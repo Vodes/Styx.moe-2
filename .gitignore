@@ -1,0 +1,45 @@
+HELP.md
+.gradle
+build/
+!**/dev-bundle/webapp/VAADIN/build
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+
+/src/main/dev-bundle
+/frontend/index.html
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+# The following files are generated/updated by vaadin-gradle-plugin
+node_modules/
+webpack.generated.js
+target
+out
+pnpmfile.js
+.npmrc
+frontend/generated

@@ -1,0 +1,15 @@
+{
+  "lumoImports": [
+    "typography",
+    "color",
+    "spacing",
+    "badge",
+    "utility"
+  ],
+  "assets": {
+    "@fontsource/open-sans": {
+      "*.css": "@fontsource/open-sans",
+      "files/*": "@fontsource/open-sans/files"
+    }
+  }
+}
