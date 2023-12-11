@@ -5,14 +5,15 @@ import com.github.mvysny.karibudsl.v23.tab
 import com.github.mvysny.karibudsl.v23.tabSheet
 import com.github.mvysny.kaributools.Badge
 import com.vaadin.flow.component.HasComponents
+import com.vaadin.flow.component.UI
+import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.html.Span
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.tabs.Tab
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
-import kotlinx.serialization.encodeToString
+import moe.styx.db.save
 import moe.styx.types.Media
 import moe.styx.web.getDBClient
-import moe.styx.web.prettyPrintJson
 import moe.styx.web.replaceAll
 import java.util.*
 
@@ -66,9 +67,19 @@ class MediaOverview(media: Media?) : KComposite() {
                     }
                 }
             }
-            button("Lol") {
-                onLeftClick {
-                    println(prettyPrintJson.encodeToString(internalMedia))
+            horizontalLayout {
+                button("Save") {
+                    addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_SUCCESS)
+                    onLeftClick {
+                        getDBClient().executeAndClose { save(internalMedia) }
+                        UI.getCurrent().page.history.back()
+                    }
+                }
+                button("Delete") {
+                    addThemeVariants(ButtonVariant.LUMO_ERROR)
+                    onLeftClick {
+                        UI.getCurrent().page.history.back()
+                    }
                 }
             }
         }

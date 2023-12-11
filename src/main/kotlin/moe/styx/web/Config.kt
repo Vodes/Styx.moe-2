@@ -9,6 +9,7 @@ data class Config(
     val tmdbToken: String = "",
     val serveHost: String = "localhost",
     val servePort: Int = 8080,
+    val imageDir: String = "",
     val dbConfig: DbConfig = DbConfig()
 )
 
@@ -16,7 +17,7 @@ data class Config(
 data class DbConfig(val ip: String = "", val user: String = "", val pass: String = "")
 
 fun getAppDir(): File {
-    return if (System.getProperty("os.name").lowercase().contains("win")) {
+    return if (isWindows()) {
         val mainDir = File(System.getenv("APPDATA"), "Styx")
         val dir = File(mainDir, "Web")
         dir.mkdirs()

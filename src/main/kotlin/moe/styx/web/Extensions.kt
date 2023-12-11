@@ -9,6 +9,7 @@ import moe.styx.types.Image
 import moe.styx.types.json
 import moe.styx.types.padString
 import moe.styx.types.toBoolean
+import java.io.File
 
 fun Long.toISODate(): String {
     val instant = Instant.fromEpochSeconds(this)
@@ -32,6 +33,17 @@ fun Image.getURL(): String {
         return externalURL as String
     }
 }
+
+fun Image.deleteIfExists() {
+    val url = getURL()
+    if (!url.contains("styx.moe"))
+        return
+    val file = File(Main.config.imageDir, url.split("/").last())
+    if (file.exists())
+        file.delete()
+}
+
+fun isWindows() = System.getProperty("os.name").contains("win", true)
 
 val prettyPrintJson = Json(json) {
     prettyPrint = true

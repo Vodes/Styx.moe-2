@@ -1,15 +1,22 @@
 package moe.styx.web.components.media
 
 import com.github.mvysny.karibudsl.v10.*
+import com.sksamuel.scrimage.ImmutableImage
+import com.sksamuel.scrimage.ScaleMethod
+import com.sksamuel.scrimage.webp.WebpWriter
 import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.notification.NotificationVariant
-import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.FlexLayout
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer
 import com.vaadin.flow.theme.lumo.LumoUtility.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.utils.io.jvm.javaio.*
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -17,10 +24,15 @@ import moe.styx.types.Image
 import moe.styx.types.Media
 import moe.styx.types.json
 import moe.styx.types.toBoolean
+import moe.styx.web.Main
 import moe.styx.web.createComponent
 import moe.styx.web.data.TmdbImage
 import moe.styx.web.data.tmdbImageQuery
+import moe.styx.web.httpClient
+import moe.styx.web.isWindows
 import org.vaadin.lineawesome.LineAwesomeIcon
+import java.io.File
+import java.util.*
 
 class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?) -> Unit) : Dialog() {
     private var current: Image? = null
@@ -81,12 +93,12 @@ class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?
         }
     }
 
-    override fun onDetach(detachEvent: DetachEvent?) {
-        onClose(current)
-    }
+    override fun onDetach(detachEvent: DetachEvent?) = onClose(current)
 }
 
 class TMDBImageDialog(val id: Int, val tv: Boolean, val thumbnail: Boolean, val onClose: (Image?) -> Unit) : Dialog() {
+    private var selected: Image? = null
+
     init {
         setWidthFull()
         maxWidth = "700px"
@@ -96,7 +108,37 @@ class TMDBImageDialog(val id: Int, val tv: Boolean, val thumbnail: Boolean, val 
             if (result != null) {
                 (if (thumbnail) result.posters else result.backdrops).sortedByDescending { it.voteCount }.forEach {
                     add(imagePreview(it) {
-                        println("Selected: ${it.getURL()}")
+                        runBlocking {
+                            val response = httpClient.get(it.getURL())
+                            if (response.status != HttpStatusCode.OK)
+                                return@runBlocking
+
+                            if (isWindows()) {
+                                selected = Image(UUID.randomUUID().toString().uppercase(), externalURL = it.getURL(), type = if (thumbnail) 0 else 1)
+                                close()
+                                return@runBlocking
+                            }
+
+                            val stream = response.bodyAsChannel().toInputStream()
+                            var image = ImmutableImage.loader().fromStream(stream).also {
+                                runCatching {
+                                    stream.close()
+                                }
+                            }
+
+                            // Make thumbnails smaller
+                            if (image.ratio() < 1 && image.height > 700)
+                                image = image.scaleToHeight(700, ScaleMethod.Bicubic)
+                            // Make banners smaller and since they're in landscape, go by width
+                            else if (image.ratio() > 1 && image.width > 1600)
+                                image = image.scaleToWidth(1600, ScaleMethod.Bicubic)
+
+                            val guid = UUID.randomUUID().toString().uppercase()
+                            val output = File(Main.config.imageDir, "$guid.webp")
+                            image.output(WebpWriter.DEFAULT.withQ(100).withM(6), output)
+                            selected = Image(guid, hasWEBP = 1, type = if (thumbnail) 0 else 1)
+                            close()
+                        }
                     })
                 }
             } else {
@@ -104,16 +146,19 @@ class TMDBImageDialog(val id: Int, val tv: Boolean, val thumbnail: Boolean, val 
             }
         }
     }
+
+    override fun onDetach(detachEvent: DetachEvent?) = onClose(selected)
 }
 
 fun imagePreview(img: TmdbImage, onSelect: () -> Unit) = createComponent {
-    horizontalLayout {
-        addClassNames(Border.BOTTOM, BorderColor.CONTRAST_30, Padding.Bottom.MEDIUM)
+    val thumb = img.aspectRatio < 1
+    flexLayout {
+        addClassNames(Border.BOTTOM, BorderColor.CONTRAST_30, Padding.Bottom.MEDIUM, Gap.MEDIUM)
         setWidthFull()
-        defaultVerticalComponentAlignment = FlexComponent.Alignment.START
-        maxHeight = "320px"
+        flexDirection = if (thumb) FlexLayout.FlexDirection.ROW else FlexLayout.FlexDirection.COLUMN
+        maxHeight = if (thumb) "320px" else "365px"
         image(img.getURL()) {
-            maxHeight = "300px"
+            maxHeight = "280px"
             onLeftClick {
                 UI.getCurrent().page.open(img.getURL())
             }
@@ -121,10 +166,11 @@ fun imagePreview(img: TmdbImage, onSelect: () -> Unit) = createComponent {
         flexLayout {
             setHeightFull()
             flexDirection = FlexLayout.FlexDirection.COLUMN
-            htmlSpan(
-                " Language: ${img.languageCode?.uppercase() ?: "Unknown"}<br>Votes: ${img.voteCount}" +
-                        "<br>Average Vote: ${img.voteAverage}<br>Resolution: ${img.width} x ${img.height}"
-            )
+            var innerHtml = "Language: ${img.languageCode?.uppercase() ?: "Unknown"}<br>Votes: ${img.voteCount}" +
+                    "<br>Average Vote: ${img.voteAverage}<br>Resolution: ${img.width}x${img.height}"
+            if (!thumb)
+                innerHtml = innerHtml.replace("<br>", " — ")
+            htmlSpan(innerHtml)
             button("Select") {
                 maxWidth = "110px"
                 addClassNames(Margin.Top.AUTO)
