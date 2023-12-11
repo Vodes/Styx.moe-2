@@ -8,12 +8,15 @@ import com.vaadin.flow.component.HasComponents
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.html.Span
+import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.tabs.Tab
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
 import moe.styx.db.save
 import moe.styx.types.Media
+import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.getDBClient
+import moe.styx.web.getFirstIDFromMap
 import moe.styx.web.replaceAll
 import java.util.*
 
@@ -27,6 +30,26 @@ class MediaOverview(media: Media?) : KComposite() {
     val root = ui {
         verticalLayout {
             h2(if (media == null) "Creating new Media" else "Editing ${media.name}")
+            button("Fill from AniList") {
+                onLeftClick {
+                    val id = internalMedia.getFirstIDFromMap(StackType.ANILIST)
+                    if (id == null)
+                        Notification.show("No AniList ID was found in the mapping.").also { return@onLeftClick }
+
+                    val result = getAniListDataForID(id!!)
+                    if (result == null)
+                        Notification.show("Could not get data from AniList API.").also { return@onLeftClick }
+
+                    internalMedia = internalMedia.copy(
+                        nameJP = result!!.title.romaji,
+                        nameEN = result.title.english,
+                        synopsisEN = result.description,
+                        genres = result.genres.joinToString(", "),
+                        tags = result.tags.filter { it.rank > 60 && !it.isMediaSpoiler }.take(10).joinToString(", ") { it.name }
+                    )
+                    updateTabs()
+                }
+            }
             tabSheet {
                 setSizeFull()
                 tab("Metadata") {

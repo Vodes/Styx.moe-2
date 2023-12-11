@@ -4,11 +4,11 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.json.Json
-import moe.styx.types.Image
-import moe.styx.types.json
-import moe.styx.types.padString
-import moe.styx.types.toBoolean
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import moe.styx.types.*
+import moe.styx.web.components.media.StackType
 import java.io.File
 
 fun Long.toISODate(): String {
@@ -43,8 +43,17 @@ fun Image.deleteIfExists() {
         file.delete()
 }
 
-fun isWindows() = System.getProperty("os.name").contains("win", true)
-
-val prettyPrintJson = Json(json) {
-    prettyPrint = true
+fun Media.getFirstIDFromMap(type: StackType): Int? {
+    val mappingJson = metadataMap?.let {
+        if (it.isBlank())
+            return@let null
+        json.decodeFromString<JsonObject>(it)
+    } ?: return null
+    val mapEntries = mappingJson[type.key]?.jsonObject?.entries ?: return null
+    var value = mapEntries.firstOrNull()?.value?.jsonPrimitive?.content ?: return null
+    if (value.contains("/"))
+        value = value.split("/")[0]
+    return (if (value.contains(",")) value.split(",")[0] else value).toIntOrNull()
 }
+
+fun isWindows() = System.getProperty("os.name").contains("win", true)

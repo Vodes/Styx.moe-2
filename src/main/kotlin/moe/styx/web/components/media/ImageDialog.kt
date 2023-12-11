@@ -17,19 +17,12 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import moe.styx.types.Image
 import moe.styx.types.Media
-import moe.styx.types.json
 import moe.styx.types.toBoolean
-import moe.styx.web.Main
-import moe.styx.web.createComponent
+import moe.styx.web.*
 import moe.styx.web.data.TmdbImage
 import moe.styx.web.data.tmdbImageQuery
-import moe.styx.web.httpClient
-import moe.styx.web.isWindows
 import org.vaadin.lineawesome.LineAwesomeIcon
 import java.io.File
 import java.util.*
@@ -67,7 +60,7 @@ class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?
                     button("Choose from TMDB") {
                         addClassNames(Padding.Horizontal.SMALL)
                         onLeftClick {
-                            val id = getFirstIDFromMap(media, StackType.TMDB)
+                            val id = media.getFirstIDFromMap(StackType.TMDB)
                             if (id == null) {
                                 Notification.show("No TMDB ID found in mappings!")
                                 return@onLeftClick
@@ -180,17 +173,4 @@ fun imagePreview(img: TmdbImage, onSelect: () -> Unit) = createComponent {
             }
         }
     }
-}
-
-private fun getFirstIDFromMap(media: Media, type: StackType): Int? {
-    val mappingJson = media.metadataMap?.let {
-        if (it.isBlank())
-            return@let null
-        json.decodeFromString<JsonObject>(it)
-    } ?: return null
-    val mapEntries = mappingJson[type.key]?.jsonObject?.entries ?: return null
-    var value = mapEntries.firstOrNull()?.value?.jsonPrimitive?.content ?: return null
-    if (value.contains("/"))
-        value = value.split("/")[0]
-    return (if (value.contains(",")) value.split(",")[0] else value).toIntOrNull()
 }
