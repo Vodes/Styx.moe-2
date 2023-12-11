@@ -1,0 +1,20 @@
+.main-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.center {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.navbar {
+  flex: 1;
+  min-width: 200px;
+}
+
+.content {
+  flex: 4;
+  min-width: 500px;
+}

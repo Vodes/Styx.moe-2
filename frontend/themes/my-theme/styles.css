@@ -1,0 +1,86 @@
+/*
+   CSS styling examples for the Vaadin app.
+
+   Visit https://vaadin.com/docs/styling/application-theme/ for more information.
+*/
+@import url('./main-layout.css');
+
+html {
+  --lumo-font-family: "Open Sans";
+  --lumo-size-xl: 3rem;
+  --lumo-size-l: 2.5rem;
+  --lumo-size-m: 2rem;
+  --lumo-size-s: 1.75rem;
+  --lumo-size-xs: 1.5rem;
+  --lumo-space-xl: 1.875rem;
+  --lumo-space-l: 1.25rem;
+  --lumo-space-m: 0.625rem;
+  --lumo-space-s: 0.3125rem;
+  --lumo-space-xs: 0.1875rem;
+}
+
+[theme~="dark"] {
+  --lumo-primary-text-color: rgb(31, 199, 42);
+  --lumo-primary-color-50pct: rgba(31, 199, 42, 0.5);
+  --lumo-primary-color-10pct: rgba(31, 199, 42, 0.1);
+  --lumo-primary-color: hsl(124, 73%, 45%);
+  --lumo-base-color: hsl(214, 8%, 27%);
+  --lumo-success-text-color: rgb(45, 205, 112);
+  --lumo-success-color-50pct: rgba(45, 205, 112, 0.5);
+  --lumo-success-color-10pct: rgba(45, 205, 112, 0.1);
+  --lumo-success-color: hsl(145, 64%, 49%);
+}
+
+/* open-sans-regular - cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./fonts/open-sans-v36-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* open-sans-italic - cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Open Sans';
+  font-style: italic;
+  font-weight: 400;
+  src: url('./fonts/open-sans-v36-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-italic.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* open-sans-700 - cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('./fonts/open-sans-v36-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* open-sans-700italic - cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Open Sans';
+  font-style: italic;
+  font-weight: 700;
+  src: url('./fonts/open-sans-v36-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-700italic.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+.main-layout-header {
+  padding: 5px;
+  border-bottom: 2px solid black;
+}
+
+.flex-container {
+  display: flex;
+  flex-direction: row;
+}
+
+@media (max-width: 800px) {
+  .flex-container {
+    flex-direction: column;
+  }
+
+
+  .flex-container > vaadin-text-field {
+    width: 100%;
+  }
+}
