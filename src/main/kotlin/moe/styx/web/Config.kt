@@ -7,6 +7,8 @@ import java.io.File
 data class Config(
     val debugToken: String = "",
     val tmdbToken: String = "",
+    val serveHost: String = "localhost",
+    val servePort: Int = 8080,
     val dbConfig: DbConfig = DbConfig()
 )
 

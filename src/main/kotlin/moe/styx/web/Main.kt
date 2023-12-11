@@ -32,11 +32,6 @@ fun getDBClient(): StyxDBClient {
     )
 }
 
-inline fun openDB(func: StyxDBClient.() -> Unit) {
-    val dbClient = getDBClient()
-    dbClient.executeAndClose(func)
-}
-
 fun main(args: Array<String>) {
     Main.appDir = if (args.isEmpty()) getAppDir() else File(args[0]).also { it.mkdirs() }
     Main.configFile = File(Main.appDir, "config.toml")
@@ -46,5 +41,5 @@ fun main(args: Array<String>) {
         exitProcess(1)
     }
     Main.config = toml.decodeFromString(Main.configFile.readText())
-    VaadinBoot().run()
+    VaadinBoot().listenOn(Main.config.serveHost).setPort(Main.config.servePort).run()
 }
