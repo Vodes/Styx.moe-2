@@ -12,6 +12,8 @@ import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.tabs.Tab
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
+import moe.styx.db.StyxDBClient
+import moe.styx.db.getMedia
 import moe.styx.db.save
 import moe.styx.types.Media
 import moe.styx.web.data.getAniListDataForID
@@ -94,7 +96,10 @@ class MediaOverview(media: Media?) : KComposite() {
                 button("Save") {
                     addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_SUCCESS)
                     onLeftClick {
-                        getDBClient().executeAndClose { save(internalMedia) }
+                        val dbClient = getDBClient()
+                        dbClient.save(internalMedia)
+                        updatePrequelSequel(dbClient, internalMedia)
+                        dbClient.closeConnection()
                         UI.getCurrent().page.history.back()
                     }
                 }
@@ -117,6 +122,31 @@ class MediaOverview(media: Media?) : KComposite() {
         }
         mappingLayout.replaceAll {
             MappingOverview(internalMedia) { internalMedia = it; wasChanged = true; internalMedia }
+        }
+    }
+}
+
+private fun updatePrequelSequel(dbClient: StyxDBClient, media: Media) {
+    if (!media.prequel.isNullOrBlank()) {
+        val prequelMedia = dbClient.getMedia(mapOf("GUID" to media.prequel!!)).firstOrNull()
+        if (prequelMedia != null) {
+            dbClient.save(prequelMedia.copy(sequel = media.GUID))
+        }
+    } else {
+        val prequelMedia = dbClient.getMedia(mapOf("sequel" to media.GUID)).firstOrNull()
+        if (prequelMedia != null) {
+            dbClient.save(prequelMedia.copy(sequel = ""))
+        }
+    }
+    if (!media.sequel.isNullOrBlank()) {
+        val sequelMedia = dbClient.getMedia(mapOf("GUID" to media.sequel!!)).firstOrNull()
+        if (sequelMedia != null) {
+            dbClient.save(sequelMedia.copy(prequel = media.GUID))
+        }
+    } else {
+        val sequelMedia = dbClient.getMedia(mapOf("prequel" to media.GUID)).firstOrNull()
+        if (sequelMedia != null) {
+            dbClient.save(sequelMedia.copy(prequel = ""))
         }
     }
 }

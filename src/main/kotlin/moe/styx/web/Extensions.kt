@@ -56,4 +56,19 @@ fun Media.getFirstIDFromMap(type: StackType): Int? {
     return (if (value.contains(",")) value.split(",")[0] else value).toIntOrNull()
 }
 
+fun Media.getFirstTMDBSeason(): Int? {
+    val mappingJson = metadataMap?.let {
+        if (it.isBlank())
+            return@let null
+        json.decodeFromString<JsonObject>(it)
+    } ?: return null
+    val mapEntries = mappingJson[StackType.TMDB.key]?.jsonObject?.entries ?: return null
+    var value = mapEntries.firstOrNull()?.value?.jsonPrimitive?.content ?: return null
+    if (value.contains("/"))
+        value = value.split("/")[0]
+    if (!value.contains(","))
+        return null
+    return value.split(",")[1].toIntOrNull()
+}
+
 fun isWindows() = System.getProperty("os.name").contains("win", true)

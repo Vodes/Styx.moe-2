@@ -1,7 +1,9 @@
 package moe.styx.web.components.media
 
 import com.github.mvysny.karibudsl.v10.*
+import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.checkbox.Checkbox
+import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.select.Select
 import com.vaadin.flow.component.textfield.IntegerField
@@ -9,12 +11,12 @@ import com.vaadin.flow.component.timepicker.TimePicker
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import com.vaadin.flow.theme.lumo.LumoUtility.*
-import moe.styx.db.delete
-import moe.styx.db.getCategories
-import moe.styx.db.getSchedules
-import moe.styx.db.save
+import moe.styx.db.*
 import moe.styx.types.*
+import moe.styx.web.data.getTmdbMetadata
 import moe.styx.web.getDBClient
+import moe.styx.web.getFirstIDFromMap
+import moe.styx.web.getFirstTMDBSeason
 import org.vaadin.lineawesome.LineAwesomeIcon
 import java.time.Duration
 import java.time.LocalTime
@@ -73,9 +75,24 @@ class RelationsView(private var media: Media, mediaProvider: (Media) -> Media) :
                     valueChangeMode = ValueChangeMode.LAZY
                     addValueChangeListener { media = mediaProvider(media.copy(prequel = it.value.trim())) }
                     setWidthFull()
+                    val tooltip = tooltip.withManual(true)
+                    val tooltipButton = Button(LineAwesomeIcon.INFO_SOLID.create())
+                    suffixComponent = tooltipButton
+                    tooltipButton.onLeftClick {
+                        if (value.isNullOrBlank()) {
+                            if (tooltip.isOpened)
+                                tooltip.isOpened = false
+                            return@onLeftClick
+                        }
+                        if (!tooltip.isOpened) {
+                            tooltip.text = getDBClient().executeGet { getMedia(mapOf("GUID" to value)).firstOrNull() }?.name ?: "No media found."
+                        }
+                        tooltip.isOpened = !tooltip.isOpened;
+                    }
                 }
                 iconButton(LineAwesomeIcon.SEARCH_SOLID.create()) {
                     onLeftClick { MediaChooseDialog(media.GUID) { prequelField.value = it?.GUID ?: "" }.open() }
+                    height = prequelField.height
                 }
             }
             flexLayout {
@@ -86,9 +103,24 @@ class RelationsView(private var media: Media, mediaProvider: (Media) -> Media) :
                     valueChangeMode = ValueChangeMode.LAZY
                     addValueChangeListener { media = mediaProvider(media.copy(sequel = it.value.trim())) }
                     setWidthFull()
+                    val tooltip = tooltip.withManual(true)
+                    val tooltipButton = Button(LineAwesomeIcon.INFO_SOLID.create())
+                    suffixComponent = tooltipButton
+                    tooltipButton.onLeftClick {
+                        if (value.isNullOrBlank()) {
+                            if (tooltip.isOpened)
+                                tooltip.isOpened = false
+                            return@onLeftClick
+                        }
+                        if (!tooltip.isOpened) {
+                            tooltip.text = getDBClient().executeGet { getMedia(mapOf("GUID" to value)).firstOrNull() }?.name ?: "No media found."
+                        }
+                        tooltip.isOpened = !tooltip.isOpened;
+                    }
                 }
                 iconButton(LineAwesomeIcon.SEARCH_SOLID.create()) {
                     onLeftClick { MediaChooseDialog(media.GUID) { sequelField.value = it?.GUID ?: "" }.open() }
+                    height = sequelField.height
                 }
             }
         }
@@ -108,12 +140,43 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
                 height = "250px"
                 setWidthFull()
             }
-            textArea("Synopsis DE") {
+            val synopsisDE = textArea("Synopsis DE") {
                 value = media.synopsisDE ?: ""
                 valueChangeMode = ValueChangeMode.LAZY
                 addValueChangeListener { media = mediaProvider(media.copy(synopsisDE = it.value.trim())) }
                 height = "250px"
                 setWidthFull()
+            }
+            contextMenu {
+                target = synopsisDE
+                item("Fill from TMDB (Series)") {
+                    onLeftClick {
+                        val id = media.getFirstIDFromMap(StackType.TMDB)
+                        if (id == null)
+                            Notification.show("No TMDB ID was found in the mapping.").also { return@onLeftClick }
+
+                        val meta = getTmdbMetadata(id!!, media.isSeries.toBoolean(), "de-DE")
+                        if (meta == null)
+                            Notification.show("Could not get metadata from TMDB!").also { return@onLeftClick }
+                        synopsisDE.value = meta!!.overview
+                        media = mediaProvider(media.copy(synopsisDE = synopsisDE.value.trim()))
+                    }
+                }
+                item("Fill from TMDB (Season)") {
+                    onLeftClick {
+                        val id = media.getFirstIDFromMap(StackType.TMDB)
+                        if (id == null)
+                            Notification.show("No TMDB ID was found in the mapping.").also { return@onLeftClick }
+                        val season = media.getFirstTMDBSeason()
+                        if (season == null || !media.isSeries.toBoolean())
+                            Notification.show("No season number was found in the mapping.").also { return@onLeftClick }
+                        val meta = getTmdbMetadata(id!!, media.isSeries.toBoolean(), "de-DE", season)
+                        if (meta == null)
+                            Notification.show("Could not get metadata from TMDB!").also { return@onLeftClick }
+                        synopsisDE.value = meta!!.overview
+                        media = mediaProvider(media.copy(synopsisDE = synopsisDE.value.trim()))
+                    }
+                }
             }
         }
     }

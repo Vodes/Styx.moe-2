@@ -35,14 +35,39 @@ data class TmdbImage(
     fun getURL() = "https://www.themoviedb.org/t/p/original$filePath"
 }
 
+@Serializable
+data class TmdbMeta(
+    val id: Int,
+    val name: String,
+    val overview: String
+)
+
 fun tmdbImageQuery(id: Int, tv: Boolean = true): ImageResults? = runBlocking {
     val response = httpClient.get("https://api.themoviedb.org/3/${if (tv) "tv" else "movie"}/$id/images") {
         accept(ContentType.Application.Json)
         bearerAuth(Main.config.tmdbToken)
         userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
     }
-    if (response.status == HttpStatusCode.OK) {
+
+    if (response.status == HttpStatusCode.OK)
         return@runBlocking json.decodeFromString(response.bodyAsText())
+
+    return@runBlocking null
+}
+
+fun getTmdbMetadata(id: Int, tv: Boolean = true, languageCode: String = "en-US", season: Int? = null): TmdbMeta? = runBlocking {
+    var url = "https://api.themoviedb.org/3/${if (tv) "tv" else "movie"}/$id"
+    if (tv && season != null) {
+        url += "/season/$season"
     }
+    val response = httpClient.get("$url?language=$languageCode") {
+        accept(ContentType.Application.Json)
+        bearerAuth(Main.config.tmdbToken)
+        userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
+    }
+
+    if (response.status == HttpStatusCode.OK)
+        return@runBlocking json.decodeFromString(response.bodyAsText())
+
     return@runBlocking null
 }
