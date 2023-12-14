@@ -47,9 +47,11 @@ dependencies {
         }
     }
     implementation("com.github.mvysny.karibudsl:karibu-dsl-v23:$karibuDslVersion")
-    implementation("com.github.mvysny.vaadin-boot:vaadin-boot:12.1")
+    implementation("eu.vaadinonkotlin:vok-util-vaadin:0.16.0")
+    implementation("com.github.mvysny.vaadin-boot:vaadin-boot:12.2")
     implementation("org.parttio:line-awesome:2.0.0")
     implementation("org.vaadin.filesystemdataprovider:filesystemdataprovider:4.0.0")
+    implementation("in.virit:viritin:2.3.1")
 
     // Misc
     implementation("com.mysql:mysql-connector-j:8.2.0")

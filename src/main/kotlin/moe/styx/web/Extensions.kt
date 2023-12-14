@@ -1,5 +1,7 @@
 package moe.styx.web
 
+import com.github.mvysny.kaributools.isEmpty
+import com.vaadin.flow.router.QueryParameters
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -21,6 +23,8 @@ fun LocalDateTime.formattedStr(): String {
     return "${this.year}-${this.monthNumber.padString()}-${this.dayOfMonth.padString()} " +
             "${this.hour.padString()}:${this.minute.padString()}:${this.second.padString()}"
 }
+
+fun QueryParameters?.isEmptyOrNull() = this?.isEmpty ?: true
 
 fun Image.getURL(): String {
     return if (hasWEBP?.toBoolean() == true) {

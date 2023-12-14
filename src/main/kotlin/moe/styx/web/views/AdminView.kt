@@ -2,9 +2,11 @@ package moe.styx.web.views
 
 import com.github.mvysny.karibudsl.v10.*
 import com.vaadin.flow.component.UI
+import com.vaadin.flow.component.html.AnchorTarget
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
+import com.vaadin.flow.server.VaadinRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -14,6 +16,7 @@ import moe.styx.web.Main
 import moe.styx.web.auth.DiscordAPI
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.initMediaComponent
+import moe.styx.web.components.linkButton
 import moe.styx.web.createComponent
 import moe.styx.web.getDBClient
 import moe.styx.web.layout.MainLayout
@@ -24,9 +27,11 @@ import moe.styx.web.replaceAll
 class AdminView : KComposite() {
     private lateinit var layout: VerticalLayout
     private lateinit var uiScope: UI
+    private var request: VaadinRequest? = null
 
     val root = ui {
         uiScope = UI.getCurrent()
+        request = VaadinRequest.getCurrent()
         verticalLayout {
             isSpacing = false
             isPadding = false
@@ -38,7 +43,7 @@ class AdminView : KComposite() {
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
-            val discordUser = DiscordAPI.getUserFromToken(Main.config.debugToken)
+            val discordUser = DiscordAPI.getUserFromToken(DiscordAPI.getCurrentToken(request) ?: "")
             if (discordUser != null) {
                 val users: List<User> = getDBClient().executeGet { getUsers(mapOf("discordID" to discordUser.id, "permissions" to 99)) }
                 uiScope.access {
@@ -51,7 +56,12 @@ class AdminView : KComposite() {
                     }
                 }
             } else
-                uiScope.access { layout.replaceAll { h2("You're not logged in.") } }
+                uiScope.access {
+                    layout.replaceAll {
+                        h2("You're not logged in.")
+                        linkButton("${Main.config.baseAPIURL}/auth", "Login", target = AnchorTarget.DEFAULT)
+                    }
+                }
         }
     }
 

@@ -10,6 +10,7 @@ import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.html.Nav
 import com.vaadin.flow.component.html.UnorderedList
 import com.vaadin.flow.component.orderedlayout.FlexComponent
+import com.vaadin.flow.server.VaadinRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,12 +34,13 @@ fun FlexComponent.replaceAll(block: HasComponents.() -> Component) {
 
 inline fun checkAuth(
     ui: UI,
+    request: VaadinRequest?,
     minPerms: Int = 50,
     parent: FlexComponent,
     crossinline func: FlexComponent.() -> Component
 ) {
     CoroutineScope(Dispatchers.IO).launch {
-        val discordUser = DiscordAPI.getUserFromToken(Main.config.debugToken)
+        val discordUser = DiscordAPI.getUserFromToken(DiscordAPI.getCurrentToken(request) ?: "")
         if (discordUser == null) {
             ui.access { navigateTo<HomeView>() }
             return@launch

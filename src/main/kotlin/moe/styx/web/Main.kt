@@ -4,6 +4,7 @@ import com.github.mvysny.vaadinboot.VaadinBoot
 import com.vaadin.flow.component.page.AppShellConfigurator
 import com.vaadin.flow.component.page.Push
 import com.vaadin.flow.shared.communication.PushMode
+import com.vaadin.flow.shared.ui.Transport
 import com.vaadin.flow.theme.Theme
 import com.vaadin.flow.theme.lumo.Lumo
 import kotlinx.serialization.decodeFromString
@@ -13,7 +14,7 @@ import java.io.File
 import kotlin.system.exitProcess
 
 @Theme("my-theme", variant = Lumo.DARK)
-@Push(PushMode.AUTOMATIC)
+@Push(PushMode.AUTOMATIC, transport = Transport.WEBSOCKET_XHR)
 class AppShell : AppShellConfigurator
 
 object Main {

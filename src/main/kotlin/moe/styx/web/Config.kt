@@ -9,6 +9,8 @@ data class Config(
     val tmdbToken: String = "",
     val serveHost: String = "localhost",
     val servePort: Int = 8080,
+    val baseURL: String = "https://example.com",
+    val baseAPIURL: String = "https://api.styx.moe",
     val imageDir: String = "",
     val dbConfig: DbConfig = DbConfig()
 )

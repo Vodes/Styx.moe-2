@@ -1,12 +1,15 @@
 package moe.styx.web.auth
 
+import com.vaadin.flow.server.VaadinRequest
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import jakarta.servlet.http.Cookie
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import moe.styx.types.json
+import moe.styx.web.Main
 import moe.styx.web.httpClient
 
 object DiscordAPI {
@@ -23,6 +26,17 @@ object DiscordAPI {
         if (response.status != HttpStatusCode.OK)
             return@runBlocking null
         return@runBlocking json.decodeFromString(response.bodyAsText())
+    }
+
+    fun getCurrentToken(request: VaadinRequest?): String? {
+        if (request == null)
+            return null
+        val cookies = request.cookies
+        val tokenCookie = cookies.find { (it as Cookie).name == "access_token" }
+        if (tokenCookie != null)
+            return tokenCookie.value
+
+        return Main.config.debugToken
     }
 }
 

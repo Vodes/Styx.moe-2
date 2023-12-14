@@ -3,22 +3,22 @@ package moe.styx.web.views
 import com.github.mvysny.karibudsl.v10.*
 import com.github.mvysny.kaributools.setClassNames2
 import com.vaadin.flow.component.UI
+import com.vaadin.flow.component.html.AnchorTarget
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
+import com.vaadin.flow.server.VaadinRequest
 import com.vaadin.flow.theme.lumo.LumoUtility.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import moe.styx.web.Main
+import moe.styx.db.getUsers
+import moe.styx.types.User
+import moe.styx.web.*
 import moe.styx.web.auth.DiscordAPI
-import moe.styx.web.auth.DiscordUser
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.linkButton
-import moe.styx.web.createComponent
 import moe.styx.web.layout.MainLayout
-import moe.styx.web.replaceAll
-import moe.styx.web.unorderedList
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 @PageTitle("Styx - User")
@@ -36,28 +36,40 @@ class UserView : KComposite() {
                 authProgress()
             }
         }.also {
-            initUI(UI.getCurrent())
+            initUI(UI.getCurrent(), VaadinRequest.getCurrent())
         }
     }
 
-    private fun initUI(ui: UI) {
+    private fun initUI(ui: UI, request: VaadinRequest?) {
         CoroutineScope(Dispatchers.IO).launch {
-            val user = DiscordAPI.getUserFromToken(Main.config.debugToken)
-            ui.access {
-                if (user != null)
-                    layout.replaceAll { userSettings(user) }
-                else
-                    layout.replaceAll { h2("You're not logged in.") }
-            }
+            val discordUser = DiscordAPI.getUserFromToken(DiscordAPI.getCurrentToken(request) ?: "")
+            if (discordUser != null) {
+                val users: List<User> = getDBClient().executeGet { getUsers(mapOf("discordID" to discordUser.id)) }
+                ui.access {
+                    if (users.isEmpty())
+                        layout.replaceAll { h2("You are not in the Styx database.") }
+                    else {
+                        val user = users.first()
+                        layout.removeAll()
+                        layout.add(userSettings(user))
+                    }
+                }
+            } else
+                ui.access {
+                    layout.replaceAll {
+                        h2("You're not logged in.")
+                        linkButton("${Main.config.baseAPIURL}/auth", "Login", target = AnchorTarget.DEFAULT)
+                    }
+                }
         }
     }
 
-    private fun userSettings(user: DiscordUser) = createComponent {
+    private fun userSettings(user: User) = createComponent {
         verticalLayout {
             isSpacing = false
             setClassNames2(Padding.NONE)
             setSizeFull()
-            h2("Welcome, ${user.username}!") { addClassNames(Padding.XSMALL) }
+            h2("Welcome, ${user.name}!") { addClassNames(Padding.XSMALL) }
             accordion {
                 setWidthFull()
                 panel("Downloads") {

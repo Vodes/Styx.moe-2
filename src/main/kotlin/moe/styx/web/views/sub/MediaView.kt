@@ -4,6 +4,7 @@ import com.github.mvysny.karibudsl.v10.KComposite
 import com.github.mvysny.karibudsl.v10.verticalLayout
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.router.*
+import com.vaadin.flow.server.VaadinRequest
 import moe.styx.db.getMedia
 import moe.styx.types.Media
 import moe.styx.web.checkAuth
@@ -22,7 +23,7 @@ class MediaView : KComposite(), HasDynamicTitle, HasUrlParameter<String> {
             setSizeFull()
             authProgress()
         }.apply {
-            checkAuth(UI.getCurrent(), parent = this) {
+            checkAuth(UI.getCurrent(), VaadinRequest.getCurrent(), parent = this) {
                 mediaOverview(media)
             }
         }
