@@ -82,7 +82,9 @@ class MediaOverview(media: Media?) : KComposite() {
                 if (entryCount < 1)
                     entryTab.isEnabled = false
 
-                add(entryTab, VerticalLayout())
+                add(entryTab, VerticalLayout().apply {
+                    h1("I should show all entries here at some point.")
+                })
 
                 // Here I'm just making sure every layout has a reference to the latest media instance(?)
                 addSelectedChangeListener {
