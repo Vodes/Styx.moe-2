@@ -12,6 +12,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import moe.styx.types.*
 import moe.styx.web.components.media.StackType
 import java.io.File
+import java.util.*
 
 fun Long.toISODate(): String {
     val instant = Instant.fromEpochSeconds(this)
@@ -25,6 +26,8 @@ fun LocalDateTime.formattedStr(): String {
 }
 
 fun QueryParameters?.isEmptyOrNull() = this?.isEmpty ?: true
+
+fun String.capitalize(): String = lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
 fun Image.getURL(): String {
     return if (hasWEBP?.toBoolean() == true) {

@@ -36,7 +36,7 @@ inline fun checkAuth(
     ui: UI,
     request: VaadinRequest?,
     minPerms: Int = 50,
-    parent: FlexComponent,
+    parent: FlexComponent? = null,
     crossinline func: FlexComponent.() -> Component
 ) {
     CoroutineScope(Dispatchers.IO).launch {
@@ -50,9 +50,10 @@ inline fun checkAuth(
             ui.access { navigateTo<HomeView>() }
             return@launch
         }
-        ui.access {
-            parent.replaceAll { func(parent) }
-        }
+        if (parent != null)
+            ui.access {
+                parent.replaceAll { init(func(parent)) }
+            }
     }
 }
 
