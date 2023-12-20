@@ -5,7 +5,6 @@ import com.github.mvysny.karibudsl.v10.h2
 import com.github.mvysny.karibudsl.v10.verticalLayout
 import com.github.mvysny.kaributools.navigateTo
 import com.vaadin.flow.component.UI
-import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.BeforeEvent
 import com.vaadin.flow.router.HasUrlParameter
 import com.vaadin.flow.router.PageTitle
@@ -26,7 +25,6 @@ import moe.styx.web.views.AdminView
 class DownloadableView : KComposite(), HasUrlParameter<String> {
     private var media: Media? = null
     private var target: DownloaderTarget? = null
-    private lateinit var layout: VerticalLayout
 
     val root = ui {
         verticalLayout {
