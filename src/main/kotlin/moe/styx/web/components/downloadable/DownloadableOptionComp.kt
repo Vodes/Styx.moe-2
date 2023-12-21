@@ -7,6 +7,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
+import com.vaadin.flow.theme.lumo.LumoUtility.Padding
 import moe.styx.types.DownloadableOption
 import moe.styx.types.SourceType
 import moe.styx.web.capitalize
@@ -29,11 +30,12 @@ class DLOptionComponent(private var option: DownloadableOption, onUpdate: (Downl
                 setWidthFull()
                 maxWidth = "500px"
             }
+            h3("Source") { addClassNames(Padding.Vertical.MEDIUM) }
             flexLayout {
                 addClassNames(LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL, "flex-container")
                 setWidthFull()
                 maxWidth = "1550px"
-                val typeSelect = select<SourceType>("Source") {
+                val typeSelect = select<SourceType>("Type") {
                     setItems(SourceType.entries)
                     value = option.source
                     isEmptySelectionAllowed = false
@@ -75,6 +77,37 @@ class DLOptionComponent(private var option: DownloadableOption, onUpdate: (Downl
                     height = "35px"
                 }
                 setAlignSelf(FlexComponent.Alignment.START, typeSelect)
+            }
+            h3("Parsing") { addClassNames(Padding.Vertical.MEDIUM) }
+            flexLayout {
+                addClassNames(LumoUtility.AlignItems.START, LumoUtility.Gap.MEDIUM, "flex-container")
+                setWidthFull()
+                maxWidth = "1550px"
+                integerField("Episode Offset") {
+                    value = option.episodeOffset ?: 0
+                    isStepButtonsVisible = true
+                    step = 1
+                    width = "200px"
+                    valueChangeMode = ValueChangeMode.LAZY
+                    addValueChangeListener { option = onUpdate(option.copy(episodeOffset = it.value)) }
+                }
+                horizontalLayout(false) {
+                    addClassNames(LumoUtility.Gap.MEDIUM, "checkbox-horilayout")
+                    checkBox("Ignore Delay") {
+                        addClassNames("meme-checkbox")
+                        setTooltipText("Also Download stuff that's older than an hour.")
+                        value = option.ignoreDelay
+                        addValueChangeListener { option = onUpdate(option.copy(ignoreDelay = it.value)) }
+                        height = "35px"
+                    }
+                    checkBox("Wait for previous") {
+                        addClassNames("meme-checkbox")
+                        setTooltipText("Require previous option to exist before downloading")
+                        value = option.waitForPrevious
+                        addValueChangeListener { option = onUpdate(option.copy(waitForPrevious = it.value)) }
+                        height = "35px"
+                    }
+                }
             }
         }
     }

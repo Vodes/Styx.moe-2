@@ -78,6 +78,10 @@ html {
   align-self: flex-end;
 }
 
+.checkbox-horilayout {
+  min-height: 66px;
+}
+
 @media (max-width: 800px) {
   .flex-container {
     flex-direction: column;
@@ -85,6 +89,10 @@ html {
 
   .meme-checkbox {
     align-self: flex-start;
+  }
+
+  .checkbox-horilayout {
+    min-height: 30px;
   }
 
   .flex-container > vaadin-text-field {
