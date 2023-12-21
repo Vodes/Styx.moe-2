@@ -101,7 +101,10 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                 setSizeFull()
                 target.options.forEachIndexed { index, option ->
                     tab(option.priority.toString()) {
-                        dlOpComponent(option, { target.options.set(index, it) })
+                        dlOpComponent(option, {
+                            target.options[index] = it
+                            it
+                        })
                     }
                 }
             }.also { tabSheet = it }

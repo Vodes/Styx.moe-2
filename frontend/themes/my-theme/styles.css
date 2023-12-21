@@ -74,11 +74,18 @@ html {
   flex-direction: row;
 }
 
+.meme-checkbox {
+  align-self: flex-end;
+}
+
 @media (max-width: 800px) {
   .flex-container {
     flex-direction: column;
   }
 
+  .meme-checkbox {
+    align-self: flex-start;
+  }
 
   .flex-container > vaadin-text-field {
     width: 100%;
