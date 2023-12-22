@@ -2,6 +2,7 @@ package moe.styx.web.components.downloadable
 
 import com.github.mvysny.karibudsl.v10.*
 import com.vaadin.flow.component.HasComponents
+import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.textfield.TextField
@@ -9,6 +10,7 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
 import moe.styx.types.DownloadableOption
+import moe.styx.types.ProcessingOptions
 import moe.styx.types.SourceType
 import moe.styx.web.capitalize
 
@@ -17,6 +19,7 @@ class DLOptionComponent(private var option: DownloadableOption, onUpdate: (Downl
     private lateinit var pathField: TextField
     private lateinit var ftpConnField: TextField
     private lateinit var keepSeedingCheck: Checkbox
+    private lateinit var processingButton: Button
 
     val root = ui {
         verticalLayout {
@@ -106,6 +109,50 @@ class DLOptionComponent(private var option: DownloadableOption, onUpdate: (Downl
                         value = option.waitForPrevious
                         addValueChangeListener { option = onUpdate(option.copy(waitForPrevious = it.value)) }
                         height = "35px"
+                    }
+                }
+            }
+            h3("Overrides") { addClassNames(Padding.Vertical.MEDIUM) }
+            flexLayout {
+                addClassNames(LumoUtility.AlignItems.START, LumoUtility.Gap.MEDIUM, "flex-container")
+                setWidthFull()
+                maxWidth = "1550px"
+                textField("Naming Template") {
+                    value = option.overrideNamingTemplate ?: ""
+                    valueChangeMode = ValueChangeMode.LAZY
+                    addValueChangeListener { option = onUpdate(option.copy(overrideNamingTemplate = it.value)) }
+                    flexGrow = 1.0
+                }
+                textField("Title Template") {
+                    value = option.overrideTitleTemplate ?: ""
+                    valueChangeMode = ValueChangeMode.LAZY
+                    addValueChangeListener { option = onUpdate(option.copy(overrideTitleTemplate = it.value)) }
+                    flexGrow = 1.0
+                }
+                textField("Command") {
+                    value = option.commandAfter ?: ""
+                    valueChangeMode = ValueChangeMode.LAZY
+                    addValueChangeListener { option = onUpdate(option.copy(commandAfter = it.value)) }
+                    flexGrow = 1.0
+                }
+            }
+            horizontalLayout(true) {
+                defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
+                checkBox("Processing") {
+                    value = option.processingOptions != null
+                    addValueChangeListener {
+                        option = onUpdate(option.copy(processingOptions = if (!it.value) null else ProcessingOptions()))
+                        processingButton.isEnabled = it.value
+                    }
+                }
+                processingButton = button("Choose processing") {
+                    isEnabled = option.processingOptions != null
+                    onLeftClick {
+                        if (option.processingOptions == null)
+                            return@onLeftClick
+                        ProcessingDialog(option.processingOptions!!) {
+                            option = onUpdate(option.copy(processingOptions = it))
+                        }.open()
                     }
                 }
             }
