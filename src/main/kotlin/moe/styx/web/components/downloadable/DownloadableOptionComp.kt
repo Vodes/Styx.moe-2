@@ -110,6 +110,12 @@ class DLOptionComponent(private var option: DownloadableOption, onUpdate: (Downl
                         addValueChangeListener { option = onUpdate(option.copy(waitForPrevious = it.value)) }
                         height = "35px"
                     }
+                    checkBox("Add to legacy DB") {
+                        addClassNames("meme-checkbox")
+                        value = option.addToLegacyDatabase
+                        addValueChangeListener { option = onUpdate(option.copy(addToLegacyDatabase = it.value)) }
+                        height = "35px"
+                    }
                 }
             }
             h3("Overrides") { addClassNames(Padding.Vertical.MEDIUM) }
@@ -150,7 +156,7 @@ class DLOptionComponent(private var option: DownloadableOption, onUpdate: (Downl
                     onLeftClick {
                         if (option.processingOptions == null)
                             return@onLeftClick
-                        ProcessingDialog(option.processingOptions!!) {
+                        ProcessingDialog(option.processingOptions!!, option.priority) {
                             option = onUpdate(option.copy(processingOptions = it))
                         }.open()
                     }

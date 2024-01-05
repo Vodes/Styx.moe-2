@@ -59,7 +59,7 @@ dependencies {
     implementation("net.peanuuutz.tomlkt:tomlkt:0.3.7")
 
     // Custom
-    implementation("moe.styx:styx-db:0.2")
+    implementation("moe.styx:styx-db:0.3")
 
     // Image Processing
     implementation("com.sksamuel.scrimage:scrimage-core:$scrimageVersion")
