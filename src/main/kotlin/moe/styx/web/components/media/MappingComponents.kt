@@ -2,21 +2,19 @@ package moe.styx.web.components.media
 
 import com.github.mvysny.karibudsl.v10.*
 import com.vaadin.flow.component.UI
+import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
+import com.vaadin.flow.component.html.Span
 import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.IntegerField
-import com.vaadin.flow.component.textfield.NumberField
 import com.vaadin.flow.component.textfield.TextField
+import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import moe.styx.types.Media
-import moe.styx.types.json
-import moe.styx.types.toBoolean
+import moe.styx.types.*
+import moe.styx.web.data.tmdbFindGroups
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class MappingOverview(private var media: Media, mediaProvider: (Media) -> Media) : KComposite() {
@@ -27,31 +25,28 @@ class MappingOverview(private var media: Media, mediaProvider: (Media) -> Media)
             val mappingJson = media.metadataMap?.let {
                 if (it.isBlank())
                     return@let null
-                json.decodeFromString<JsonObject>(it)
+                json.decodeFromString<MappingCollection>(it)
             }
-            val tmdbStack = MappingStack(media, StackType.TMDB, mappingJson?.get(StackType.TMDB.key)?.jsonObject)
-            val anilistStack = MappingStack(media, StackType.ANILIST, mappingJson?.get(StackType.ANILIST.key)?.jsonObject)
-            val malStack = MappingStack(media, StackType.MAL, mappingJson?.get(StackType.MAL.key)?.jsonObject)
+            val tmdbStack = MappingStack(media, StackType.TMDB, mappingJson?.tmdbMappings ?: mutableListOf<TMDBMapping>())
+            val anilistStack = MappingStack(media, StackType.ANILIST, mappingJson?.anilistMappings ?: mutableListOf<BasicMapping>())
+            val malStack = MappingStack(media, StackType.MAL, mappingJson?.malMappings ?: mutableListOf<BasicMapping>())
             add(tmdbStack, anilistStack, malStack)
             button("Save") {
                 addThemeVariants(ButtonVariant.LUMO_SUCCESS)
                 onLeftClick {
-                    val combinedMap = mapOf(
-                        tmdbStack.type.key to tmdbStack.generateMap(),
-                        anilistStack.type.key to anilistStack.generateMap(),
-                        malStack.type.key to malStack.generateMap()
+                    val mappings = MappingCollection(
+                        tmdbStack.getMappings() as MutableList<TMDBMapping>,
+                        anilistStack.getMappings() as MutableList<BasicMapping>,
+                        malStack.getMappings() as MutableList<BasicMapping>
                     )
-                    if (combinedMap.filterValues { it.isNotEmpty() }.isEmpty())
-                        mediaProvider(media.copy(metadataMap = ""))
-                    else
-                        mediaProvider(media.copy(metadataMap = json.encodeToString(combinedMap)))
+                    mediaProvider(media.copy(metadataMap = json.encodeToString(mappings)))
                 }
             }
         }
     }
 }
 
-class MappingStack(val media: Media, val type: StackType, val jsonObj: JsonObject?) : KComposite() {
+class MappingStack(val media: Media, val type: StackType, private val mappings: List<IMapping>) : KComposite() {
     val entries = mutableListOf<StackEntry>()
     lateinit var entryLayout: VerticalLayout
 
@@ -64,7 +59,7 @@ class MappingStack(val media: Media, val type: StackType, val jsonObj: JsonObjec
                 iconButton(LineAwesomeIcon.PLUS_SOLID.create()) {
                     onLeftClick {
                         entries.add(
-                            StackEntry(this@MappingStack, "", "", "", "", "")
+                            StackEntry(this@MappingStack, if (type == StackType.TMDB) TMDBMapping() else BasicMapping())
                         )
                         entryLayout.removeAll()
                         entries.forEach {
@@ -75,27 +70,15 @@ class MappingStack(val media: Media, val type: StackType, val jsonObj: JsonObjec
             }
             entryLayout = verticalLayout {}
         }.also {
-            initEntries()
+            mappings.forEach {
+                val stackEnt = StackEntry(this@MappingStack, it)
+                entries.add(stackEnt)
+                entryLayout.add(stackEnt)
+            }
         }
     }
 
-    private fun initEntries() {
-        if (jsonObj == null)
-            return
-        entryLayout.removeAll()
-        entries.clear()
-        jsonObj.entries.forEach {
-            val content = it.value.jsonPrimitive.content
-            val offset = content.split("/").getOrNull(1)?.trim()
-            var splitID = if (content.contains("/")) content.split("/")[0].split(",") else content.split(",")
-            splitID = splitID.map { str -> str.trim() }
-            val entry = StackEntry(this, it.key, splitID.getOrNull(0), splitID.getOrNull(1), splitID.getOrNull(2), offset)
-            entries.add(entry)
-        }
-        entries.forEach {
-            entryLayout.add(it)
-        }
-    }
+    fun getMappings() = entries.map { it.mappingEntry }
 
     fun removeEntry(entry: StackEntry) {
         entries.remove(entry)
@@ -104,45 +87,34 @@ class MappingStack(val media: Media, val type: StackType, val jsonObj: JsonObjec
             entryLayout.add(it)
         }
     }
-
-    fun generateMap(): Map<String, String> {
-        val map = mutableMapOf<String, String>()
-        for (entry in entries) {
-            if (entry.idMappingField.value.isNullOrBlank())
-                continue
-            val key = entry.epMappingField.value
-            var value = entry.idMappingField.value
-            if (type == StackType.TMDB) {
-                value += ",${entry.seasonField.value}"
-                if (!entry.groupField.value.isNullOrBlank()) {
-                    value += ",${entry.groupField.value}"
-                }
-            }
-            if (entry.offsetField.value != 0.0)
-                value += "/${entry.offsetField.value}"
-            map[key] = value
-        }
-        return map.toMap()
-    }
 }
 
-class StackEntry(parent: MappingStack, epMapping: String?, idMapping: String?, season: String?, group: String?, offset: String?) : KComposite() {
-    lateinit var epMappingField: TextField
-    lateinit var idMappingField: TextField
-    lateinit var seasonField: IntegerField
-    lateinit var groupField: TextField
-    lateinit var offsetField: NumberField
+class StackEntry(parent: MappingStack, var mappingEntry: IMapping) : KComposite() {
+    private lateinit var idMappingField: TextField
+    private lateinit var seasonField: IntegerField
 
     val root = ui {
         flexLayout {
             setWidthFull()
             addClassNames(LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL, "flex-container")
-            epMappingField = textField("EP Mapping") {
-                placeholder = "e. g. 01-12"
-                value = if (epMapping.isNullOrBlank()) "" else epMapping
+            numberField("Match From") {
+                value = mappingEntry.matchFrom
+                step = 0.5
+                isStepButtonsVisible = true
+                valueChangeMode = ValueChangeMode.LAZY
+                addValueChangeListener { mappingEntry.matchFrom = it.value }
+            }
+            numberField("Match Until") {
+                value = mappingEntry.matchUntil
+                step = 0.5
+                isStepButtonsVisible = true
+                valueChangeMode = ValueChangeMode.LAZY
+                addValueChangeListener { mappingEntry.matchUntil = it.value }
             }
             idMappingField = textField("ID") {
-                value = if (idMapping.isNullOrBlank()) "" else idMapping
+                value = mappingEntry.remoteID.toString()
+                valueChangeMode = ValueChangeMode.LAZY
+                addValueChangeListener { mappingEntry.remoteID = it.value.toIntOrNull() ?: 0 }
             }
             contextMenu {
                 target = idMappingField
@@ -165,21 +137,65 @@ class StackEntry(parent: MappingStack, epMapping: String?, idMapping: String?, s
             }
 
             seasonField = integerField("Season") {
-                value = season?.toIntOrNull() ?: 1
+                value = (mappingEntry as? TMDBMapping)?.seasonEntry ?: 1
                 min = 0
                 step = 1
                 isStepButtonsVisible = true
+                isVisible = mappingEntry is TMDBMapping && parent.media.isSeries.toBoolean()
+                valueChangeMode = ValueChangeMode.LAZY
+                addValueChangeListener {
+                    if (mappingEntry is TMDBMapping)
+                        (mappingEntry as TMDBMapping).seasonEntry = it.value
+                }
             }
             horizontalLayout {
                 isPadding = false
                 addClassNames(LumoUtility.Gap.SMALL)
-                groupField = textField("Episode Group") {
-                    value = if (group.isNullOrBlank()) "" else group
+                select<TMDBOrder>("Episode Order") {
+                    setItems(TMDBOrder.entries)
+                    isEmptySelectionAllowed = true
+                    value = (mappingEntry as? TMDBMapping)?.orderType
+                    isVisible = mappingEntry is TMDBMapping && parent.media.isSeries.toBoolean()
+                    setTextRenderer { it.title }
+                    addValueChangeListener { event ->
+                        if (mappingEntry !is TMDBMapping || idMappingField.value.isNullOrBlank())
+                            return@addValueChangeListener
+
+                        if (event.value == null) {
+                            (mappingEntry as TMDBMapping).orderType = null
+                            (mappingEntry as TMDBMapping).orderID = null
+                            return@addValueChangeListener
+                        }
+
+                        val groups = idMappingField.value.toIntOrNull()?.let { tmdbFindGroups(it) }
+                        if (groups == null || groups.results.isNullOrEmpty()) {
+                            Notification.show("Could not find any episode groups for this ID!", 1200, Notification.Position.TOP_CENTER)
+                            return@addValueChangeListener
+                        }
+                        val selectedGroup = groups.results.find { it.type == event.value.type }
+                        if (selectedGroup == null) {
+                            Notification.show("Could not find a group for this type!", 1200, Notification.Position.TOP_CENTER)
+                            return@addValueChangeListener
+                        }
+
+                        (mappingEntry as TMDBMapping).orderType = event.value
+                        (mappingEntry as TMDBMapping).orderID = selectedGroup.id
+                        val notification = Notification(Span("Selected group \"${selectedGroup.name}\"!"), Button("Show").apply {
+                            onLeftClick {
+                                UI.getCurrent().page.open("https://www.themoviedb.org/tv/${idMappingField.value}/episode_group/${selectedGroup.id}")
+                            }
+                        })
+                        notification.duration = 1500
+                        notification.position = Notification.Position.TOP_CENTER
+                        notification.open()
+                    }
                 }
-                offsetField = numberField("Episode Offset") {
-                    value = offset?.toDoubleOrNull() ?: 0.0
+                numberField("Episode Offset") {
+                    value = mappingEntry.offset
                     step = 0.5
                     isStepButtonsVisible = true
+                    valueChangeMode = ValueChangeMode.LAZY
+                    addValueChangeListener { mappingEntry.offset = it.value }
                 }
                 if (parent.entries.isNotEmpty() && parent.entries[0] != this@StackEntry)
                     iconButton(LineAwesomeIcon.TRASH_SOLID.create()) {
@@ -187,11 +203,6 @@ class StackEntry(parent: MappingStack, epMapping: String?, idMapping: String?, s
                             parent.removeEntry(this@StackEntry)
                         }
                     }
-            }
-
-            if (parent.type != StackType.TMDB || !parent.media.isSeries.toBoolean()) {
-                groupField.isVisible = false
-                seasonField.isVisible = false
             }
         }
     }

@@ -42,8 +42,27 @@ data class TmdbMeta(
     val overview: String
 )
 
+@Serializable
+data class TmdbGroupQueryResult(val type: Int, val name: String, val id: String)
+
+@Serializable
+data class TmdbGroupQuery(val id: Int, val results: List<TmdbGroupQueryResult>?)
+
 fun tmdbImageQuery(id: Int, tv: Boolean = true): ImageResults? = runBlocking {
     val response = httpClient.get("https://api.themoviedb.org/3/${if (tv) "tv" else "movie"}/$id/images") {
+        accept(ContentType.Application.Json)
+        bearerAuth(Main.config.tmdbToken)
+        userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
+    }
+
+    if (response.status == HttpStatusCode.OK)
+        return@runBlocking json.decodeFromString(response.bodyAsText())
+
+    return@runBlocking null
+}
+
+fun tmdbFindGroups(id: Int): TmdbGroupQuery? = runBlocking {
+    val response = httpClient.get("https://api.themoviedb.org/3/tv/$id/episode_groups") {
         accept(ContentType.Application.Json)
         bearerAuth(Main.config.tmdbToken)
         userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
