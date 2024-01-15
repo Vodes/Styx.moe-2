@@ -21,8 +21,8 @@ import moe.styx.types.Image
 import moe.styx.types.Media
 import moe.styx.types.toBoolean
 import moe.styx.web.*
-import moe.styx.web.data.TmdbImage
-import moe.styx.web.data.tmdbImageQuery
+import moe.styx.web.data.tmdb.TmdbImage
+import moe.styx.web.data.tmdb.tmdbImageQuery
 import org.vaadin.lineawesome.LineAwesomeIcon
 import java.io.File
 import java.util.*

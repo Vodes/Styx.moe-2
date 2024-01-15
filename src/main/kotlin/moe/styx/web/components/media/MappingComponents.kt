@@ -14,7 +14,7 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import kotlinx.serialization.encodeToString
 import moe.styx.types.*
-import moe.styx.web.data.tmdbFindGroups
+import moe.styx.web.data.tmdb.tmdbFindGroups
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class MappingOverview(private var media: Media, mediaProvider: (Media) -> Media) : KComposite() {

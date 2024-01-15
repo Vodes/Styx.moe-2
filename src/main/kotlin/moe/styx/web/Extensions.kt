@@ -1,14 +1,9 @@
 package moe.styx.web
 
-import com.github.mvysny.kaributools.isEmpty
-import com.vaadin.flow.router.QueryParameters
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import moe.styx.types.*
 import moe.styx.web.components.media.StackType
 import java.io.File
@@ -24,8 +19,6 @@ fun LocalDateTime.formattedStr(): String {
     return "${this.year}-${this.monthNumber.padString()}-${this.dayOfMonth.padString()} " +
             "${this.hour.padString()}:${this.minute.padString()}:${this.second.padString()}"
 }
-
-fun QueryParameters?.isEmptyOrNull() = this?.isEmpty ?: true
 
 fun String.capitalize(): String = lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
@@ -54,28 +47,22 @@ fun Media.getFirstIDFromMap(type: StackType): Int? {
     val mappingJson = metadataMap?.let {
         if (it.isBlank())
             return@let null
-        json.decodeFromString<JsonObject>(it)
+        json.decodeFromString<MappingCollection>(it)
     } ?: return null
-    val mapEntries = mappingJson[type.key]?.jsonObject?.entries ?: return null
-    var value = mapEntries.firstOrNull()?.value?.jsonPrimitive?.content ?: return null
-    if (value.contains("/"))
-        value = value.split("/")[0]
-    return (if (value.contains(",")) value.split(",")[0] else value).toIntOrNull()
+    return when (type.key) {
+        "tmdb" -> mappingJson.tmdbMappings.minByOrNull { it.remoteID }?.remoteID
+        "mal" -> mappingJson.malMappings.minByOrNull { it.remoteID }?.remoteID
+        else -> mappingJson.anilistMappings.minByOrNull { it.remoteID }?.remoteID
+    }
 }
 
 fun Media.getFirstTMDBSeason(): Int? {
     val mappingJson = metadataMap?.let {
         if (it.isBlank())
             return@let null
-        json.decodeFromString<JsonObject>(it)
+        json.decodeFromString<MappingCollection>(it)
     } ?: return null
-    val mapEntries = mappingJson[StackType.TMDB.key]?.jsonObject?.entries ?: return null
-    var value = mapEntries.firstOrNull()?.value?.jsonPrimitive?.content ?: return null
-    if (value.contains("/"))
-        value = value.split("/")[0]
-    if (!value.contains(","))
-        return null
-    return value.split(",")[1].toIntOrNull()
+    return mappingJson.tmdbMappings.minByOrNull { it.seasonEntry }?.seasonEntry
 }
 
 fun isWindows() = System.getProperty("os.name").contains("win", true)

@@ -16,7 +16,7 @@ import moe.styx.db.getSchedules
 import moe.styx.db.save
 import moe.styx.types.*
 import moe.styx.web.components.mediaSelection
-import moe.styx.web.data.getTmdbMetadata
+import moe.styx.web.data.tmdb.getTmdbMetadata
 import moe.styx.web.getDBClient
 import moe.styx.web.getFirstIDFromMap
 import moe.styx.web.getFirstTMDBSeason
@@ -27,11 +27,11 @@ class MetadataView(private var media: Media, mediaProvider: (Media) -> Media) : 
     val root = ui {
         verticalLayout {
             isPadding = false
-            h3("Names") { addClassNames(LumoUtility.Padding.Horizontal.NONE, LumoUtility.Padding.Bottom.SMALL, LumoUtility.Padding.Top.MEDIUM) }
+            h3("Names") { addClassNames(Padding.Horizontal.NONE, Padding.Bottom.SMALL, Padding.Top.MEDIUM) }
             flexLayout {
                 setWidthFull()
                 maxWidth = "1550px"
-                addClassNames(LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL, "flex-container")
+                addClassNames(AlignItems.CENTER, Gap.SMALL, "flex-container")
                 justifyContentMode = FlexComponent.JustifyContentMode.EVENLY
 
                 val nameField = textField("Name") {
