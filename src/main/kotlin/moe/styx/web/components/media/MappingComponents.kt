@@ -14,6 +14,7 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import kotlinx.serialization.encodeToString
 import moe.styx.types.*
+import moe.styx.web.data.getMalIDForAnilistID
 import moe.styx.web.data.tmdb.tmdbFindGroups
 import org.vaadin.lineawesome.LineAwesomeIcon
 
@@ -29,7 +30,7 @@ class MappingOverview(private var media: Media, mediaProvider: (Media) -> Media)
             }
             val tmdbStack = MappingStack(media, StackType.TMDB, mappingJson?.tmdbMappings ?: mutableListOf<TMDBMapping>())
             val anilistStack = MappingStack(media, StackType.ANILIST, mappingJson?.anilistMappings ?: mutableListOf<BasicMapping>())
-            val malStack = MappingStack(media, StackType.MAL, mappingJson?.malMappings ?: mutableListOf<BasicMapping>())
+            val malStack = MappingStack(media, StackType.MAL, mappingJson?.malMappings ?: mutableListOf<BasicMapping>(), anilistStack)
             add(tmdbStack, anilistStack, malStack)
             button("Save") {
                 addThemeVariants(ButtonVariant.LUMO_SUCCESS)
@@ -39,14 +40,15 @@ class MappingOverview(private var media: Media, mediaProvider: (Media) -> Media)
                         anilistStack.getMappings() as MutableList<BasicMapping>,
                         malStack.getMappings() as MutableList<BasicMapping>
                     )
-                    mediaProvider(media.copy(metadataMap = json.encodeToString(mappings)))
+                    media = mediaProvider(media.copy(metadataMap = json.encodeToString(mappings)))
                 }
             }
         }
     }
 }
 
-class MappingStack(val media: Media, val type: StackType, private val mappings: List<IMapping>) : KComposite() {
+class MappingStack(val media: Media, val type: StackType, private val mappings: List<IMapping>, private val anilistStack: MappingStack? = null) :
+    KComposite() {
     val entries = mutableListOf<StackEntry>()
     lateinit var entryLayout: VerticalLayout
 
@@ -58,12 +60,29 @@ class MappingStack(val media: Media, val type: StackType, private val mappings: 
                 h3(type.displayName)
                 iconButton(LineAwesomeIcon.PLUS_SOLID.create()) {
                     onLeftClick {
-                        entries.add(
-                            StackEntry(this@MappingStack, if (type == StackType.TMDB) TMDBMapping() else BasicMapping())
-                        )
-                        entryLayout.removeAll()
-                        entries.forEach {
-                            entryLayout.add(it)
+                        addEntry(StackEntry(this@MappingStack, if (type == StackType.TMDB) TMDBMapping() else BasicMapping()))
+                    }
+                }
+                if (type == StackType.MAL) {
+                    iconButton(LineAwesomeIcon.SYNC_SOLID.create()) {
+                        setTooltipText("Sync with Anilist Stack (converting IDs)")
+                        onLeftClick {
+                            if (anilistStack == null || anilistStack.entries.isEmpty())
+                                return@onLeftClick
+                            entries.clear()
+                            entryLayout.removeAll()
+                            anilistStack.entries.forEach {
+                                val id = it.mappingEntry.remoteID
+                                val newID = getMalIDForAnilistID(id)
+                                if (newID != null)
+                                    addEntry(StackEntry(this@MappingStack, (it.mappingEntry as BasicMapping).copy(remoteID = newID)))
+                            }
+                        }
+                    }
+                } else {
+                    iconButton(LineAwesomeIcon.SEARCH_SOLID.create()) {
+                        onLeftClick {
+                            MappingSearchDialog(this@MappingStack, media).open()
                         }
                     }
                 }
@@ -79,6 +98,14 @@ class MappingStack(val media: Media, val type: StackType, private val mappings: 
     }
 
     fun getMappings() = entries.map { it.mappingEntry }
+
+    fun addEntry(entry: StackEntry) {
+        entries.add(entry)
+        entryLayout.removeAll()
+        entries.forEach {
+            entryLayout.add(it)
+        }
+    }
 
     fun removeEntry(entry: StackEntry) {
         entries.remove(entry)
@@ -197,12 +224,11 @@ class StackEntry(parent: MappingStack, var mappingEntry: IMapping) : KComposite(
                     valueChangeMode = ValueChangeMode.LAZY
                     addValueChangeListener { mappingEntry.offset = it.value }
                 }
-                if (parent.entries.isNotEmpty() && parent.entries[0] != this@StackEntry)
-                    iconButton(LineAwesomeIcon.TRASH_SOLID.create()) {
-                        onLeftClick {
-                            parent.removeEntry(this@StackEntry)
-                        }
+                iconButton(LineAwesomeIcon.TRASH_SOLID.create()) {
+                    onLeftClick {
+                        parent.removeEntry(this@StackEntry)
                     }
+                }
             }
         }
     }

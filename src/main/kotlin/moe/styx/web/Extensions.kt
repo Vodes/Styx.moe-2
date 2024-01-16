@@ -6,6 +6,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import moe.styx.types.*
 import moe.styx.web.components.media.StackType
+import moe.styx.web.data.tmdb.TmdbEpisode
+import moe.styx.web.data.tmdb.getTmdbOrder
+import moe.styx.web.data.tmdb.getTmdbSeason
 import java.io.File
 import java.util.*
 
@@ -63,6 +66,26 @@ fun Media.getFirstTMDBSeason(): Int? {
         json.decodeFromString<MappingCollection>(it)
     } ?: return null
     return mappingJson.tmdbMappings.minByOrNull { it.seasonEntry }?.seasonEntry
+}
+
+fun TMDBMapping.getRemoteEpisodes(language: String = "en-US", message: (content: String) -> Unit = {}): List<TmdbEpisode> {
+    if (remoteID <= 0)
+        message("No valid ID was found!").also { return emptyList() }
+
+    if (orderType != null && !orderID.isNullOrBlank()) {
+        val order = getTmdbOrder(orderID!!)
+        if (order == null)
+            message("No episode order was found!").also { return emptyList() }
+        val group = order!!.groups.find { it.order == seasonEntry }
+        if (group == null)
+            message("Could not find season $seasonEntry in the episode group!").also { return emptyList() }
+        return group!!.episodes
+    }
+    val season = getTmdbSeason(remoteID, seasonEntry, language)
+    if (season == null)
+        message("Could not get season $seasonEntry for $remoteID!").also { return emptyList() }
+
+    return season!!.episodes
 }
 
 fun isWindows() = System.getProperty("os.name").contains("win", true)

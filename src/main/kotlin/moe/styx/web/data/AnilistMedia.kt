@@ -78,6 +78,8 @@ data class AniListMediaResult(
             return if (title.romaji.isNullOrBlank()) title.native ?: "N/A" else title.romaji
         return title.english
     }
+
+    fun listingURL() = "https://anilist.co/anime/$id"
 }
 
 @Serializable

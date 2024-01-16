@@ -37,7 +37,9 @@ data class TmdbMeta(
     @SerialName("name")
     private val _name: String? = null,
     private val title: String? = null,
-    val overview: String
+    val overview: String,
+    @SerialName("number_of_seasons")
+    val numberSeasons: Int? = null
 ) {
     val name: String
         get() = if (_name.isNullOrBlank()) title ?: "" else _name
