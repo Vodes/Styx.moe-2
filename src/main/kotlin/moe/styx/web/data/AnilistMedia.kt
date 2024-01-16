@@ -66,13 +66,19 @@ val searchQuery = """
 data class AniListMediaResult(
     val id: Int,
     val title: AniListTitle,
-    val description: String,
+    val description: String?,
     val startDate: AniListDate? = null,
     val coverImage: AnilistCoverImage,
     val trailer: AniListTrailer? = null,
     val genres: List<String>,
     val tags: List<AnilistTag>
-)
+) {
+    fun anyTitle(): String {
+        if (title.english.isNullOrBlank())
+            return if (title.romaji.isNullOrBlank()) title.native ?: "N/A" else title.romaji
+        return title.english
+    }
+}
 
 @Serializable
 data class AniListTitle(

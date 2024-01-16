@@ -32,7 +32,16 @@ data class TmdbImage(
 }
 
 @Serializable
-data class TmdbMeta(val id: Int, val name: String, val overview: String)
+data class TmdbMeta(
+    val id: Int,
+    @SerialName("name")
+    private val _name: String? = null,
+    private val title: String? = null,
+    val overview: String
+) {
+    val name: String
+        get() = if (_name.isNullOrBlank()) title ?: "" else _name
+}
 
 @Serializable
 data class TmdbGroupQueryResult(val type: Int, val name: String, val id: String)
