@@ -16,6 +16,8 @@ import moe.styx.db.getSchedules
 import moe.styx.db.save
 import moe.styx.types.*
 import moe.styx.web.components.mediaSelection
+import moe.styx.web.data.getAnisearchIDForAnilistID
+import moe.styx.web.data.scrapeAnisearchDescription
 import moe.styx.web.data.tmdb.getTmdbMetadata
 import moe.styx.web.getDBClient
 import moe.styx.web.getFirstIDFromMap
@@ -130,6 +132,21 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
                         if (meta == null)
                             Notification.show("Could not get metadata from TMDB!").also { return@onLeftClick }
                         synopsisDE.value = meta!!.overview
+                        media = mediaProvider(media.copy(synopsisDE = synopsisDE.value.trim()))
+                    }
+                }
+                item("Fill from AniSearch") {
+                    onLeftClick {
+                        val id = media.getFirstIDFromMap(StackType.ANILIST)
+                        if (id == null)
+                            Notification.show("No AniList ID was found in the mapping.").also { return@onLeftClick }
+                        val anisearchID = getAnisearchIDForAnilistID(id!!)
+                        if (anisearchID == null)
+                            Notification.show("No AniSearch ID was found for this AniList ID.").also { return@onLeftClick }
+                        val scrape = scrapeAnisearchDescription(anisearchID!!)
+                        if (scrape == null)
+                            Notification.show("Could not scrape description from AniSearch!").also { return@onLeftClick }
+                        synopsisDE.value = scrape!!
                         media = mediaProvider(media.copy(synopsisDE = synopsisDE.value.trim()))
                     }
                 }

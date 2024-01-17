@@ -57,6 +57,7 @@ dependencies {
     implementation("com.mysql:mysql-connector-j:8.2.0")
     implementation("org.slf4j:slf4j-simple:2.0.7")
     implementation("net.peanuuutz.tomlkt:tomlkt:0.3.7")
+    implementation("org.jsoup:jsoup:1.17.2")
 
     // Custom
     implementation("moe.styx:styx-db:0.3")
