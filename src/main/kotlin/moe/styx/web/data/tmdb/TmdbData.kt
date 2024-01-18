@@ -46,7 +46,7 @@ data class TmdbMeta(
 }
 
 @Serializable
-data class TmdbGroupQueryResult(val type: Int, val name: String, val id: String)
+data class TmdbGroupQueryResult(val type: Int, val name: String, val id: String, @SerialName("group_count") val groupCount: Int)
 
 @Serializable
 data class TmdbGroupQuery(val id: Int, val results: List<TmdbGroupQueryResult>?)

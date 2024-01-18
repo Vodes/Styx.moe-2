@@ -199,7 +199,16 @@ class StackEntry(parent: MappingStack, var mappingEntry: IMapping) : KComposite(
                             Notification.show("Could not find any episode groups for this ID!", 1200, Notification.Position.TOP_CENTER)
                             return@addValueChangeListener
                         }
-                        val selectedGroup = groups.results.find { it.type == event.value.type }
+                        val matchingGroups = groups.results.filter { it.type == event.value.type }
+                        if (matchingGroups.isEmpty()) {
+                            Notification.show("Could not find a group for this type!", 1200, Notification.Position.TOP_CENTER)
+                            return@addValueChangeListener
+                        }
+                        val selectedGroup = if (event.value == TMDBOrder.ABSOLUTE)
+                            matchingGroups.minByOrNull { it.groupCount }
+                        else
+                            matchingGroups.firstOrNull()
+
                         if (selectedGroup == null) {
                             Notification.show("Could not find a group for this type!", 1200, Notification.Position.TOP_CENTER)
                             return@addValueChangeListener
