@@ -4,6 +4,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
@@ -66,7 +67,8 @@ val searchQuery = """
 data class AniListMediaResult(
     val id: Int,
     val title: AniListTitle,
-    val description: String?,
+    @SerialName("description")
+    private val _description: String?,
     val startDate: AniListDate? = null,
     val coverImage: AnilistCoverImage,
     val trailer: AniListTrailer? = null,
@@ -80,6 +82,9 @@ data class AniListMediaResult(
     }
 
     fun listingURL() = "https://anilist.co/anime/$id"
+
+    val description: String?
+        get() = _description?.replace("<br><br>", "\n")?.replace("<br>", "")
 }
 
 @Serializable
