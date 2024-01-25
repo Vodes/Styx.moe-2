@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import moe.styx.db.getUsers
+import moe.styx.types.User
 import moe.styx.web.auth.DiscordAPI
 import moe.styx.web.views.HomeView
 
@@ -37,23 +38,27 @@ inline fun checkAuth(
     request: VaadinRequest?,
     minPerms: Int = 50,
     parent: FlexComponent? = null,
-    crossinline func: FlexComponent.() -> Component
+    noinline notLoggedIn: (FlexComponent.() -> Component)? = null,
+    crossinline func: FlexComponent.(User) -> Component
 ) {
     CoroutineScope(Dispatchers.IO).launch {
         val discordUser = DiscordAPI.getUserFromToken(DiscordAPI.getCurrentToken(request) ?: "")
         if (discordUser == null) {
-            ui.access { navigateTo<HomeView>() }
+            if (notLoggedIn != null)
+                parent?.let { ui.access { it.replaceAll { init(notLoggedIn(it)) } } }
+            else
+                ui.access { navigateTo<HomeView>() }
             return@launch
         }
-        val user = getDBClient().executeGet { getUsers(mapOf("discordID" to discordUser.id)) }.find { it.permissions > minPerms }
+        val user = getDBClient().executeGet { getUsers(mapOf("discordID" to discordUser.id)) }.find { it.permissions >= minPerms }
         if (user == null) {
-            ui.access { navigateTo<HomeView>() }
+            if (notLoggedIn != null)
+                parent?.let { ui.access { it.replaceAll { init(notLoggedIn(it)) } } }
+            else
+                ui.access { navigateTo<HomeView>() }
             return@launch
         }
-        if (parent != null)
-            ui.access {
-                parent.replaceAll { init(func(parent)) }
-            }
+        parent?.let { ui.access { it.replaceAll { init(func(it, user)) } } }
     }
 }
 

@@ -1,67 +1,33 @@
 package moe.styx.web.views
 
 import com.github.mvysny.karibudsl.v10.*
+import com.github.mvysny.kaributools.setClassNames2
 import com.vaadin.flow.component.UI
-import com.vaadin.flow.component.html.AnchorTarget
-import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.server.VaadinRequest
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import moe.styx.db.getUsers
-import moe.styx.types.User
-import moe.styx.web.Main
-import moe.styx.web.auth.DiscordAPI
+import com.vaadin.flow.theme.lumo.LumoUtility
+import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.initMediaComponent
-import moe.styx.web.components.linkButton
+import moe.styx.web.components.noAccess
 import moe.styx.web.createComponent
 import moe.styx.web.getDBClient
 import moe.styx.web.layout.MainLayout
-import moe.styx.web.replaceAll
 
 @Route("admin", layout = MainLayout::class)
 @PageTitle("Styx - Admin")
 class AdminView : KComposite() {
-    private lateinit var layout: VerticalLayout
-    private lateinit var uiScope: UI
-    private var request: VaadinRequest? = null
 
     val root = ui {
-        uiScope = UI.getCurrent()
-        request = VaadinRequest.getCurrent()
-        verticalLayout {
-            isSpacing = false
-            isPadding = false
-            layout = verticalLayout {
-                authProgress()
+        verticalLayout(false) {
+            setClassNames2(LumoUtility.Margin.NONE, LumoUtility.Padding.NONE)
+            authProgress()
+        }.also { layout ->
+            checkAuth(UI.getCurrent(), VaadinRequest.getCurrent(), 99, layout, notLoggedIn = { noAccess() }) {
+                h2("Welcome, ${it.name}!")
+                init(initAdminView())
             }
-        }
-    }
-
-    init {
-        CoroutineScope(Dispatchers.IO).launch {
-            val discordUser = DiscordAPI.getUserFromToken(DiscordAPI.getCurrentToken(request) ?: "")
-            if (discordUser != null) {
-                val users: List<User> = getDBClient().executeGet { getUsers(mapOf("discordID" to discordUser.id, "permissions" to 99)) }
-                uiScope.access {
-                    if (users.isEmpty())
-                        layout.replaceAll { h2("You are not in the Styx database or not an admin.") }
-                    else {
-                        val user = users.first()
-                        layout.replaceAll { h2("Welcome, ${user.name}!") }
-                        layout.add(initAdminView())
-                    }
-                }
-            } else
-                uiScope.access {
-                    layout.replaceAll {
-                        h2("You're not logged in.")
-                        linkButton("${Main.config.baseAPIURL}/auth", "Login", target = AnchorTarget.DEFAULT)
-                    }
-                }
         }
     }
 
