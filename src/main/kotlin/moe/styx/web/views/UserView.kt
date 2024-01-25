@@ -14,6 +14,7 @@ import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.linkButton
 import moe.styx.web.components.noAccess
+import moe.styx.web.components.user.deviceListView
 import moe.styx.web.createComponent
 import moe.styx.web.layout.MainLayout
 import moe.styx.web.unorderedList
@@ -47,7 +48,7 @@ class UserView : KComposite() {
                 }
                 panel("Devices") {
                     setClassNames2(Padding.XSMALL)
-                    content { h2("Nothing here yet.") }
+                    content { deviceListView(user) }
                 }
             }
             linkButton("${Main.config.baseAPIURL}/logout", "Logout", LineAwesomeIcon.USER_ALT_SLASH_SOLID.create(), target = AnchorTarget.DEFAULT)

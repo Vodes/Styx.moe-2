@@ -9,6 +9,7 @@ import com.vaadin.flow.component.HasComponents
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.html.Nav
 import com.vaadin.flow.component.html.UnorderedList
+import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.server.VaadinRequest
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,10 @@ fun createComponent(block: HasComponents.() -> Component): KComposite {
 fun FlexComponent.replaceAll(block: HasComponents.() -> Component) {
     removeAll()
     add(block())
+}
+
+fun topNotification(text: String, millis: Int = 1200): Notification {
+    return Notification.show(text, millis, Notification.Position.TOP_CENTER).also { it.open() }
 }
 
 inline fun checkAuth(
