@@ -30,6 +30,7 @@ val mediaProperties = """
         	coverImage {
               extraLarge
             }
+            bannerImage
             trailer {
               id
               site
@@ -71,6 +72,7 @@ data class AniListMediaResult(
     private val _description: String?,
     val startDate: AniListDate? = null,
     val coverImage: AnilistCoverImage,
+    val bannerImage: String? = null,
     val trailer: AniListTrailer? = null,
     val genres: List<String>,
     val tags: List<AnilistTag>
@@ -111,7 +113,9 @@ data class AniListTrailer(
 data class AnilistCoverImage(
     val extraLarge: String? = null,
     val large: String? = null
-)
+) {
+    fun getURL() = extraLarge ?: large
+}
 
 @Serializable
 data class AnilistTag(

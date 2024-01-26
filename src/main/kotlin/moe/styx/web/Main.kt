@@ -3,6 +3,7 @@ package moe.styx.web
 import com.github.mvysny.vaadinboot.VaadinBoot
 import com.vaadin.flow.component.page.AppShellConfigurator
 import com.vaadin.flow.component.page.Push
+import com.vaadin.flow.server.AppShellSettings
 import com.vaadin.flow.shared.communication.PushMode
 import com.vaadin.flow.shared.ui.Transport
 import com.vaadin.flow.theme.Theme
@@ -15,7 +16,13 @@ import kotlin.system.exitProcess
 
 @Theme("my-theme", variant = Lumo.DARK)
 @Push(PushMode.AUTOMATIC, transport = Transport.WEBSOCKET_XHR)
-class AppShell : AppShellConfigurator
+class AppShell : AppShellConfigurator {
+    override fun configurePage(settings: AppShellSettings?) {
+        settings?.addLink("shortcut icon", "icons/icon.ico")
+        settings?.addFavIcon("icon", "icons/icon.ico", "256x256")
+        super.configurePage(settings)
+    }
+}
 
 object Main {
     lateinit var appDir: File

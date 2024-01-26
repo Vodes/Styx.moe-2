@@ -5,11 +5,13 @@ import com.sksamuel.scrimage.ImmutableImage
 import com.sksamuel.scrimage.ScaleMethod
 import com.sksamuel.scrimage.webp.WebpWriter
 import com.vaadin.flow.component.DetachEvent
+import com.vaadin.flow.component.Key
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.notification.NotificationVariant
 import com.vaadin.flow.component.orderedlayout.FlexLayout
+import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer
 import com.vaadin.flow.theme.lumo.LumoUtility.*
 import io.ktor.client.request.*
@@ -21,6 +23,7 @@ import moe.styx.types.Image
 import moe.styx.types.Media
 import moe.styx.types.toBoolean
 import moe.styx.web.*
+import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.data.tmdb.TmdbImage
 import moe.styx.web.data.tmdb.tmdbImageQuery
 import org.vaadin.lineawesome.LineAwesomeIcon
@@ -29,6 +32,7 @@ import java.util.*
 
 class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?) -> Unit) : Dialog() {
     private var current: Image? = null
+    private lateinit var urlField: TextField
 
     init {
         setWidthFull()
@@ -43,10 +47,31 @@ class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?
                 setWidthFull()
                 horizontalLayout {
                     setWidthFull()
-                    textField {
+                    urlField = textField {
                         setWidthFull()
                     }
-                    iconButton(LineAwesomeIcon.DOWNLOAD_SOLID.create())
+                    contextMenu {
+                        target = urlField
+                        item("Open in new tab", clickListener = {
+                            UI.getCurrent().page.open(urlField.value)
+                        })
+                    }
+                    iconButton(LineAwesomeIcon.DOWNLOAD_SOLID.create()) {
+                        addClickShortcut(Key.ENTER)
+                        addClickShortcut(Key.NUMPAD_ENTER)
+                        addClickListener {
+                            if (urlField.value.isNullOrBlank())
+                                return@addClickListener
+
+                            val image = downloadImage(urlField.value, thumbnail)
+                            if (image == null) {
+                                topNotification("Could not download image for this ID!")
+                                return@addClickListener
+                            }
+                            current = image
+                            close()
+                        }
+                    }
                 }
                 horizontalLayout {
                     isPadding = false
@@ -54,7 +79,19 @@ class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?
                     button("From Anilist") {
                         addClassNames(Padding.Horizontal.SMALL)
                         onLeftClick {
-                            println("meme")
+                            val id = media.getFirstIDFromMap(StackType.ANILIST)
+                            if (id == null) {
+                                topNotification("No AniList ID found in mappings!")
+                                return@onLeftClick
+                            }
+                            val data = getAniListDataForID(id)
+                            if (data == null || (!thumbnail && data.bannerImage.isNullOrBlank()) || (thumbnail && data.coverImage.getURL()
+                                    .isNullOrBlank())
+                            ) {
+                                topNotification("Could not fetch images for this ID!")
+                                return@onLeftClick
+                            }
+                            urlField.value = if (thumbnail) data.coverImage.getURL() else data.bannerImage
                         }
                     }
                     button("Choose from TMDB") {
@@ -62,7 +99,7 @@ class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?
                         onLeftClick {
                             val id = media.getFirstIDFromMap(StackType.TMDB)
                             if (id == null) {
-                                Notification.show("No TMDB ID found in mappings!")
+                                topNotification("No TMDB ID found in mappings!")
                                 return@onLeftClick
                             }
                             TMDBImageDialog(id, media.isSeries.toBoolean(), thumbnail) {
@@ -101,37 +138,8 @@ class TMDBImageDialog(val id: Int, val tv: Boolean, val thumbnail: Boolean, val 
             if (result != null) {
                 (if (thumbnail) result.posters else result.backdrops).sortedByDescending { it.voteCount }.forEach {
                     add(imagePreview(it) {
-                        runBlocking {
-                            val response = httpClient.get(it.getURL())
-                            if (response.status != HttpStatusCode.OK)
-                                return@runBlocking
-
-                            if (isWindows()) {
-                                selected = Image(UUID.randomUUID().toString().uppercase(), externalURL = it.getURL(), type = if (thumbnail) 0 else 1)
-                                close()
-                                return@runBlocking
-                            }
-
-                            val stream = response.bodyAsChannel().toInputStream()
-                            var image = ImmutableImage.loader().fromStream(stream).also {
-                                runCatching {
-                                    stream.close()
-                                }
-                            }
-
-                            // Make thumbnails smaller
-                            if (image.ratio() < 1 && image.height > 700)
-                                image = image.scaleToHeight(700, ScaleMethod.Bicubic)
-                            // Make banners smaller and since they're in landscape, go by width
-                            else if (image.ratio() > 1 && image.width > 1600)
-                                image = image.scaleToWidth(1600, ScaleMethod.Bicubic)
-
-                            val guid = UUID.randomUUID().toString().uppercase()
-                            val output = File(Main.config.imageDir, "$guid.webp")
-                            image.output(WebpWriter.DEFAULT.withQ(100).withM(6), output)
-                            selected = Image(guid, hasWEBP = 1, type = if (thumbnail) 0 else 1)
-                            close()
-                        }
+                        selected = downloadImage(it.getURL(), thumbnail)
+                        close()
                     })
                 }
             } else {
@@ -141,6 +149,37 @@ class TMDBImageDialog(val id: Int, val tv: Boolean, val thumbnail: Boolean, val 
     }
 
     override fun onDetach(detachEvent: DetachEvent?) = onClose(selected)
+}
+
+private fun downloadImage(url: String, thumbnail: Boolean): Image? = runBlocking {
+    val response = httpClient.get(url)
+    if (response.status != HttpStatusCode.OK)
+        return@runBlocking null
+
+    val guid = UUID.randomUUID().toString().uppercase()
+
+    if (isWindows()) {
+        return@runBlocking Image(guid, externalURL = url, type = if (thumbnail) 0 else 1)
+    }
+    val stream = response.bodyAsChannel().toInputStream()
+    var image = ImmutableImage.loader().fromStream(stream).also {
+        runCatching {
+            stream.close()
+        }.onFailure {
+            return@runBlocking null
+        }
+    }
+
+    // Make thumbnails smaller
+    if (image.ratio() < 1 && image.height > 700)
+        image = image.scaleToHeight(700, ScaleMethod.Bicubic)
+    // Make banners smaller and since they're in landscape, go by width
+    else if (image.ratio() > 1 && image.width > 1600)
+        image = image.scaleToWidth(1600, ScaleMethod.Bicubic)
+
+    val output = File(Main.config.imageDir, "$guid.webp")
+    image.output(WebpWriter.DEFAULT.withQ(100).withM(6), output)
+    return@runBlocking Image(guid, hasWEBP = 1, type = if (thumbnail) 0 else 1)
 }
 
 fun imagePreview(img: TmdbImage, onSelect: () -> Unit) = createComponent {
