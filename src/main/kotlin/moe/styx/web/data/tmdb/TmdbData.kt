@@ -28,7 +28,7 @@ data class TmdbImage(
     @SerialName("vote_count")
     val voteCount: Int
 ) {
-    fun getURL() = "https://www.themoviedb.org/t/p/original$filePath"
+    fun getURL() = "https://image.tmdb.org/t/p/original$filePath"
 }
 
 @Serializable
