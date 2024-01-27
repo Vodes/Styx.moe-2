@@ -19,6 +19,7 @@ import moe.styx.db.save
 import moe.styx.types.Media
 import moe.styx.types.toBoolean
 import moe.styx.types.toInt
+import moe.styx.web.components.entry.entryListing
 import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.getDBClient
 import moe.styx.web.getFirstIDFromMap
@@ -95,9 +96,7 @@ class MediaOverview(media: Media?) : KComposite() {
                 if (entryCount < 1)
                     entryTab.isEnabled = false
 
-                add(entryTab, VerticalLayout().apply {
-                    h1("I should show all entries here at some point.")
-                })
+                add(entryTab, entryListing(internalMedia))
 
                 // Here I'm just making sure every layout has a reference to the latest media instance(?)
                 addSelectedChangeListener {
