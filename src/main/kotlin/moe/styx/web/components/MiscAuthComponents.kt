@@ -27,7 +27,7 @@ class NoAccessComp : KComposite() {
     val root = ui {
         verticalLayout(false) {
             h3("You are not logged in or don't have sufficient permissions.")
-            linkButton("${Main.config.baseAPIURL}/auth", "Login", LineAwesomeIcon.USER_LOCK_SOLID.create(), target = AnchorTarget.DEFAULT)
+            linkButton("${Main.config.baseAPIURL}/discord/auth", "Login", LineAwesomeIcon.USER_LOCK_SOLID.create(), target = AnchorTarget.DEFAULT)
         }
     }
 }

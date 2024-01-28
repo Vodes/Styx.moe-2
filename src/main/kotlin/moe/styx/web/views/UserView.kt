@@ -51,7 +51,12 @@ class UserView : KComposite() {
                     content { deviceListView(user) }
                 }
             }
-            linkButton("${Main.config.baseAPIURL}/logout", "Logout", LineAwesomeIcon.USER_ALT_SLASH_SOLID.create(), target = AnchorTarget.DEFAULT)
+            linkButton(
+                "${Main.config.baseAPIURL}/discord/logout",
+                "Logout",
+                LineAwesomeIcon.USER_ALT_SLASH_SOLID.create(),
+                target = AnchorTarget.DEFAULT
+            )
         }
     }
 
