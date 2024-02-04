@@ -18,6 +18,7 @@ import moe.styx.types.Media
 import moe.styx.types.toBoolean
 import moe.styx.web.createComponent
 import moe.styx.web.toISODate
+import moe.styx.web.views.sub.DownloadableView
 import moe.styx.web.views.sub.MediaView
 
 fun initMediaComponent(dbClient: StyxDBClient, exclude: String = "", onClickItem: ((Media) -> Unit)? = null) = createComponent {
@@ -85,6 +86,17 @@ fun initMediaComponent(dbClient: StyxDBClient, exclude: String = "", onClickItem
                         Notification.show("This is a movie.")
                         return@item
                     }
+                })
+                item("Configure Downloader", clickListener = {
+                    if (it == null) {
+                        Notification.show("How did you even manage to do that?")
+                        return@item
+                    }
+                    if (!it.isSeries.toBoolean()) {
+                        Notification.show("This is a movie.")
+                        return@item
+                    }
+                    navigateTo(DownloadableView::class, it.GUID)
                 })
             }
         }
