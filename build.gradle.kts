@@ -61,6 +61,7 @@ dependencies {
 
     // Custom
     implementation("moe.styx:styx-db:0.3")
+    implementation("moe.styx:styx-downloader:0.1")
 
     // Image Processing
     implementation("com.sksamuel.scrimage:scrimage-core:$scrimageVersion")
