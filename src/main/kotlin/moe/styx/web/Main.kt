@@ -11,6 +11,8 @@ import com.vaadin.flow.theme.lumo.Lumo
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import moe.styx.db.StyxDBClient
+import moe.styx.types.Changes
+import moe.styx.types.json
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -28,6 +30,14 @@ object Main {
     lateinit var appDir: File
     lateinit var configFile: File
     lateinit var config: Config
+    lateinit var changesFile: File
+
+    fun updateChanges(media: Long? = null, entry: Long? = null) {
+        if (!changesFile.exists())
+            return
+        val changes = runCatching { json.decodeFromString<Changes>(changesFile.readText()) }.getOrNull()
+        changesFile.writeText(json.encodeToString(Changes(media ?: (changes?.media ?: 0), entry ?: (changes?.entry ?: 0))))
+    }
 }
 
 fun getDBClient(): StyxDBClient {
@@ -42,6 +52,7 @@ fun getDBClient(): StyxDBClient {
 
 fun main(args: Array<String>) {
     Main.appDir = if (args.isEmpty()) getAppDir() else File(args[0]).also { it.mkdirs() }
+    Main.changesFile = File(Main.appDir.parentFile, "changes.json")
     Main.configFile = File(Main.appDir, "config.toml")
     if (!Main.configFile.exists()) {
         Main.configFile.writeText(toml.encodeToString(Config()))

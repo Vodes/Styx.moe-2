@@ -2,14 +2,19 @@ package moe.styx.web.components.downloadable
 
 import com.github.mvysny.karibudsl.v10.*
 import com.github.mvysny.kaributools.selectionMode
+import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.grid.Grid
-import com.vaadin.flow.component.html.AnchorTarget
+import com.vaadin.flow.component.orderedlayout.FlexComponent
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.data.value.ValueChangeMode
 import kotlinx.datetime.Clock
+import moe.styx.downloader.episodeWanted
 import moe.styx.downloader.ftp.FTPClient
 import moe.styx.downloader.ftp.FTPHandler
 import moe.styx.downloader.loadConfig
+import moe.styx.downloader.parsing.ParseDenyReason
 import moe.styx.downloader.parsing.ParseResult
 import moe.styx.downloader.torrent.FeedItem
 import moe.styx.downloader.torrent.RSSHandler
@@ -17,12 +22,27 @@ import moe.styx.types.DownloadableOption
 import moe.styx.types.DownloaderTarget
 import moe.styx.types.Media
 import moe.styx.types.SourceType
+import moe.styx.web.createComponent
 import moe.styx.web.readableSize
+import moe.styx.web.replaceAll
+import org.vaadin.lineawesome.LineAwesomeIcon
 import moe.styx.downloader.Main as DownloaderMain
 
 var lastInitialized = 0L
 
-class PreviewDialog(private val media: Media, private val target: DownloaderTarget, private val option: DownloadableOption) : Dialog() {
+class PreviewDialog(
+    private val media: Media,
+    private var target: DownloaderTarget,
+    private var option: DownloadableOption,
+    val onClose: (DownloadableOption) -> Unit
+) : Dialog() {
+    private lateinit var layout: VerticalLayout
+    private var ftpClient: FTPClient? = null
+    private val isRSS = option.source == SourceType.TORRENT
+    private var pathChanged = true
+    private var rssResults: List<RSSResult> = emptyList()
+    private var ftpResults: List<FTPResult> = emptyList()
+
     init {
         println(option)
         setWidthFull()
@@ -31,97 +51,201 @@ class PreviewDialog(private val media: Media, private val target: DownloaderTarg
             loadConfig()
             lastInitialized = Clock.System.now().epochSeconds
         }
+
+        if (!isRSS) {
+            FTPHandler.initClient()
+            ftpClient = if (!option.ftpConnectionString.isNullOrBlank())
+                FTPClient.fromConnectionString(option.ftpConnectionString!!).connect()
+            else
+                FTPHandler.defaultFTPClient.connect()
+        }
+
         verticalLayout {
             setWidthFull()
             h3("Downloader Preview")
             horizontalLayout {
-                nativeLabel("Feed/Path: ")
-                if (option.source == SourceType.FTP)
-                    nativeLabel(option.sourcePath)
-                else
-                    anchor(option.sourcePath!!, option.sourcePath!!) {
-                        setTarget(AnchorTarget.BLANK)
+                setWidthFull()
+                maxWidth = "1000px"
+                defaultVerticalComponentAlignment = FlexComponent.Alignment.END
+                textField(if (isRSS) "RSS Feed" else "FTP Path") {
+                    setWidthFull()
+                    valueChangeMode = ValueChangeMode.LAZY
+                    value = option.sourcePath ?: ""
+                    addValueChangeListener {
+                        option = option.copy(sourcePath = it.value)
+                        pathChanged = true
+                        updateTarget()
+                        updateResults()
+                    }
+                }
+                if (isRSS)
+                    iconButton(LineAwesomeIcon.EXTERNAL_LINK_SQUARE_ALT_SOLID.create()) {
+                        onLeftClick {
+                            UI.getCurrent().page.open(option.sourcePath ?: "")
+                        }
                     }
             }
-            if (option.source == SourceType.FTP) {
-                FTPHandler.initClient()
-                val connected = if (!option.ftpConnectionString.isNullOrBlank()) {
-                    FTPClient.fromConnectionString(option.ftpConnectionString!!).connect()
-                } else
-                    FTPHandler.defaultFTPClient.connect()
-                if (connected == null) {
-                    h4("Could not authenticate the FTP Client.")
-                    return@verticalLayout
-                }
-                val results = FTPHandler.checkDir(option.sourcePath!!, option, listOf(target), connected)
-                verticalLayout Layout@{
-                    if (results.isEmpty()) {
-                        h4("No files found.")
-                        return@Layout
+            verticalLayout {
+                setWidthFull()
+                maxWidth = "1000px"
+                textField("File Regex") {
+                    setWidthFull()
+                    valueChangeMode = ValueChangeMode.LAZY
+                    value = option.fileRegex
+                    addValueChangeListener {
+                        option = option.copy(fileRegex = it.value)
+                        updateTarget()
+                        updateResults()
                     }
-                    grid<PreviewResult> {
+                }
+                if (isRSS)
+                    textField("RSS Regex") {
                         setWidthFull()
-                        setItems(results.map { ftpToDataClass(it) })
-                        selectionMode = Grid.SelectionMode.NONE
-                        columnFor(PreviewResult::title, converter = { it!!.split("/").last() }, sortable = true) {
-                            setHeader("Filename")
-                            setTooltipGenerator(PreviewResult::title)
-                        }
-                        columnFor(PreviewResult::size, converter = { it!!.readableSize() }, sortable = true) {
-                            setHeader("Size")
-                            isExpand = false
-                        }
-                        columnFor(PreviewResult::parseResult, converter = {
-                            return@columnFor when (it!!) {
-                                is ParseResult.OK -> "Would download"
-                                is ParseResult.DENIED -> "Denied: ${(it as ParseResult.DENIED).parseFailReason.name}"
-                                else -> "Failed: ${(it as ParseResult.FAILED).parseFailReason.name}"
-                            }
-                        }, sortable = false) {
-                            setHeader("Result")
-                            setWidth("250px")
-                            isExpand = false
+                        valueChangeMode = ValueChangeMode.LAZY
+                        value = option.rssRegex ?: ""
+                        addValueChangeListener {
+                            option = option.copy(rssRegex = it.value)
+                            updateTarget()
+                            updateResults()
                         }
                     }
-                }
+            }
+            layout = verticalLayout {
+                setSizeFull()
+            }
+        }.also {
+            updateResults()
+        }
+    }
+
+    private fun updateResults() {
+        if (!isRSS && ftpClient == null) {
+            layout.replaceAll { h4("Could not connect to the ftp server.") }
+            return
+        }
+
+        val results = if (isRSS) {
+            if (pathChanged || rssResults.isEmpty()) {
+                pathChanged = false
+                rssResults = RSSHandler.checkFeed(option.sourcePath!!, listOf(option), listOf(target))
             } else {
-                val results = RSSHandler.checkFeed(option.sourcePath!!, listOf(option), listOf(target))
-                verticalLayout Layout@{
-                    if (results.isEmpty()) {
-                        h4("No entries found.")
-                        return@Layout
-                    }
-                    grid<PreviewResult> {
-                        setWidthFull()
-                        setItems(results.map { rssToDataClass(it) })
-                        selectionMode = Grid.SelectionMode.NONE
-                        columnFor(PreviewResult::title, converter = { it!!.split("/").last() }, sortable = true) {
-                            setHeader("Title")
-                            setTooltipGenerator(PreviewResult::title)
-                        }
-                        columnFor(PreviewResult::parseResult, converter = {
-                            return@columnFor when (it!!) {
-                                is ParseResult.OK -> "Would download"
-                                is ParseResult.DENIED -> "Denied: ${(it as ParseResult.DENIED).parseFailReason.name}"
-                                else -> "Failed: ${(it as ParseResult.FAILED).parseFailReason.name}"
-                            }
-                        }, sortable = false) {
-                            setHeader("Result")
-                            setWidth("250px")
-                            isExpand = false
-                        }
-                        gridContextMenu {
-                            item("Open Post", clickListener = {
-                                UI.getCurrent().page.open(it!!.postURL)
-                            })
-                            item("Download Torrent", clickListener = {
-                                UI.getCurrent().page.open(it!!.torrentURL)
-                            })
-                        }
-                    }
+                rssResults = reevaluateRss()
+            }
+            rssResults.map { rssToDataClass(it) }
+        } else {
+            if (pathChanged || ftpResults.isEmpty()) {
+                pathChanged = false
+                ftpResults = FTPHandler.checkDir(option.sourcePath!!, option, listOf(target), ftpClient!!)
+            } else {
+                ftpResults = reevaluateFtp()
+            }
+            ftpResults.map { ftpToDataClass(it) }
+        }
+
+        if (results.isEmpty()) {
+            layout.replaceAll { h4("No entries could be found.") }
+            return
+        }
+
+        layout.replaceAll {
+            if (option.source == SourceType.TORRENT)
+                init(rssResultsGrid(results))
+            else
+                init(ftpResultsGrid(results))
+        }
+    }
+
+    override fun onDetach(detachEvent: DetachEvent?) {
+        ftpClient?.disconnect()
+        onClose(option)
+    }
+
+    private fun updateTarget() {
+        // Ugly hack to remove references
+        target = target.copy(options = target.options.toList().toMutableList())
+        target.options.find { it.priority == option.priority }?.let {
+            target.options[target.options.indexOf(it)] = option
+        } ?: target.options.add(option)
+    }
+
+    private fun ftpResultsGrid(results: List<PreviewResult>) = createComponent {
+        grid<PreviewResult> {
+            setWidthFull()
+            setItems(results)
+            selectionMode = Grid.SelectionMode.NONE
+            columnFor(PreviewResult::title, converter = { it!!.split("/").last() }, sortable = true) {
+                setHeader("Filename")
+                setTooltipGenerator(PreviewResult::title)
+            }
+            columnFor(PreviewResult::size, converter = { it!!.readableSize() }, sortable = true) {
+                setHeader("Size")
+                isExpand = false
+            }
+            columnFor(PreviewResult::parseResult, converter = {
+                return@columnFor when (it!!) {
+                    is ParseResult.OK -> "Would download"
+                    is ParseResult.DENIED -> "Denied: ${(it as ParseResult.DENIED).parseFailReason.name}"
+                    else -> "Failed: ${(it as ParseResult.FAILED).parseFailReason.name}"
                 }
+            }, sortable = false) {
+                setHeader("Result")
+                setWidth("250px")
+                isExpand = false
             }
         }
+    }
+
+    private fun rssResultsGrid(results: List<PreviewResult>) = createComponent {
+        grid<PreviewResult> {
+            setWidthFull()
+            setItems(results)
+            selectionMode = Grid.SelectionMode.NONE
+            columnFor(PreviewResult::title, converter = { it!!.split("/").last() }, sortable = true) {
+                setHeader("Title")
+                setTooltipGenerator(PreviewResult::title)
+            }
+            columnFor(PreviewResult::parseResult, converter = {
+                return@columnFor when (it!!) {
+                    is ParseResult.OK -> "Would download"
+                    is ParseResult.DENIED -> "Denied: ${(it as ParseResult.DENIED).parseFailReason.name}"
+                    else -> "Failed: ${(it as ParseResult.FAILED).parseFailReason.name}"
+                }
+            }, sortable = false) {
+                setHeader("Result")
+                setWidth("250px")
+                isExpand = false
+            }
+            gridContextMenu {
+                item("Open Post", clickListener = {
+                    UI.getCurrent().page.open(it!!.postURL)
+                })
+                item("Download Torrent", clickListener = {
+                    UI.getCurrent().page.open(it!!.torrentURL)
+                })
+            }
+        }
+    }
+
+    private fun reevaluateRss(): List<RSSResult> {
+        val new = rssResults.map {
+            var parseResult = it.second
+            if (it.second !is ParseResult.DENIED || (it.second as ParseResult.DENIED).parseFailReason != ParseDenyReason.PostIsTooOld) {
+                parseResult = option.episodeWanted(it.first.title, target, true)
+            }
+            return@map it.first to parseResult
+        }
+        return new
+    }
+
+    private fun reevaluateFtp(): List<FTPResult> {
+        val new = ftpResults.map {
+            var parseResult = it.second
+            if (it.second !is ParseResult.DENIED || (it.second as ParseResult.DENIED).parseFailReason != ParseDenyReason.PostIsTooOld) {
+                parseResult = option.episodeWanted(it.first.first, target)
+            }
+            return@map it.first to parseResult
+        }
+        return new
     }
 }
 

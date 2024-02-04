@@ -119,7 +119,15 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                                 topNotification("Please make sure you have a valid rss feed or ftp path.")
                             return@onLeftClick
                         }
-                        PreviewDialog(media, target, option).open()
+                        PreviewDialog(media, target, option) { updatedOption ->
+                            val num = tabSheet?.selectedTab?.label?.toIntOrNull()
+                            if (num != null) {
+                                target.options[num] = updatedOption
+                                reorderOptions()
+                                updateTargetRef()
+                                tabSheet?.let { it.selectedIndex = num }
+                            }
+                        }.open()
                     }
                 }
             }

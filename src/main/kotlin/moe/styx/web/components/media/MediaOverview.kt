@@ -13,12 +13,14 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.tabs.Tab
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
+import kotlinx.datetime.Clock
 import moe.styx.db.StyxDBClient
 import moe.styx.db.getMedia
 import moe.styx.db.save
 import moe.styx.types.Media
 import moe.styx.types.toBoolean
 import moe.styx.types.toInt
+import moe.styx.web.Main.updateChanges
 import moe.styx.web.components.entry.entryListing
 import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.getDBClient
@@ -110,10 +112,11 @@ class MediaOverview(media: Media?) : KComposite() {
                 button("Save") {
                     addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_SUCCESS)
                     onLeftClick {
-                        val dbClient = getDBClient()
-                        dbClient.save(internalMedia)
-                        updatePrequelSequel(dbClient, internalMedia)
-                        dbClient.closeConnection()
+                        getDBClient().executeAndClose {
+                            save(internalMedia)
+                            updatePrequelSequel(this, internalMedia)
+                        }
+                        updateChanges(media = Clock.System.now().epochSeconds)
                         UI.getCurrent().page.history.back()
                     }
                 }
