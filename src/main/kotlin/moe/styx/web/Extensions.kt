@@ -42,6 +42,8 @@ fun LocalDateTime.formattedStr(): String {
             "${this.hour.padString()}:${this.minute.padString()}:${this.second.padString()}"
 }
 
+fun newGUID() = UUID.randomUUID().toString().uppercase()
+
 fun String.capitalize(): String = lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
 fun Image.getURL(): String {

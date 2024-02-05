@@ -8,8 +8,13 @@ import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.data.value.ValueChangeMode
+import moe.styx.db.getEntries
+import moe.styx.db.save
 import moe.styx.downloader.parsing.parseEpisodeAndVersion
 import moe.styx.types.Media
+import moe.styx.types.MediaEntry
+import moe.styx.web.getDBClient
+import moe.styx.web.newGUID
 import moe.styx.web.readableSize
 import moe.styx.web.topNotification
 import org.vaadin.filesystemdataprovider.FileTypeResolver
@@ -17,6 +22,7 @@ import org.vaadin.filesystemdataprovider.FilesystemData
 import org.vaadin.filesystemdataprovider.FilesystemDataProvider
 import java.io.File
 import java.time.LocalDate
+import java.time.ZoneId
 
 class ImportDialog(val media: Media) : Dialog() {
     private var selected: Set<File> = emptySet()
@@ -76,8 +82,28 @@ class ImportDialog(val media: Media) : Dialog() {
             }
             button("Import") {
                 onLeftClick {
-                    // TODO: this
-                    topNotification("Not implemented just yet.")
+                    val list = converted.filter { it.episode.isNotBlank() }.sortedBy { it.episode }
+                    if (list.isEmpty()) {
+                        topNotification("No valid episode numbers found.")
+                        return@onLeftClick
+                    }
+                    val dbClient = getDBClient()
+                    val existing = dbClient.getEntries(mapOf("mediaID" to media.GUID))
+                    var date = firstEpDatePicker.value
+                    list.forEach { combo ->
+                        val time = date.atTime(16, 0).atZone(ZoneId.systemDefault()).toInstant().epochSecond
+                        val existingEntry = existing.find { it.entryNumber.toDoubleOrNull() == combo.episode.toDoubleOrNull() }
+                        val entry =
+                            existingEntry?.copy(filePath = combo.file.absolutePath, fileSize = combo.file.length(), originalName = combo.file.name)
+                                ?: MediaEntry(
+                                    newGUID(), media.GUID, time, combo.episode, null, null, null, null, null, combo.file
+                                        .absolutePath, combo.file.length(), combo.file.name
+                                )
+                        date = date.plusDays(7)
+                        dbClient.save(entry)
+                    }
+                    dbClient.closeConnection()
+                    this@ImportDialog.close()
                 }
             }
         }
