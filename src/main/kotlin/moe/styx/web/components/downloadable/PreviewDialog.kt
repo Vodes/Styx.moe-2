@@ -46,7 +46,6 @@ class PreviewDialog(
     private var ftpResults: List<FTPResult> = emptyList()
 
     init {
-        println(option)
         setWidthFull()
         maxWidth = "1200px"
         if (!DownloaderMain.isInitialized() || lastInitialized < (Clock.System.now().epochSeconds - 300)) {

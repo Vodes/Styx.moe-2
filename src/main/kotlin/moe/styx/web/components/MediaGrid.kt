@@ -3,6 +3,7 @@ package moe.styx.web.components
 import com.github.mvysny.karibudsl.v10.*
 import com.github.mvysny.kaributools.navigateTo
 import com.github.mvysny.kaributools.selectionMode
+import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog
 import com.vaadin.flow.component.grid.Grid
@@ -13,13 +14,15 @@ import com.vaadin.flow.data.provider.ListDataProvider
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import moe.styx.db.StyxDBClient
+import moe.styx.db.delete
+import moe.styx.db.getEntries
 import moe.styx.db.getMedia
 import moe.styx.types.Media
 import moe.styx.types.toBoolean
-import moe.styx.web.createComponent
-import moe.styx.web.toISODate
+import moe.styx.web.*
 import moe.styx.web.views.sub.DownloadableView
 import moe.styx.web.views.sub.MediaView
+import java.io.File
 
 fun initMediaComponent(dbClient: StyxDBClient, exclude: String = "", onClickItem: ((Media) -> Unit)? = null) = createComponent {
     val media = dbClient.executeGet(false) { getMedia() }.sortedByDescending { it.added }.filter { it.GUID != exclude }
@@ -68,12 +71,57 @@ fun initMediaComponent(dbClient: StyxDBClient, exclude: String = "", onClickItem
                     navigateTo(MediaView::class, it.GUID)
                 })
 
-                item("Delete", clickListener = {
-                    if (it == null) {
+                item("Delete", clickListener = { m ->
+                    if (m == null) {
                         Notification.show("How did you even manage to do that?")
                         return@item
                     }
-                    ConfirmDialog().open()
+                    val entries = getDBClient().executeGet { getEntries(mapOf("mediaID" to m.GUID)) }
+                    val folders = entries.map { File(it.filePath).parentFile }.toSet()
+                    ConfirmDialog().apply {
+                        setHeader("Do you really want to delete this?")
+                        if (m.isSeries.toBoolean())
+                            setText(
+                                htmlSpan(
+                                    "This can free up ${
+                                        entries.sumOf { it.fileSize }.readableSize()
+                                    } and would delete the following folders:<br>" +
+                                            folders.joinToString("<br>") { it.absolutePath }
+                                )
+                            )
+                        else
+                            setText("This can free up ${entries.sumOf { it.fileSize }.readableSize()}.")
+                        setRejectText("with Files")
+                        setRejectable(true)
+                        setCancelable(true)
+                        isCloseOnEsc = false
+                        setConfirmText("Yes")
+                        setCancelText("No")
+
+                        addConfirmListener {
+                            getDBClient().executeAndClose {
+                                delete(m)
+                                entries.forEach { delete(it) }
+                            }
+                            UI.getCurrent().page.reload()
+                        }
+                        addRejectListener {
+                            if (isWindows())
+                                return@addRejectListener
+                            getDBClient().executeAndClose {
+                                delete(m)
+                                entries.forEach { delete(it) }
+                                if (m.isSeries.toBoolean())
+                                    folders.forEach {
+                                        if (it.exists())
+                                            it.deleteRecursively()
+                                    }
+                                else
+                                    entries.map { File(it.filePath) }.forEach { if (it.exists()) it.delete() }
+                            }
+                            UI.getCurrent().page.reload()
+                        }
+                    }.open()
                 })
 
                 separator()
