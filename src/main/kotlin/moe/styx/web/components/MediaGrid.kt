@@ -20,6 +20,7 @@ import moe.styx.db.getMedia
 import moe.styx.types.Media
 import moe.styx.types.toBoolean
 import moe.styx.web.*
+import moe.styx.web.components.media.ImportDialog
 import moe.styx.web.views.sub.DownloadableView
 import moe.styx.web.views.sub.MediaView
 import java.io.File
@@ -134,6 +135,7 @@ fun initMediaComponent(dbClient: StyxDBClient, exclude: String = "", onClickItem
                         Notification.show("This is a movie.")
                         return@item
                     }
+                    ImportDialog(it).open()
                 })
                 item("Configure Downloader", clickListener = {
                     if (it == null) {
