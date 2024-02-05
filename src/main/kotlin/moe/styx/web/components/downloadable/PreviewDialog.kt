@@ -22,6 +22,8 @@ import moe.styx.types.DownloadableOption
 import moe.styx.types.DownloaderTarget
 import moe.styx.types.Media
 import moe.styx.types.SourceType
+import moe.styx.web.components.addRSSTemplateMenu
+import moe.styx.web.components.addRegexTemplateMenu
 import moe.styx.web.createComponent
 import moe.styx.web.readableSize
 import moe.styx.web.replaceAll
@@ -71,6 +73,8 @@ class PreviewDialog(
                     setWidthFull()
                     valueChangeMode = ValueChangeMode.LAZY
                     value = option.sourcePath ?: ""
+                    if (isRSS)
+                        addRSSTemplateMenu()
                     addValueChangeListener {
                         option = option.copy(sourcePath = it.value)
                         pathChanged = true
@@ -92,6 +96,7 @@ class PreviewDialog(
                     setWidthFull()
                     valueChangeMode = ValueChangeMode.LAZY
                     value = option.fileRegex
+                    addRegexTemplateMenu(media)
                     addValueChangeListener {
                         option = option.copy(fileRegex = it.value)
                         updateTarget()
@@ -103,6 +108,7 @@ class PreviewDialog(
                         setWidthFull()
                         valueChangeMode = ValueChangeMode.LAZY
                         value = option.rssRegex ?: ""
+                        addRegexTemplateMenu(media, true)
                         addValueChangeListener {
                             option = option.copy(rssRegex = it.value)
                             updateTarget()

@@ -184,7 +184,7 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                 }
                 target.options.forEachIndexed { index, option ->
                     tab(option.priority.toString()) {
-                        dlOpComponent(option, {
+                        dlOpComponent(media, option, {
                             target.options[index] = it
                             it
                         })

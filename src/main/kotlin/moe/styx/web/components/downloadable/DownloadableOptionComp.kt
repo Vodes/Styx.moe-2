@@ -10,11 +10,15 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
 import moe.styx.types.DownloadableOption
+import moe.styx.types.Media
 import moe.styx.types.ProcessingOptions
 import moe.styx.types.SourceType
 import moe.styx.web.capitalize
+import moe.styx.web.components.addRSSTemplateMenu
+import moe.styx.web.components.addRegexTemplateMenu
 
-class DLOptionComponent(private var option: DownloadableOption, onUpdate: (DownloadableOption) -> DownloadableOption) : KComposite() {
+class DLOptionComponent(private val media: Media, private var option: DownloadableOption, onUpdate: (DownloadableOption) -> DownloadableOption) :
+    KComposite() {
     private lateinit var rssRegexField: TextField
     private lateinit var pathField: TextField
     private lateinit var ftpConnField: TextField
@@ -29,9 +33,10 @@ class DLOptionComponent(private var option: DownloadableOption, onUpdate: (Downl
             textField("File Regex") {
                 value = option.fileRegex
                 valueChangeMode = ValueChangeMode.LAZY
+                addRegexTemplateMenu(media)
                 addValueChangeListener { option = onUpdate(option.copy(fileRegex = it.value)) }
                 setWidthFull()
-                maxWidth = "500px"
+                maxWidth = "600px"
             }
             h3("Source") { addClassNames(Padding.Vertical.MEDIUM) }
             flexLayout {
@@ -55,6 +60,7 @@ class DLOptionComponent(private var option: DownloadableOption, onUpdate: (Downl
                     isVisible = option.source == SourceType.TORRENT
                     value = option.rssRegex ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
+                    addRegexTemplateMenu(media, true)
                     addValueChangeListener { option = onUpdate(option.copy(rssRegex = it.value)) }
                     flexGrow = 1.0
                 }
@@ -62,6 +68,7 @@ class DLOptionComponent(private var option: DownloadableOption, onUpdate: (Downl
                     isVisible = option.source in arrayOf(SourceType.TORRENT, SourceType.FTP)
                     value = option.sourcePath ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
+                    addRSSTemplateMenu()
                     addValueChangeListener { option = onUpdate(option.copy(sourcePath = it.value)) }
                     flexGrow = 1.0
                 }
@@ -195,8 +202,8 @@ class DLOptionComponent(private var option: DownloadableOption, onUpdate: (Downl
 
 @VaadinDsl
 fun (@VaadinDsl HasComponents).dlOpComponent(
-    option: DownloadableOption, onUpdate: (DownloadableOption) -> DownloadableOption,
+    media: Media, option: DownloadableOption, onUpdate: (DownloadableOption) -> DownloadableOption,
     block: (@VaadinDsl DLOptionComponent).() -> Unit = {}
 ) = init(
-    DLOptionComponent(option, onUpdate), block
+    DLOptionComponent(media, option, onUpdate), block
 )
