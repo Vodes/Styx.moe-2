@@ -6,6 +6,7 @@ import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.html.AnchorTarget
 import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
+import com.vaadin.flow.server.StreamResource
 import com.vaadin.flow.server.VaadinRequest
 import com.vaadin.flow.theme.lumo.LumoUtility.*
 import moe.styx.types.User
@@ -19,6 +20,7 @@ import moe.styx.web.createComponent
 import moe.styx.web.layout.MainLayout
 import moe.styx.web.unorderedList
 import org.vaadin.lineawesome.LineAwesomeIcon
+import java.io.File
 
 @PageTitle("Styx - User")
 @Route("user", layout = MainLayout::class)
@@ -63,24 +65,52 @@ class UserView : KComposite() {
     private fun downloadButtons() = createComponent {
         horizontalLayout {
             setClassNames2(Padding.Horizontal.SMALL)
-            unorderedList {
-                addClassNames(Display.FLEX, Gap.SMALL, ListStyleType.NONE, Margin.NONE, Padding.NONE)
-                linkButton(
-                    "https://vodes.pw/awcp/Application%20Versions/UpdaterLinks/Styx%20Launcher%20v5.exe",
-                    "Windows",
-                    LineAwesomeIcon.WINDOWS.create()
-                )
-                linkButton(
-                    "https://vodes.pw/awcp/Application%20Versions/UpdaterLinks/Styx%20Launcher%20v5.jar",
-                    "Other (.jar)",
-                    LineAwesomeIcon.DESKTOP_SOLID.create()
-                )
-                linkButton(
-                    "https://vodes.pw/awcp/Application%20Versions/Android/pw.vodes.styx-0.1.3.apk",
-                    "Android",
-                    LineAwesomeIcon.ANDROID.create()
-                )
+            if (!File(Main.config.buildDir).exists() || File(Main.config.buildDir).listFiles().isNullOrEmpty()) {
+                h3("Could not find builds on the server.")
+                return@horizontalLayout
+            }
+            val latest = File(Main.config.buildDir).listFiles()!!.filter { it.isDirectory }.maxBy { it.name }
+            val winMsi = latest.walkTopDown().find { it.name.endsWith(".msi") }
+            val linuxDeb = latest.walkTopDown().find { it.name.endsWith(".deb") }
+            val linuxRpm = latest.walkTopDown().find { it.name.endsWith(".rpm") }
+            val linuxJar = latest.walkTopDown().find { it.name.contains("linux", true) && it.name.endsWith(".jar") }
+            verticalLayout {
+                if (linuxJar != null || linuxDeb != null || linuxRpm != null) {
+                    h3("Linux")
+                    unorderedList {
+                        addClassNames(Display.FLEX, Gap.SMALL, ListStyleType.NONE, Margin.NONE, Padding.NONE)
+                        if (linuxDeb != null) {
+                            linkButton("", "DEB", LineAwesomeIcon.UBUNTU.create()) {
+                                element.setAttribute("download", true)
+                                setHref(linuxDeb.streamResource())
+                            }
+                        }
+                        if (linuxRpm != null) {
+                            linkButton("", "RPM", LineAwesomeIcon.FEDORA.create()) {
+                                element.setAttribute("download", true)
+                                setHref(linuxRpm.streamResource())
+                            }
+                        }
+                        if (linuxJar != null) {
+                            linkButton("", "Jar", LineAwesomeIcon.JAVA.create()) {
+                                element.setAttribute("download", true)
+                                setHref(linuxJar.streamResource())
+                            }
+                        }
+                    }
+                }
+                if (winMsi != null) {
+                    h3("Windows")
+                    linkButton("", "Windows Installer", LineAwesomeIcon.WINDOWS.create()) {
+                        element.setAttribute("download", true)
+                        setHref(winMsi.streamResource())
+                    }
+                }
             }
         }
+    }
+
+    private fun File.streamResource(): StreamResource {
+        return StreamResource(this.name, this::inputStream)
     }
 }

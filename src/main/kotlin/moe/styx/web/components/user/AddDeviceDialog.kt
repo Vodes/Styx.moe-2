@@ -10,6 +10,7 @@ import moe.styx.db.getUnregisteredDevices
 import moe.styx.db.save
 import moe.styx.types.User
 import moe.styx.types.toDevice
+import moe.styx.web.Main
 import moe.styx.web.getDBClient
 import moe.styx.web.topNotification
 
@@ -21,7 +22,7 @@ class AddDeviceDialog(val user: User, doRefresh: () -> Unit = {}) : Dialog() {
         verticalLayout {
             setWidthFull()
             h3("Device Registration")
-            image("https://i.styx.moe/website/loginview.webp") {
+            image("${Main.config.imageURL}/website/loginview.webp") {
                 tooltip = "Will look something like this"
                 addClassNames(BoxShadow.MEDIUM)
             }

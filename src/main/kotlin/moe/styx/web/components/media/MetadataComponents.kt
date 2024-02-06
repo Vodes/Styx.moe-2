@@ -54,13 +54,13 @@ class MetadataView(private var media: Media, mediaProvider: (Media) -> Media) : 
                 setFlexGrow(1.0, nameField, englishField, romajiField)
             }
             h3("Relations") { addClassNames(Padding.Horizontal.NONE, Padding.Vertical.SMALL) }
-            add(RelationsView(media) { mediaProvider(it) })
+            add(RelationsView(media) { media = mediaProvider(it); media })
 
             h3("Descriptions") { addClassNames(Padding.Horizontal.NONE, Padding.Vertical.SMALL) }
-            add(SynopsisView(media) { mediaProvider(it) })
+            add(SynopsisView(media) { media = mediaProvider(it); media })
 
             h3("Misc") { addClassNames(Padding.Horizontal.NONE, Padding.Vertical.SMALL) }
-            add(Other(media) { mediaProvider(it) })
+            add(Other(media) { media = mediaProvider(it); media })
         }
     }
 }
@@ -117,7 +117,7 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
                         if (meta == null)
                             Notification.show("Could not get metadata from TMDB!").also { return@onLeftClick }
                         synopsisDE.value = meta!!.overview
-                        media = mediaProvider(media.copy(synopsisDE = synopsisDE.value.trim()))
+                        media = mediaProvider(media.copy(synopsisDE = meta.overview))
                     }
                 }
                 item("Fill from TMDB (Season)") {
@@ -132,7 +132,7 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
                         if (meta == null)
                             Notification.show("Could not get metadata from TMDB!").also { return@onLeftClick }
                         synopsisDE.value = meta!!.overview
-                        media = mediaProvider(media.copy(synopsisDE = synopsisDE.value.trim()))
+                        media = mediaProvider(media.copy(synopsisDE = meta.overview))
                     }
                 }
                 item("Fill from AniSearch") {
@@ -147,7 +147,7 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
                         if (scrape == null)
                             Notification.show("Could not scrape description from AniSearch!").also { return@onLeftClick }
                         synopsisDE.value = scrape!!
-                        media = mediaProvider(media.copy(synopsisDE = synopsisDE.value.trim()))
+                        media = mediaProvider(media.copy(synopsisDE = scrape))
                     }
                 }
             }

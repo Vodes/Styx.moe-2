@@ -10,8 +10,10 @@ data class Config(
     val serveHost: String = "localhost",
     val servePort: Int = 8080,
     val baseURL: String = "https://example.com",
-    val baseAPIURL: String = "https://api.styx.moe",
+    val baseAPIURL: String = "",
+    val imageURL: String = "",
     val imageDir: String = "",
+    val buildDir: String = "",
     val dbConfig: DbConfig = DbConfig()
 )
 

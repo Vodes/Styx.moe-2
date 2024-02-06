@@ -6,6 +6,7 @@ import com.vaadin.flow.component.*
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.html.Anchor
 import com.vaadin.flow.component.html.AnchorTarget
+import com.vaadin.flow.server.StreamResource
 import com.vaadin.flow.shared.ApplicationConstants
 
 class LinkButton : Composite<Anchor>(), HasTheme, HasStyle {
@@ -44,6 +45,7 @@ class LinkButton : Composite<Anchor>(), HasTheme, HasStyle {
     }
 
     fun setHref(href: String) = content.setHref(href)
+    fun setHref(resource: StreamResource) = content.setHref(resource)
     fun setText(text: String) = button.setText(text)
     fun setIcon(icon: Component) = button.setIcon(icon)
     fun setTarget(target: AnchorTarget) = content.setTarget(target)

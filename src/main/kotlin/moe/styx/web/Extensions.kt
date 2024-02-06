@@ -48,11 +48,11 @@ fun String.capitalize(): String = lowercase().replaceFirstChar { if (it.isLowerC
 
 fun Image.getURL(): String {
     return if (hasWEBP?.toBoolean() == true) {
-        "https://i.styx.moe/$GUID.webp"
+        "${Main.config.imageURL}/$GUID.webp"
     } else if (hasJPG?.toBoolean() == true) {
-        "https://i.styx.moe/$GUID.jpg"
+        "${Main.config.imageURL}/$GUID.jpg"
     } else if (hasPNG?.toBoolean() == true) {
-        "https://i.styx.moe/$GUID.png"
+        "${Main.config.imageURL}/$GUID.png"
     } else {
         return externalURL as String
     }
@@ -60,7 +60,7 @@ fun Image.getURL(): String {
 
 fun Image.deleteIfExists() {
     val url = getURL()
-    if (!url.contains("styx.moe"))
+    if (!url.contains(Main.config.imageURL, true))
         return
     val file = File(Main.config.imageDir, url.split("/").last())
     if (file.exists())
