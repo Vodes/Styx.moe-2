@@ -60,7 +60,7 @@ dependencies {
     implementation("org.jsoup:jsoup:1.17.2")
 
     // Custom
-    implementation("moe.styx:styx-db:0.3")
+    implementation("moe.styx:styx-db:0.5")
     implementation("moe.styx:styx-downloader:0.1")
 
     // Image Processing
