@@ -50,12 +50,10 @@ fun initMediaComponent(dbClient: StyxDBClient, exclude: String = "", onClickItem
         grid<Media> {
             minWidth = "750px"
             addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS, GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_WRAP_CELL_CONTENT)
-            addItemClickListener {
-                if (onClickItem != null) {
+            if (onClickItem != null) {
+                addItemClickListener {
                     onClickItem(it.item)
-                    return@addItemClickListener
                 }
-                navigateTo(MediaView::class, it.item.GUID)
             }
             selectionMode = Grid.SelectionMode.NONE
             setItems(mediaProvider)
@@ -64,6 +62,7 @@ fun initMediaComponent(dbClient: StyxDBClient, exclude: String = "", onClickItem
             columnFor(Media::nameJP, sortable = true) { setHeader("Romaji") }
             columnFor(Media::added, sortable = true, converter = { it?.toISODate() ?: "" })
             gridContextMenu {
+                isOpenOnClick = onClickItem == null
                 item("View", clickListener = {
                     if (it == null) {
                         Notification.show("How did you even manage to do that?")
