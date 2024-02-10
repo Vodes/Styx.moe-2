@@ -10,10 +10,10 @@ import com.vaadin.flow.router.HasUrlParameter
 import com.vaadin.flow.router.PageTitle
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.server.VaadinRequest
+import moe.styx.common.data.DownloaderTarget
+import moe.styx.common.data.Media
 import moe.styx.db.getMedia
 import moe.styx.db.getTargets
-import moe.styx.types.DownloaderTarget
-import moe.styx.types.Media
 import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.downloadable.DownloadableOverview

@@ -7,9 +7,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
-import moe.styx.types.json
+import moe.styx.common.http.httpClient
+import moe.styx.common.json
 import moe.styx.web.Main
-import moe.styx.web.httpClient
 
 suspend inline fun <reified T> genericTmdbGet(url: String): T? {
     val response = httpClient.get(url) {

@@ -10,6 +10,10 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.data.value.ValueChangeMode
 import kotlinx.datetime.Clock
+import moe.styx.common.data.DownloadableOption
+import moe.styx.common.data.DownloaderTarget
+import moe.styx.common.data.Media
+import moe.styx.common.data.SourceType
 import moe.styx.downloader.episodeWanted
 import moe.styx.downloader.ftp.FTPClient
 import moe.styx.downloader.ftp.FTPHandler
@@ -18,10 +22,6 @@ import moe.styx.downloader.parsing.ParseDenyReason
 import moe.styx.downloader.parsing.ParseResult
 import moe.styx.downloader.torrent.FeedItem
 import moe.styx.downloader.torrent.RSSHandler
-import moe.styx.types.DownloadableOption
-import moe.styx.types.DownloaderTarget
-import moe.styx.types.Media
-import moe.styx.types.SourceType
 import moe.styx.web.components.addRSSTemplateMenu
 import moe.styx.web.components.addRegexTemplateMenu
 import moe.styx.web.createComponent

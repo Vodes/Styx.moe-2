@@ -8,9 +8,9 @@ import jakarta.servlet.http.Cookie
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import moe.styx.types.json
+import moe.styx.common.http.httpClient
+import moe.styx.common.json
 import moe.styx.web.Main
-import moe.styx.web.httpClient
 
 object DiscordAPI {
     fun getUserFromToken(token: String): DiscordUser? = runBlocking {

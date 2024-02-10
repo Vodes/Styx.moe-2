@@ -13,7 +13,9 @@ import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import kotlinx.serialization.encodeToString
-import moe.styx.types.*
+import moe.styx.common.data.*
+import moe.styx.common.extension.toBoolean
+import moe.styx.common.json
 import moe.styx.web.data.getMalIDForAnilistID
 import moe.styx.web.data.tmdb.tmdbFindGroups
 import org.vaadin.lineawesome.LineAwesomeIcon

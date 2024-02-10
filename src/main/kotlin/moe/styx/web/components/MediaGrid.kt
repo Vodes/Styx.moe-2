@@ -13,12 +13,12 @@ import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.provider.ListDataProvider
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
+import moe.styx.common.data.Media
+import moe.styx.common.extension.toBoolean
 import moe.styx.db.StyxDBClient
 import moe.styx.db.delete
 import moe.styx.db.getEntries
 import moe.styx.db.getMedia
-import moe.styx.types.Media
-import moe.styx.types.toBoolean
 import moe.styx.web.*
 import moe.styx.web.components.media.ImportDialog
 import moe.styx.web.views.sub.DownloadableView

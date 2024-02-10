@@ -6,8 +6,8 @@ import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
-import moe.styx.types.json
-import moe.styx.web.httpClient
+import moe.styx.common.http.httpClient
+import moe.styx.common.json
 import org.jsoup.Jsoup
 
 private var lastUpdated: Long = 0

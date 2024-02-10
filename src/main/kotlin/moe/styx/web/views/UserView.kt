@@ -9,7 +9,7 @@ import com.vaadin.flow.router.Route
 import com.vaadin.flow.server.StreamResource
 import com.vaadin.flow.server.VaadinRequest
 import com.vaadin.flow.theme.lumo.LumoUtility.*
-import moe.styx.types.User
+import moe.styx.common.data.User
 import moe.styx.web.Main
 import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress

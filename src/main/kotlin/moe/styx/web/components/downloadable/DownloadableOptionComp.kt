@@ -9,11 +9,10 @@ import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
-import moe.styx.types.DownloadableOption
-import moe.styx.types.Media
-import moe.styx.types.ProcessingOptions
-import moe.styx.types.SourceType
-import moe.styx.web.capitalize
+import moe.styx.common.data.DownloadableOption
+import moe.styx.common.data.Media
+import moe.styx.common.data.ProcessingOptions
+import moe.styx.common.data.SourceType
 import moe.styx.web.components.addRSSTemplateMenu
 import moe.styx.web.components.addRegexTemplateMenu
 

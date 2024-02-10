@@ -1,10 +1,15 @@
 package moe.styx.web
 
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import moe.styx.types.*
+import moe.styx.common.data.Image
+import moe.styx.common.data.MappingCollection
+import moe.styx.common.data.Media
+import moe.styx.common.data.TMDBMapping
+import moe.styx.common.extension.formattedStr
+import moe.styx.common.extension.toBoolean
+import moe.styx.common.json
 import moe.styx.web.components.media.StackType
 import moe.styx.web.data.tmdb.TmdbEpisode
 import moe.styx.web.data.tmdb.getTmdbOrder
@@ -37,14 +42,7 @@ fun Long.readableSize(useBinary: Boolean = false): String {
     return "${(if (steps > 2) big else small).format(current)} ${units[steps]}"
 }
 
-fun LocalDateTime.formattedStr(): String {
-    return "${this.year}-${this.monthNumber.padString()}-${this.dayOfMonth.padString()} " +
-            "${this.hour.padString()}:${this.minute.padString()}:${this.second.padString()}"
-}
-
 fun newGUID() = UUID.randomUUID().toString().uppercase()
-
-fun String.capitalize(): String = lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
 fun Image.getURL(): String {
     return if (hasWEBP?.toBoolean() == true) {

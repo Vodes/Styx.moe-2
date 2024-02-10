@@ -8,8 +8,8 @@ val ktorVersion: String by extra
 val scrimageVersion: String by extra
 
 plugins {
-    kotlin("jvm") version "1.9.21"
-    kotlin("plugin.serialization") version "1.9.21"
+    kotlin("jvm") version "1.9.22"
+    kotlin("plugin.serialization") version "1.9.22"
     id("application")
     id("com.vaadin")
     id("com.github.johnrengelman.shadow") version "8.1.1"
@@ -35,8 +35,6 @@ dependencies {
     // Kotlin Stuff
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.21")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
 
     // Vaadin Stuff
     implementation("com.vaadin:vaadin-core:$vaadinVersion") {
@@ -60,20 +58,13 @@ dependencies {
     implementation("org.jsoup:jsoup:1.17.2")
 
     // Custom
-    implementation("moe.styx:styx-db:0.5")
-    implementation("moe.styx:styx-downloader:0.1")
+    implementation("moe.styx:styx-db:0.0.5")
+    implementation("moe.styx:styx-downloader:0.0.2")
 
     // Image Processing
     implementation("com.sksamuel.scrimage:scrimage-core:$scrimageVersion")
     implementation("com.sksamuel.scrimage:scrimage-webp:$scrimageVersion")
     implementation("com.sksamuel.scrimage:scrimage-formats-extra:$scrimageVersion")
-
-    // Ktor
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-java:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-    implementation("io.ktor:ktor-client-encoding:$ktorVersion")
 
     // test support
     testImplementation("com.github.mvysny.kaributesting:karibu-testing-v24:2.1.0")

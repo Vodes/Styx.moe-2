@@ -14,12 +14,12 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.tabs.Tab
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
 import kotlinx.datetime.Clock
+import moe.styx.common.data.Media
+import moe.styx.common.extension.toBoolean
+import moe.styx.common.extension.toInt
 import moe.styx.db.StyxDBClient
 import moe.styx.db.getMedia
 import moe.styx.db.save
-import moe.styx.types.Media
-import moe.styx.types.toBoolean
-import moe.styx.types.toInt
 import moe.styx.web.Main.updateChanges
 import moe.styx.web.components.entry.entryListing
 import moe.styx.web.data.getAniListDataForID

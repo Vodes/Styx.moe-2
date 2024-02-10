@@ -15,8 +15,8 @@ import com.vaadin.flow.server.VaadinRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import moe.styx.common.data.User
 import moe.styx.db.getUsers
-import moe.styx.types.User
 import moe.styx.web.auth.DiscordAPI
 import moe.styx.web.views.HomeView
 

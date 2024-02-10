@@ -7,10 +7,10 @@ import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.value.ValueChangeMode
-import moe.styx.types.BasicMapping
-import moe.styx.types.Media
-import moe.styx.types.TMDBMapping
-import moe.styx.types.toBoolean
+import moe.styx.common.data.BasicMapping
+import moe.styx.common.data.Media
+import moe.styx.common.data.TMDBMapping
+import moe.styx.common.extension.toBoolean
 import moe.styx.web.data.searchAniList
 import moe.styx.web.data.tmdb.getTmdbMetadata
 import moe.styx.web.data.tmdb.tmdbFindMedia

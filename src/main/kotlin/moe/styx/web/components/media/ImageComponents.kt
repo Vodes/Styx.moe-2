@@ -4,10 +4,10 @@ import com.github.mvysny.karibudsl.v10.*
 import com.vaadin.flow.component.html.Image
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
+import moe.styx.common.data.Media
 import moe.styx.db.delete
 import moe.styx.db.getImages
 import moe.styx.db.save
-import moe.styx.types.Media
 import moe.styx.web.deleteIfExists
 import moe.styx.web.getDBClient
 import moe.styx.web.getURL
@@ -15,8 +15,8 @@ import moe.styx.web.getURL
 class ThumbnailComponent(var media: Media, val mediaProvider: (Media) -> Media) : KComposite() {
     private val thumbFallback = "https://vodes.pw/i/Alex/ZTKosJEnJMuRpnr.png"
     private val bannerFallback = "https://archive.is/vdFTk/103fb85fb390e1401bf27bee19b656fe4d8355c5.jpg"
-    var currentThumbnail: moe.styx.types.Image? = null
-    var currentBanner: moe.styx.types.Image? = null
+    var currentThumbnail: moe.styx.common.data.Image? = null
+    var currentBanner: moe.styx.common.data.Image? = null
 
     lateinit var bannerImg: Image
     lateinit var thumbImg: Image
@@ -62,7 +62,7 @@ class ThumbnailComponent(var media: Media, val mediaProvider: (Media) -> Media) 
         }.also { dbClient.closeConnection() }
     }
 
-    private fun handleResult(img: moe.styx.types.Image?, thumb: Boolean) {
+    private fun handleResult(img: moe.styx.common.data.Image?, thumb: Boolean) {
         if (img == null)
             return
 

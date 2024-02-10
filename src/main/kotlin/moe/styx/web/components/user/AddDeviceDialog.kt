@@ -6,10 +6,10 @@ import com.vaadin.flow.component.Key
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.theme.lumo.LumoUtility.BoxShadow
 import kotlinx.datetime.Clock
+import moe.styx.common.data.User
+import moe.styx.common.data.toDevice
 import moe.styx.db.getUnregisteredDevices
 import moe.styx.db.save
-import moe.styx.types.User
-import moe.styx.types.toDevice
 import moe.styx.web.Main
 import moe.styx.web.getDBClient
 import moe.styx.web.topNotification

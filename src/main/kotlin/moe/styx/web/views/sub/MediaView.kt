@@ -5,8 +5,8 @@ import com.github.mvysny.karibudsl.v10.verticalLayout
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.router.*
 import com.vaadin.flow.server.VaadinRequest
+import moe.styx.common.data.Media
 import moe.styx.db.getMedia
-import moe.styx.types.Media
 import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.media.mediaOverview

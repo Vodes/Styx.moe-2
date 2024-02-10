@@ -10,9 +10,10 @@ import com.vaadin.flow.theme.Theme
 import com.vaadin.flow.theme.lumo.Lumo
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import moe.styx.common.data.Changes
+import moe.styx.common.http.getHttpClient
+import moe.styx.common.json
 import moe.styx.db.StyxDBClient
-import moe.styx.types.Changes
-import moe.styx.types.json
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -51,6 +52,7 @@ fun getDBClient(): StyxDBClient {
 }
 
 fun main(args: Array<String>) {
+    getHttpClient("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     Main.appDir = if (args.isEmpty()) getAppDir() else File(args[0]).also { it.mkdirs() }
     Main.changesFile = File(Main.appDir.parentFile, "changes.json")
     Main.configFile = File(Main.appDir, "config.toml")

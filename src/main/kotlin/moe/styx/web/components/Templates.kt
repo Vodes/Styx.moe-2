@@ -3,7 +3,7 @@ package moe.styx.web.components
 import com.github.mvysny.karibudsl.v10.contextMenu
 import com.github.mvysny.karibudsl.v10.item
 import com.vaadin.flow.component.textfield.TextField
-import moe.styx.types.Media
+import moe.styx.common.data.Media
 
 fun TextField.addRegexTemplateMenu(m: Media, rss: Boolean = false) {
     val field = this@addRegexTemplateMenu

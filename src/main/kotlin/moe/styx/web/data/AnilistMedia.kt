@@ -11,8 +11,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import moe.styx.types.json
-import moe.styx.web.httpClient
+import moe.styx.common.http.httpClient
+import moe.styx.common.json
 
 val mediaProperties = """
             id

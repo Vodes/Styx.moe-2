@@ -4,7 +4,7 @@ import com.github.mvysny.karibudsl.v10.verticalLayout
 import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.html.Div
-import moe.styx.types.Media
+import moe.styx.common.data.Media
 import moe.styx.web.components.initMediaComponent
 import moe.styx.web.getDBClient
 

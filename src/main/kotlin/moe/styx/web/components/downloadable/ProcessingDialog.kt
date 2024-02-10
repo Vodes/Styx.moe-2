@@ -5,7 +5,7 @@ import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.value.ValueChangeMode
-import moe.styx.types.ProcessingOptions
+import moe.styx.common.data.ProcessingOptions
 
 class ProcessingDialog(private var options: ProcessingOptions, private val priority: Int, val onClose: (ProcessingOptions) -> Unit) : Dialog() {
 

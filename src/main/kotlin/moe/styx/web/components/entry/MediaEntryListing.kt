@@ -4,8 +4,8 @@ import com.github.mvysny.karibudsl.v10.*
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.theme.lumo.LumoUtility
+import moe.styx.common.data.Media
 import moe.styx.db.getEntries
-import moe.styx.types.Media
 import moe.styx.web.createComponent
 import moe.styx.web.getDBClient
 import moe.styx.web.readableSize

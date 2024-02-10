@@ -19,9 +19,10 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.runBlocking
-import moe.styx.types.Image
-import moe.styx.types.Media
-import moe.styx.types.toBoolean
+import moe.styx.common.data.Image
+import moe.styx.common.data.Media
+import moe.styx.common.extension.toBoolean
+import moe.styx.common.http.httpClient
 import moe.styx.web.*
 import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.data.tmdb.TmdbImage

@@ -8,11 +8,11 @@ import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.data.value.ValueChangeMode
+import moe.styx.common.data.Media
+import moe.styx.common.data.MediaEntry
 import moe.styx.db.getEntries
 import moe.styx.db.save
 import moe.styx.downloader.parsing.parseEpisodeAndVersion
-import moe.styx.types.Media
-import moe.styx.types.MediaEntry
 import moe.styx.web.getDBClient
 import moe.styx.web.newGUID
 import moe.styx.web.readableSize

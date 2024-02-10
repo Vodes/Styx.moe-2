@@ -11,12 +11,12 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.tabs.TabSheet
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
+import moe.styx.common.data.DownloadableOption
+import moe.styx.common.data.DownloaderTarget
+import moe.styx.common.data.Media
+import moe.styx.common.data.SourceType
 import moe.styx.db.delete
 import moe.styx.db.save
-import moe.styx.types.DownloadableOption
-import moe.styx.types.DownloaderTarget
-import moe.styx.types.Media
-import moe.styx.types.SourceType
 import moe.styx.web.createComponent
 import moe.styx.web.getDBClient
 import moe.styx.web.replaceAll

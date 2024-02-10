@@ -5,9 +5,9 @@ import com.vaadin.flow.component.HasComponents
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.theme.lumo.LumoUtility
+import moe.styx.common.data.User
 import moe.styx.db.delete
 import moe.styx.db.getDevices
-import moe.styx.types.User
 import moe.styx.web.getDBClient
 import moe.styx.web.replaceAll
 import moe.styx.web.toISODate
