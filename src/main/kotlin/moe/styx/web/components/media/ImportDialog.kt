@@ -10,13 +10,14 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.data.value.ValueChangeMode
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
+import moe.styx.common.data.MediaInfo
+import moe.styx.common.extension.currentUnixSeconds
+import moe.styx.common.extension.toInt
 import moe.styx.db.getEntries
 import moe.styx.db.save
 import moe.styx.downloader.parsing.parseEpisodeAndVersion
-import moe.styx.web.getDBClient
-import moe.styx.web.newGUID
-import moe.styx.web.readableSize
-import moe.styx.web.topNotification
+import moe.styx.downloader.utils.getMediaInfo
+import moe.styx.web.*
 import org.vaadin.filesystemdataprovider.FileTypeResolver
 import org.vaadin.filesystemdataprovider.FilesystemData
 import org.vaadin.filesystemdataprovider.FilesystemDataProvider
@@ -99,10 +100,26 @@ class ImportDialog(val media: Media) : Dialog() {
                                     newGUID(), media.GUID, time, combo.episode, null, null, null, null, null, combo.file
                                         .absolutePath, combo.file.length(), combo.file.name
                                 )
+                        val mediaInfoResult = combo.file.getMediaInfo()
+                        if (mediaInfoResult != null) {
+                            dbClient.save(
+                                MediaInfo(
+                                    entry.GUID,
+                                    mediaInfoResult.videoCodec(),
+                                    mediaInfoResult.videoBitDepth(),
+                                    mediaInfoResult.videoResolution(),
+                                    mediaInfoResult.hasEnglishDub().toInt(),
+                                    mediaInfoResult.hasGermanDub().toInt(),
+                                    mediaInfoResult.hasGermanSub().toInt()
+                                )
+                            )
+                        }
                         date = date.plusDays(7)
                         dbClient.save(entry)
                     }
                     dbClient.closeConnection()
+                    val now = currentUnixSeconds()
+                    Main.updateChanges(now, now)
                     this@ImportDialog.close()
                 }
             }
