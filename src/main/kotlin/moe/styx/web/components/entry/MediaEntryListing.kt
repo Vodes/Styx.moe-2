@@ -14,6 +14,11 @@ import org.vaadin.lineawesome.LineAwesomeIcon
 
 fun entryListing(media: Media) = createComponent {
     verticalLayout {
+        button("Fetch TMDB Metadata") {
+            onLeftClick {
+                TMDBMetaDialog(media).open()
+            }
+        }
         val episodes = getDBClient().executeGet { getEntries(mapOf("mediaID" to media.GUID)) }.sortedBy { it.entryNumber.toDoubleOrNull() ?: 0.0 }
         episodes.forEachIndexed { index, entry ->
             verticalLayout(false) {
@@ -26,6 +31,8 @@ fun entryListing(media: Media) = createComponent {
                     details("Synopsis") { nativeLabel(entry.synopsisEN) }
                 if (!entry.synopsisDE.isNullOrBlank())
                     details("Synopsis DE") { nativeLabel(entry.synopsisDE) }
+                htmlSpan("<b>File:</b> ${entry.filePath}")
+                htmlSpan("<b>Original File:</b> ${entry.originalName}")
                 horizontalLayout(false) {
                     defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
                     iconButton(LineAwesomeIcon.PEN_SOLID.create()) {

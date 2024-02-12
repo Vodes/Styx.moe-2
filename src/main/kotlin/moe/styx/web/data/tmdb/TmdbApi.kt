@@ -65,6 +65,6 @@ fun getTmdbSeason(id: Int, season: Int, languageCode: String = "en-US"): TmdbSea
     return@runBlocking genericTmdbGet("https://api.themoviedb.org/3/tv/$id/season/$season?language=$languageCode")
 }
 
-fun getTmdbOrder(id: String): TmdbEpisodeOrder? = runBlocking {
-    return@runBlocking genericTmdbGet("https://api.themoviedb.org/3/tv/episode_group/$id")
+fun getTmdbOrder(id: String, languageCode: String = "en-US"): TmdbEpisodeOrder? = runBlocking {
+    return@runBlocking genericTmdbGet("https://api.themoviedb.org/3/tv/episode_group/$id?language=$languageCode")
 }

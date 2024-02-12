@@ -3,10 +3,7 @@ package moe.styx.web
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import moe.styx.common.data.Image
-import moe.styx.common.data.MappingCollection
-import moe.styx.common.data.Media
-import moe.styx.common.data.TMDBMapping
+import moe.styx.common.data.*
 import moe.styx.common.extension.formattedStr
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.json
@@ -87,24 +84,55 @@ fun Media.getFirstTMDBSeason(): Int? {
     return mappingJson.tmdbMappings.minByOrNull { it.seasonEntry }?.seasonEntry
 }
 
-fun TMDBMapping.getRemoteEpisodes(language: String = "en-US", message: (content: String) -> Unit = {}): List<TmdbEpisode> {
+fun MappingCollection.getMappingForEpisode(episode: String, type: StackType = StackType.TMDB): IMapping? {
+    val mappings = when (type) {
+        StackType.TMDB -> this.tmdbMappings
+        StackType.ANILIST -> this.anilistMappings
+        else -> this.malMappings
+    }
+    var fallback: IMapping? = null
+    for (mapping in mappings) {
+        if (mapping.matchFrom > 0 && mapping.matchUntil > 0) {
+            val epDouble = episode.toDouble()
+            if (mapping.matchFrom == mapping.matchUntil) {
+                if (epDouble == mapping.matchFrom)
+                    return mapping
+            } else {
+                if (epDouble >= mapping.matchFrom && epDouble <= mapping.matchUntil)
+                    return mapping
+            }
+        } else
+            fallback = mapping
+    }
+    return fallback
+}
+
+fun TMDBMapping.getRemoteEpisodes(message: (content: String) -> Unit = {}): Pair<List<TmdbEpisode>, List<TmdbEpisode>> {
+    val empty = emptyList<TmdbEpisode>() to emptyList<TmdbEpisode>()
     if (remoteID <= 0)
-        message("No valid ID was found!").also { return emptyList() }
+        message("No valid ID was found!").also { return empty }
 
     if (orderType != null && !orderID.isNullOrBlank()) {
         val order = getTmdbOrder(orderID!!)
         if (order == null)
-            message("No episode order was found!").also { return emptyList() }
+            message("No episode order was found!").also { return empty }
         val group = order!!.groups.find { it.order == seasonEntry }
         if (group == null)
-            message("Could not find season $seasonEntry in the episode group!").also { return emptyList() }
-        return group!!.episodes
-    }
-    val season = getTmdbSeason(remoteID, seasonEntry, language)
-    if (season == null)
-        message("Could not get season $seasonEntry for $remoteID!").also { return emptyList() }
+            message("Could not find season $seasonEntry in the episode group!").also { return empty }
 
-    return season!!.episodes
+        val otherOrder = getTmdbOrder(orderID!!, "de-DE")
+        val otherGroup = otherOrder?.groups?.find { it.order == seasonEntry }
+        return group!!.episodes to (otherGroup?.episodes ?: emptyList())
+    }
+    val season = getTmdbSeason(remoteID, seasonEntry, "en-US")
+    if (season == null)
+        message("Could not get season $seasonEntry for $remoteID!").also { return empty }
+
+    val other = getTmdbSeason(remoteID, seasonEntry, "de-DE")
+    if (other == null)
+        message("Could not get season $seasonEntry for $remoteID!").also { return empty }
+
+    return season!!.episodes to other!!.episodes
 }
 
 fun isWindows() = System.getProperty("os.name").contains("win", true)

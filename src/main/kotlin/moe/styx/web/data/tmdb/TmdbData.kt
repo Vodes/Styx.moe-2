@@ -61,8 +61,8 @@ data class TmdbEpisode(
     val name: String,
     val overview: String,
     @SerialName("still_path")
-    val stillPath: String,
-    val order: Int
+    val stillPath: String? = null,
+    val order: Int? = null
 ) {
     fun getThumbnail() = "https://www.themoviedb.org/t/p/original$stillPath"
     fun parseDate() = format.parse(airDate)
