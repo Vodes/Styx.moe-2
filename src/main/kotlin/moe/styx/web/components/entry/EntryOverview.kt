@@ -31,7 +31,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
 
     val root = ui {
         verticalLayout {
-            h2(if (mediaEntry == null) "Creating new Entry" else "Editing ${media.name} - ${entry.entryNumber}")
+            h2(if (mediaEntry == null) "Creating new Entry for ${media.name}" else "Editing ${media.name} - ${entry.entryNumber}")
             numberField("Episode") {
                 min = 0.0
                 value = entry.entryNumber.toDouble()

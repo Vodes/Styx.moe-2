@@ -46,9 +46,10 @@ class EntryView : KComposite(), HasDynamicTitle, HasUrlParameter<String> {
     override fun setParameter(event: BeforeEvent, @OptionalParameter entryID: String?) {
         getDBClient().executeAndClose {
             if (!entryID.isNullOrBlank()) {
-                entry = getEntries(mapOf("GUID" to entryID)).firstOrNull()
-                if (entry != null)
-                    media = getMedia(mapOf("GUID" to entry!!.mediaID)).firstOrNull()
+                val entryLocal = getEntries(mapOf("GUID" to entryID.split("?")[0])).firstOrNull()
+                if (entryLocal != null)
+                    media = getMedia(mapOf("GUID" to entryLocal.mediaID)).firstOrNull()
+                entry = entryLocal
             }
             val parameters = event.location.queryParameters.parameters
             if (parameters.containsKey("media") && media == null) {
