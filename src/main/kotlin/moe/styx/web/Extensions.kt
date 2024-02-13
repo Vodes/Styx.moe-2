@@ -39,6 +39,8 @@ fun Long.readableSize(useBinary: Boolean = false): String {
     return "${(if (steps > 2) big else small).format(current)} ${units[steps]}"
 }
 
+val uselessEPTitleRegex = "^(?:Folge|Episode) \\d+\$".toRegex(RegexOption.IGNORE_CASE)
+
 fun newGUID() = UUID.randomUUID().toString().uppercase()
 
 fun Image.getURL(): String {

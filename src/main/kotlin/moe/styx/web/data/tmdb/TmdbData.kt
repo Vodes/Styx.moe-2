@@ -2,7 +2,9 @@ package moe.styx.web.data.tmdb
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import moe.styx.web.uselessEPTitleRegex
 import java.text.SimpleDateFormat
+import java.time.temporal.ChronoUnit
 
 private val format = SimpleDateFormat("yyyy-MM-dd")
 
@@ -66,7 +68,14 @@ data class TmdbEpisode(
 ) {
     fun getThumbnail() = "https://www.themoviedb.org/t/p/original$stillPath"
     fun parseDate() = format.parse(airDate)
-    fun parseDateUnix() = parseDate().toInstant().epochSecond
+    fun parseDateUnix() = parseDate().toInstant().plus(12, ChronoUnit.HOURS).epochSecond
+
+    fun filteredName(): String {
+        return if (uselessEPTitleRegex.matchEntire(name) != null) {
+            ""
+        } else
+            name
+    }
 }
 
 @Serializable

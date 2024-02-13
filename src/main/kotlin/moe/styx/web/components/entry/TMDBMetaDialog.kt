@@ -1,6 +1,8 @@
 package moe.styx.web.components.entry
 
 import com.github.mvysny.karibudsl.v10.*
+import com.vaadin.flow.component.UI
+import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.theme.lumo.LumoUtility
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
@@ -8,13 +10,18 @@ import moe.styx.common.data.MappingCollection
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
 import moe.styx.common.data.TMDBMapping
+import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.padString
 import moe.styx.common.json
 import moe.styx.db.getEntries
+import moe.styx.db.save
 import moe.styx.web.*
 import moe.styx.web.data.tmdb.TmdbEpisode
 
 class TMDBMetaDialog(val media: Media) : Dialog() {
+
+    private lateinit var useReleaseDatesCheckbx: Checkbox
+    private lateinit var updateMediaAddedTime: Checkbox
 
     init {
         setSizeFull()
@@ -29,9 +36,17 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
                 return@main
             }
             val episodes = getDBClient().executeGet { getEntries(mapOf("mediaID" to media.GUID)) }
-            val test = episodes.associateWith { collection.getMappingForEpisode(it.entryNumber) as TMDBMapping? }
             val grouped = episodes.groupBy { collection.getMappingForEpisode(it.entryNumber) as TMDBMapping? }
-
+            horizontalLayout {
+                button("Import metadata") {
+                    onLeftClick {
+                        doImport(grouped)
+                        UI.getCurrent().page.reload()
+                    }
+                }
+                useReleaseDatesCheckbx = checkBox("Use release dates") { value = true }
+            }
+            updateMediaAddedTime = checkBox("Update 'added' date of Media")
             grouped.forEach { (mapping, entries) ->
                 verticalLayout(false) {
                     addClassNames(LumoUtility.Border.TOP)
@@ -54,7 +69,43 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
             }
         }
     }
+
+    private fun doImport(grouped: Map<TMDBMapping?, List<MediaEntry>>) {
+        getDBClient().executeAndClose {
+            val dates = mutableSetOf<Long>()
+            grouped.forEach groups@{ (mapping, entries) ->
+                if (mapping == null) {
+                    return@groups
+                }
+                val (metaEN, metaDE) = mapping.getRemoteEpisodes()
+                entries.forEach { entry ->
+                    val number = entry.entryNumber.toDouble() + mapping.offset
+                    val epMetaEN = metaEN.find { (if (it.order != null) it.order + 1 else it.episodeNumber) == number.toInt() }
+                    val epMetaDE = metaDE.find { (if (it.order != null) it.order + 1 else it.episodeNumber) == number.toInt() }
+                    if (epMetaEN == null)
+                        return@forEach
+                    val nameEN = epMetaEN.filteredName()
+                    val nameDE = epMetaDE?.filteredName() ?: ""
+                    val newEntry = entry.copy(
+                        nameEN = nameEN.ifBlank { entry.nameEN },
+                        nameDE = nameDE.ifBlank { entry.nameDE },
+                        synopsisEN = epMetaEN.overview.ifBlank { entry.synopsisEN },
+                        synopsisDE = (epMetaDE?.overview ?: "").ifBlank { entry.synopsisDE },
+                        timestamp = (if (useReleaseDatesCheckbx.value) epMetaEN.parseDateUnix() else entry.timestamp).also { dates.add(it) }
+                    )
+                    save(newEntry)
+                }
+            }
+            if (updateMediaAddedTime.value) {
+                val newMedia = media.copy(added = dates.min())
+                save(newMedia)
+            }
+        }
+        val now = currentUnixSeconds()
+        Main.updateChanges(now, now)
+    }
 }
+
 
 fun episodeMetaview(entry: MediaEntry, index: Int, epMetaEN: TmdbEpisode?, epMetaDE: TmdbEpisode?) = createComponent {
     verticalLayout(false) {
@@ -69,8 +120,8 @@ fun episodeMetaview(entry: MediaEntry, index: Int, epMetaEN: TmdbEpisode?, epMet
             }
             verticalLayout(false) {
                 addClassNames(Padding.Bottom.MEDIUM)
-                nativeLabel("Title EN: ${epMetaEN.name}")
-                nativeLabel("Title DE: ${epMetaDE?.name ?: "/"}")
+                htmlSpan("<b>Title EN</b>: ${epMetaEN.name}")
+                htmlSpan("<b>Title DE</b>: ${epMetaDE?.name ?: "/"}")
                 if (epMetaEN.overview.isNotBlank())
                     details("Summary EN") { nativeLabel(epMetaEN.overview) }
                 if (!epMetaDE?.overview.isNullOrBlank())
