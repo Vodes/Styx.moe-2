@@ -145,7 +145,7 @@ class ImportDialog(val media: Media) : Dialog() {
 
 data class FileEPCombo(val file: File, val episode: String, val version: Int?)
 
-class FileBrowserDialog(val onClose: (Set<File>) -> Unit) : Dialog() {
+class FileBrowserDialog(private val allowMultiple: Boolean = true, val onClose: (Set<File>) -> Unit) : Dialog() {
     private var selected: Set<File> = emptySet()
 
     init {
@@ -156,7 +156,7 @@ class FileBrowserDialog(val onClose: (Set<File>) -> Unit) : Dialog() {
         val provider = FilesystemDataProvider(rootData)
         treeGrid(provider) {
             setSizeFull()
-            setSelectionMode(Grid.SelectionMode.MULTI)
+            setSelectionMode(if (allowMultiple) Grid.SelectionMode.MULTI else Grid.SelectionMode.SINGLE)
             addComponentHierarchyColumn {
                 horizontalLayout {
                     defaultVerticalComponentAlignment = FlexComponent.Alignment.END

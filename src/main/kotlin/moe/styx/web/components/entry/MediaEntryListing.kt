@@ -1,6 +1,7 @@
 package moe.styx.web.components.entry
 
 import com.github.mvysny.karibudsl.v10.*
+import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.theme.lumo.LumoUtility
@@ -36,7 +37,9 @@ fun entryListing(media: Media) = createComponent {
                 horizontalLayout(false) {
                     defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
                     iconButton(LineAwesomeIcon.PEN_SOLID.create()) {
-                        onLeftClick { topNotification("Not implemented yet.") }
+                        onLeftClick {
+                            UI.getCurrent().navigate("/entry/${entry.GUID}?media=${media.GUID}")
+                        }
                     }
                     iconButton(LineAwesomeIcon.TRASH_SOLID.create()) {
                         addThemeVariants(ButtonVariant.LUMO_ERROR)

@@ -26,11 +26,11 @@ import moe.styx.web.components.entry.entryListing
 import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.getDBClient
 import moe.styx.web.getFirstIDFromMap
+import moe.styx.web.newGUID
 import moe.styx.web.replaceAll
-import java.util.*
 
 class MediaOverview(media: Media?) : KComposite() {
-    private var internalMedia = media ?: Media(UUID.randomUUID().toString().uppercase(), "", "", "", "", "", "", added = currentUnixSeconds())
+    private var internalMedia = media ?: Media(newGUID(), "", "", "", "", "", "", added = currentUnixSeconds())
     private lateinit var metadataLayout: VerticalLayout
     private lateinit var imagesLayout: VerticalLayout
     private lateinit var mappingLayout: VerticalLayout
