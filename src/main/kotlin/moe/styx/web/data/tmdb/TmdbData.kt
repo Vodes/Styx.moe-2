@@ -31,6 +31,12 @@ data class TmdbImage(
     val voteCount: Int
 ) {
     fun getURL() = "https://image.tmdb.org/t/p/original$filePath"
+    fun getPreviewURL(): String {
+        return if (aspectRatio < 1)
+            "https://media.themoviedb.org/t/p/w300_and_h450_bestv2$filePath"
+        else
+            "https://media.themoviedb.org/t/p/w500_and_h282_face$filePath"
+    }
 }
 
 @Serializable

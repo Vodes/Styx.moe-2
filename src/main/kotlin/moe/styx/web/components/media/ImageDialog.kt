@@ -190,7 +190,7 @@ fun imagePreview(img: TmdbImage, onSelect: () -> Unit) = createComponent {
         setWidthFull()
         flexDirection = if (thumb) FlexLayout.FlexDirection.ROW else FlexLayout.FlexDirection.COLUMN
         maxHeight = if (thumb) "320px" else "365px"
-        image(img.getURL()) {
+        image(img.getPreviewURL()) {
             maxHeight = "280px"
             onLeftClick {
                 UI.getCurrent().page.open(img.getURL())
