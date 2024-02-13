@@ -33,6 +33,7 @@ class MediaOverview(media: Media?) : KComposite() {
     private lateinit var metadataLayout: VerticalLayout
     private lateinit var imagesLayout: VerticalLayout
     private lateinit var mappingLayout: VerticalLayout
+    private lateinit var entryLayout: VerticalLayout
     private var wasChanged = false
 
     val root = ui {
@@ -97,8 +98,11 @@ class MediaOverview(media: Media?) : KComposite() {
                     Badge("$entryCount").apply { addClassNames(Padding.Horizontal.SMALL) })
                 if (entryCount < 1)
                     entryTab.isEnabled = false
-
-                add(entryTab, entryListing(internalMedia))
+                entryLayout = VerticalLayout().apply {
+                    setSizeFull()
+                    init(entryListing(internalMedia))
+                }
+                add(entryTab, entryLayout)
 
                 // Here I'm just making sure every layout has a reference to the latest media instance(?)
                 addSelectedChangeListener {
@@ -139,6 +143,9 @@ class MediaOverview(media: Media?) : KComposite() {
         }
         mappingLayout.replaceAll {
             MappingOverview(internalMedia) { internalMedia = it; wasChanged = true; internalMedia }
+        }
+        entryLayout.replaceAll {
+            entryListing(internalMedia)
         }
     }
 }
