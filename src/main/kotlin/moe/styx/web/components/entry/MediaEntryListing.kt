@@ -1,6 +1,7 @@
 package moe.styx.web.components.entry
 
 import com.github.mvysny.karibudsl.v10.*
+import com.github.mvysny.kaributools.tooltip
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog
@@ -43,8 +44,12 @@ fun entryListing(media: Media) = createComponent {
                     details("Synopsis") { nativeLabel(entry.synopsisEN) }
                 if (!entry.synopsisDE.isNullOrBlank())
                     details("Synopsis DE") { nativeLabel(entry.synopsisDE) }
-                htmlSpan("<b>File:</b> ${entry.filePath}")
-                htmlSpan("<b>Original File:</b> ${entry.originalName}")
+                val fileName = File(entry.filePath).name
+                htmlSpan("<b>File:</b> $fileName") {
+                    tooltip = File(entry.filePath).parentFile.absolutePath
+                }
+                if (!entry.originalName.equals(fileName, true))
+                    htmlSpan("<b>Original File:</b> ${entry.originalName}")
                 horizontalLayout(false) {
                     defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
                     iconButton(LineAwesomeIcon.PEN_SOLID.create()) {
