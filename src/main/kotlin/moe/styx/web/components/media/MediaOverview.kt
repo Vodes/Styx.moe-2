@@ -15,6 +15,7 @@ import com.vaadin.flow.component.tabs.Tab
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
 import kotlinx.datetime.Clock
 import moe.styx.common.data.Media
+import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
 import moe.styx.db.StyxDBClient
@@ -29,7 +30,7 @@ import moe.styx.web.replaceAll
 import java.util.*
 
 class MediaOverview(media: Media?) : KComposite() {
-    private var internalMedia = media ?: Media(UUID.randomUUID().toString().uppercase(), "", "", "", "", "", "")
+    private var internalMedia = media ?: Media(UUID.randomUUID().toString().uppercase(), "", "", "", "", "", "", added = currentUnixSeconds())
     private lateinit var metadataLayout: VerticalLayout
     private lateinit var imagesLayout: VerticalLayout
     private lateinit var mappingLayout: VerticalLayout
