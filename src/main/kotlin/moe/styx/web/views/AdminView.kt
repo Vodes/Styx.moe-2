@@ -11,6 +11,7 @@ import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.initMediaComponent
 import moe.styx.web.components.noAccess
+import moe.styx.web.components.user.userListing
 import moe.styx.web.createComponent
 import moe.styx.web.getDBClient
 import moe.styx.web.layout.MainLayout
@@ -36,10 +37,10 @@ class AdminView : KComposite() {
         accordion {
             setWidthFull()
             panel("Media Management") {
-                add(initMediaComponent(dbClient))
+                init(initMediaComponent(dbClient))
             }
             panel("User Management") {
-                h2("Test 2")
+                init(userListing(dbClient))
             }
         }.also {
             dbClient.closeConnection()
