@@ -10,8 +10,13 @@ import kotlinx.serialization.encodeToString
 import moe.styx.common.data.BasicMapping
 import moe.styx.common.data.MappingCollection
 import moe.styx.common.data.Media
+import moe.styx.common.data.TMDBMapping
+import moe.styx.common.extension.toBoolean
 import moe.styx.common.json
+import moe.styx.common.util.isClose
 import moe.styx.web.data.getAniListDataForID
+import moe.styx.web.data.getMalIDForAnilistID
+import moe.styx.web.data.tmdb.tmdbFindMedia
 import moe.styx.web.topNotification
 
 class QuickAddDialog(media: Media, val onChoose: (Media) -> Unit) : Dialog() {
@@ -40,9 +45,24 @@ class QuickAddDialog(media: Media, val onChoose: (Media) -> Unit) : Dialog() {
                             topNotification("Could not get metadata for this ID.")
                             return@onLeftClick
                         }
+                        val malID = getMalIDForAnilistID(meta.id)
+                        val tmdbResult = tmdbFindMedia(meta.anyTitle(), media.isSeries.toBoolean()).filter { it.name.isClose(meta.anyTitle()) }
                         val metadataMap = runCatching { json.decodeFromString<MappingCollection>(media.metadataMap!!) }.getOrNull()?.apply {
                             this.anilistMappings.add(BasicMapping(remoteID = meta.id))
-                        } ?: MappingCollection(anilistMappings = mutableListOf(BasicMapping(remoteID = meta.id)))
+                            if (malID != null)
+                                this.malMappings.add(BasicMapping(remoteID = malID))
+                            if (tmdbResult.isNotEmpty())
+                                this.tmdbMappings.add(TMDBMapping(remoteID = tmdbResult.first().id))
+                        } ?: MappingCollection(
+                            anilistMappings = mutableListOf(BasicMapping(remoteID = meta.id)),
+                            malMappings = mutableListOf<BasicMapping>().apply {
+                                if (malID != null)
+                                    add(BasicMapping(remoteID = malID))
+                            }, tmdbMappings = mutableListOf<TMDBMapping>().apply {
+                                if (tmdbResult.isNotEmpty())
+                                    add(TMDBMapping(remoteID = tmdbResult.first().id))
+                            }
+                        )
                         onChoose(
                             media.copy(
                                 name = meta.anyTitle(),
