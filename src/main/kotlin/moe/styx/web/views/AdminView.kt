@@ -10,11 +10,13 @@ import com.vaadin.flow.theme.lumo.LumoUtility
 import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.initMediaComponent
+import moe.styx.web.components.misc.generateUnwatched
 import moe.styx.web.components.noAccess
 import moe.styx.web.components.user.userListing
 import moe.styx.web.createComponent
 import moe.styx.web.getDBClient
 import moe.styx.web.layout.MainLayout
+import moe.styx.web.topNotification
 
 @Route("admin", layout = MainLayout::class)
 @PageTitle("Styx - Admin")
@@ -41,6 +43,15 @@ class AdminView : KComposite() {
             }
             panel("User Management") {
                 init(userListing(dbClient))
+            }
+            panel("Misc Utils") {
+                button("Show unwatched shows") {
+                    onLeftClick {
+                        topNotification("Please wait.")
+                        val ui = UI.getCurrent()
+                        generateUnwatched(ui)
+                    }
+                }
             }
         }.also {
             dbClient.closeConnection()
