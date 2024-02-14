@@ -11,6 +11,7 @@ import moe.styx.common.data.BasicMapping
 import moe.styx.common.data.Media
 import moe.styx.common.data.TMDBMapping
 import moe.styx.common.extension.toBoolean
+import moe.styx.web.data.AniListMediaResult
 import moe.styx.web.data.searchAniList
 import moe.styx.web.data.tmdb.getTmdbMetadata
 import moe.styx.web.data.tmdb.tmdbFindMedia
@@ -70,24 +71,31 @@ class MappingSearchDialog(val parent: MappingStack, val media: Media) : Dialog()
                 )
             }
         } else {
-            val results = searchAniList(search)
-            if (results.isEmpty())
-                resultLayout.replaceAll { h3("Could not find anything for this search.") }.also { return }
-            results.forEach { meta ->
-                resultLayout.add(
-                    verticalLayout(false) {
-                        anchor(meta.listingURL(), meta.anyTitle()).apply { setTarget(AnchorTarget.BLANK) }
-                        button("Add") {
-                            onLeftClick {
-                                this@MappingSearchDialog.parent.addEntry(
-                                    StackEntry(this@MappingSearchDialog.parent, BasicMapping(remoteID = meta.id))
-                                )
-                            }
-                        }
-                    }
+            updateAnilistResults(search, resultLayout) {
+                this@MappingSearchDialog.parent.addEntry(
+                    StackEntry(this@MappingSearchDialog.parent, BasicMapping(remoteID = it.id))
                 )
             }
         }
+    }
+}
+
+fun updateAnilistResults(search: String, layout: VerticalLayout, onClick: (AniListMediaResult) -> Unit) {
+    val results = searchAniList(search)
+    if (results.isEmpty())
+        layout.replaceAll { h3("Could not find anything for this search.") }.also { return }
+    results.forEach { meta ->
+        layout.add(
+            VerticalLayout().apply {
+                isPadding = false
+                anchor(meta.listingURL(), meta.anyTitle()).apply { setTarget(AnchorTarget.BLANK) }
+                button("Add") {
+                    onLeftClick {
+                        onClick(meta)
+                    }
+                }
+            }
+        )
     }
 }
 

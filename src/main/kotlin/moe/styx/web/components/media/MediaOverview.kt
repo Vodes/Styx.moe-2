@@ -28,6 +28,7 @@ import moe.styx.web.getDBClient
 import moe.styx.web.getFirstIDFromMap
 import moe.styx.web.newGUID
 import moe.styx.web.replaceAll
+import org.vaadin.lineawesome.LineAwesomeIcon
 
 class MediaOverview(media: Media?) : KComposite() {
     private var internalMedia = media ?: Media(newGUID(), "", "", "", "", "", "", added = currentUnixSeconds())
@@ -60,6 +61,15 @@ class MediaOverview(media: Media?) : KComposite() {
                             tags = result.tags.filter { it.rank > 60 && !it.isMediaSpoiler }.take(10).joinToString(", ") { it.name }
                         )
                         updateTabs()
+                    }
+                }
+                iconButton(LineAwesomeIcon.FAST_FORWARD_SOLID.create()) {
+                    setTooltipText("Quick Add (Anilist)")
+                    onLeftClick {
+                        QuickAddDialog(internalMedia) {
+                            internalMedia = it
+                            updateTabs()
+                        }.open()
                     }
                 }
                 checkBox("Movie") {
