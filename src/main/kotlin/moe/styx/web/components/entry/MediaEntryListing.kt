@@ -9,6 +9,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.theme.lumo.LumoUtility
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
+import moe.styx.common.extension.equalsAny
 import moe.styx.db.delete
 import moe.styx.db.getEntries
 import moe.styx.db.save
@@ -44,11 +45,11 @@ fun entryListing(media: Media) = createComponent {
                     details("Synopsis") { nativeLabel(entry.synopsisEN) }
                 if (!entry.synopsisDE.isNullOrBlank())
                     details("Synopsis DE") { nativeLabel(entry.synopsisDE) }
-                val fileName = File(entry.filePath).name
-                htmlSpan("<b>File:</b> $fileName") {
-                    tooltip = File(entry.filePath).parentFile.absolutePath
+                val file = File(entry.filePath)
+                htmlSpan("<b>File:</b> ${file.name}") {
+                    tooltip = file.parentFile.absolutePath
                 }
-                if (!entry.originalName.equals(fileName, true))
+                if (!entry.originalName.isNullOrBlank() && !entry.originalName.equalsAny(file.name, file.nameWithoutExtension))
                     htmlSpan("<b>Original File:</b> ${entry.originalName}")
                 horizontalLayout(false) {
                     defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
