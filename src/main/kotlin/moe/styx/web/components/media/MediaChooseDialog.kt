@@ -5,7 +5,7 @@ import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.html.Div
 import moe.styx.common.data.Media
-import moe.styx.web.components.initMediaComponent
+import moe.styx.web.components.MediaGrid
 import moe.styx.web.getDBClient
 
 class MediaChooseDialog(private val exclude: String, val onClose: (Media?) -> Unit) : Dialog() {
@@ -17,7 +17,7 @@ class MediaChooseDialog(private val exclude: String, val onClose: (Media?) -> Un
         layout.setSizeFull()
         layout.add(verticalLayout {
             setSizeFull()
-            add(initMediaComponent(dbClient, exclude) { selected = it; this@MediaChooseDialog.close() })
+            add(MediaGrid(dbClient, exclude) { selected = it; this@MediaChooseDialog.close() })
         })
         add(layout)
         dbClient.closeConnection()
