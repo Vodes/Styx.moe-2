@@ -22,11 +22,8 @@ import moe.styx.db.StyxDBClient
 import moe.styx.db.delete
 import moe.styx.db.getEntries
 import moe.styx.db.getMedia
+import moe.styx.web.*
 import moe.styx.web.components.media.ImportDialog
-import moe.styx.web.getDBClient
-import moe.styx.web.isWindows
-import moe.styx.web.readableSize
-import moe.styx.web.toISODate
 import moe.styx.web.views.sub.DownloadableView
 import moe.styx.web.views.sub.MediaView
 import java.io.File
@@ -83,9 +80,15 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
                 gridContextMenu {
                     isOpenOnClick = onClickItem == null
                     item("View", clickListener = {
-                        if (!it.checkValidMedia())
+                        if (!it.checkValidMedia(true))
                             return@item
                         navigateTo(MediaView::class, it!!.GUID)
+                    })
+                    item("View in new tab", clickListener = {
+                        if (!it.checkValidMedia(true))
+                            return@item
+                        val route = getRouteUrl(MediaView::class)
+                        UI.getCurrent().page.open("${Main.config.baseURL}/$route/${it!!.GUID}")
                     })
                     item("Delete", clickListener = { onDeleteClick(it) })
                     separator()

@@ -48,12 +48,12 @@ class MetadataView(private var media: Media, mediaProvider: (Media) -> Media) : 
                     addValueChangeListener { this@MetadataView.media = mediaProvider(media.copy(name = it.value.trim())) }
                 }
                 val englishField = textField("English") {
-                    value = media.nameEN
+                    value = media.nameEN ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
                     addValueChangeListener { this@MetadataView.media = mediaProvider(media.copy(nameEN = it.value.trim())) }
                 }
                 val romajiField = textField("Romaji") {
-                    value = media.nameJP
+                    value = media.nameJP ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
                     addValueChangeListener { this@MetadataView.media = mediaProvider(media.copy(nameJP = it.value.trim())) }
                 }
