@@ -46,7 +46,10 @@ class UserView : KComposite() {
                 panel("Downloads") {
                     isOpened = true
                     setClassNames2(Padding.XSMALL)
-                    content { add(downloadButtons()) }
+                    content {
+                        add(desktopDownloadButtons())
+                        add(androidDownloadButtons())
+                    }
                 }
                 panel("Devices") {
                     setClassNames2(Padding.XSMALL)
@@ -62,7 +65,7 @@ class UserView : KComposite() {
         }
     }
 
-    private fun downloadButtons() = createComponent {
+    private fun desktopDownloadButtons() = createComponent {
         horizontalLayout {
             setClassNames2(Padding.Horizontal.SMALL)
             if (!File(Main.config.buildDir).exists() || File(Main.config.buildDir).listFiles().isNullOrEmpty()) {
@@ -106,6 +109,60 @@ class UserView : KComposite() {
                         setHref(winMsi.streamResource())
                     }
                 }
+            }
+        }
+    }
+
+    private fun androidDownloadButtons() = createComponent {
+        horizontalLayout {
+            setClassNames2(Padding.Horizontal.SMALL)
+            if (!File(Main.config.androidBuildDir).exists() || File(Main.config.androidBuildDir).listFiles().isNullOrEmpty()) {
+                h3("Could not find builds on the server.")
+                return@horizontalLayout
+            }
+            val latest = File(Main.config.androidBuildDir).listFiles()!!.filter { it.isDirectory }.maxBy { it.name }
+            val universalAPK = latest.walkTopDown().find { it.name.endsWith("-universal-release.apk") }
+            val arm64APK = latest.walkTopDown().find { it.name.endsWith("-arm64-v8a-release.apk") }
+            val armAPK = latest.walkTopDown().find { it.name.endsWith("-armeabi-v7a-release.apk") }
+            val x86APK = latest.walkTopDown().find { it.name.endsWith("-x86-release.apk") }
+            val x64APK = latest.walkTopDown().find { it.name.endsWith("-x86_64-release.apk") }
+            verticalLayout {
+                h3("Android")
+                unorderedList {
+                    addClassNames(Display.FLEX, Gap.SMALL, ListStyleType.NONE, Margin.NONE, Padding.NONE)
+                    if (universalAPK != null) {
+                        linkButton("", "Universal APK", LineAwesomeIcon.ANDROID.create()) {
+                            element.setAttribute("download", true)
+                            setHref(universalAPK.streamResource())
+                        }
+                    }
+                    if (arm64APK != null) {
+                        linkButton("", "ARM-64 APK") {
+                            element.setAttribute("download", true)
+                            setHref(arm64APK.streamResource())
+                        }
+                    }
+                    if (armAPK != null) {
+                        linkButton("", "ARM APK") {
+                            element.setAttribute("download", true)
+                            setHref(armAPK.streamResource())
+                        }
+                    }
+                    if (x86APK != null) {
+                        linkButton("", "x86 APK") {
+                            element.setAttribute("download", true)
+                            setHref(x86APK.streamResource())
+                        }
+                    }
+                    if (x64APK != null) {
+                        linkButton("", "x86-64 APK") {
+                            element.setAttribute("download", true)
+                            setHref(x64APK.streamResource())
+                        }
+                    }
+                }
+                htmlSpan("If you don't know what to pick here or don't care about filesize just go with <b>Universal</b>.")
+                htmlSpan("Chances are that if you have a modern device <b>ARM-64</b> will be what you want.")
             }
         }
     }

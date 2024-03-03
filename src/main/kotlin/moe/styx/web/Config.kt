@@ -14,6 +14,7 @@ data class Config(
     val imageURL: String = "",
     val imageDir: String = "",
     val buildDir: String = "",
+    val androidBuildDir: String = "",
     val dbConfig: DbConfig = DbConfig()
 )
 
