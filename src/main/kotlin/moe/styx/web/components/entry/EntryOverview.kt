@@ -144,7 +144,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                                 fileField.value = file.absolutePath
                                 sizeField.value = file.length().readableSize()
                                 entry = entry.copy(filePath = file.absolutePath, fileSize = file.length())
-                            }
+                            }.open()
                         }
                     }
                 }
