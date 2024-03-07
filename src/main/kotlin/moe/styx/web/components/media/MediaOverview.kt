@@ -107,8 +107,6 @@ class MediaOverview(media: Media?) : KComposite() {
                 val entryCount = getDBClient().executeGet { genericCount("MediaEntry", mapOf("mediaID" to internalMedia.GUID)) }
                 val entryTab = Tab(Span("Entries").apply { addClassNames(Padding.Right.SMALL) },
                     Badge("$entryCount").apply { addClassNames(Padding.Horizontal.SMALL) })
-                if (entryCount < 1)
-                    entryTab.isEnabled = false
                 entryLayout = VerticalLayout().apply {
                     setSizeFull()
                     init(entryListing(internalMedia))

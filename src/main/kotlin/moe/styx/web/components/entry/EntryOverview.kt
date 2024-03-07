@@ -9,8 +9,11 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
+import moe.styx.common.data.MediaInfo
 import moe.styx.common.extension.currentUnixSeconds
+import moe.styx.common.extension.toInt
 import moe.styx.db.save
+import moe.styx.downloader.utils.getMediaInfo
 import moe.styx.web.components.media.FileBrowserDialog
 import moe.styx.web.getDBClient
 import moe.styx.web.newGUID
@@ -107,7 +110,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                         addValueChangeListener { entry = entry.copy(filePath = it.value) }
                     }
                     iconButton(LineAwesomeIcon.SYNC_SOLID.create()) {
-                        setTooltipText("Update file size")
+                        setTooltipText("Update file size & mediainfo")
                         onLeftClick {
                             val file = File(fileField.value)
                             if (!file.exists()) {
@@ -116,6 +119,21 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                             }
                             entry = entry.copy(fileSize = file.length())
                             sizeField.value = file.length().readableSize()
+                            getDBClient().executeAndClose {
+                                val mediainfo = file.getMediaInfo()
+                                if (mediainfo != null)
+                                    save(
+                                        MediaInfo(
+                                            entry.GUID,
+                                            mediainfo.videoCodec(),
+                                            mediainfo.videoBitDepth(),
+                                            mediainfo.videoResolution(),
+                                            mediainfo.hasEnglishDub().toInt(),
+                                            mediainfo.hasGermanDub().toInt(),
+                                            mediainfo.hasGermanSub().toInt()
+                                        )
+                                    )
+                            }
                         }
                     }
                     iconButton(LineAwesomeIcon.FOLDER_OPEN_SOLID.create()) {
