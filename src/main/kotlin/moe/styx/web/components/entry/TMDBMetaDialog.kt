@@ -17,8 +17,12 @@ import moe.styx.common.extension.padString
 import moe.styx.common.json
 import moe.styx.db.getEntries
 import moe.styx.db.save
-import moe.styx.web.*
+import moe.styx.downloader.utils.getRemoteEpisodes
+import moe.styx.web.Main
+import moe.styx.web.createComponent
 import moe.styx.web.data.tmdb.parseDateUnix
+import moe.styx.web.getDBClient
+import moe.styx.web.topNotification
 
 class TMDBMetaDialog(val media: Media) : Dialog() {
 

@@ -5,15 +5,19 @@ import com.github.mvysny.kaributools.tooltip
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog
+import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.theme.lumo.LumoUtility
+import kotlinx.serialization.encodeToString
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
 import moe.styx.common.extension.equalsAny
 import moe.styx.common.extension.readableSize
+import moe.styx.common.prettyPrintJson
 import moe.styx.db.delete
 import moe.styx.db.getEntries
 import moe.styx.db.save
+import moe.styx.downloader.utils.getMediaInfo
 import moe.styx.web.createComponent
 import moe.styx.web.getDBClient
 import org.vaadin.lineawesome.LineAwesomeIcon
@@ -62,6 +66,9 @@ fun entryListing(media: Media) = createComponent {
                         addThemeVariants(ButtonVariant.LUMO_ERROR)
                         onLeftClick { entryDeleteDialog(entry) }
                     }
+                    iconButton(LineAwesomeIcon.INFO_CIRCLE_SOLID.create()) {
+                        onLeftClick { entryMediaInfoDialog(entry) }
+                    }
                     h5("Size: ${entry.fileSize.readableSize()}")
                 }
             }
@@ -92,6 +99,28 @@ fun entryDeleteDialog(mediaEntry: MediaEntry) {
             if (file.exists())
                 file.delete()
             getDBClient().executeAndClose { delete(mediaEntry) }
+        }
+    }.open()
+}
+
+fun entryMediaInfoDialog(mediaEntry: MediaEntry) {
+    val entryFile = File(mediaEntry.filePath)
+    val mediainfo = if (entryFile.exists()) entryFile.getMediaInfo() else null
+    Dialog().apply {
+        setSizeFull()
+        maxWidth = "800px"
+        maxHeight = "600px"
+        verticalLayout {
+            setSizeFull()
+            if (!entryFile.exists() || mediainfo == null) {
+                h3("Could not find file.")
+                return@verticalLayout
+            }
+            textArea("MediaInfo") {
+                setSizeFull()
+                isEnabled = false
+                value = prettyPrintJson.encodeToString(mediainfo)
+            }
         }
     }.open()
 }
