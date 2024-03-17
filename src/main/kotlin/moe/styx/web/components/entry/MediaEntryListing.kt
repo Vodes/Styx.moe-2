@@ -118,7 +118,7 @@ fun entryMediaInfoDialog(mediaEntry: MediaEntry) {
             }
             textArea("MediaInfo") {
                 setSizeFull()
-                isEnabled = false
+                isReadOnly = true
                 value = prettyPrintJson.encodeToString(mediainfo)
             }
         }
