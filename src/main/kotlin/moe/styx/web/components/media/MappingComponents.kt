@@ -14,6 +14,7 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
 import kotlinx.serialization.encodeToString
 import moe.styx.common.data.*
+import moe.styx.common.data.tmdb.StackType
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.json
 import moe.styx.web.data.getMalIDForAnilistID
@@ -201,7 +202,7 @@ class StackEntry(parent: MappingStack, var mappingEntry: IMapping) : KComposite(
                             Notification.show("Could not find any episode groups for this ID!", 1200, Notification.Position.TOP_CENTER)
                             return@addValueChangeListener
                         }
-                        val matchingGroups = groups.results.filter { it.type == event.value.type }
+                        val matchingGroups = groups.results!!.filter { it.type == event.value.type }
                         if (matchingGroups.isEmpty()) {
                             Notification.show("Could not find a group for this type!", 1200, Notification.Position.TOP_CENTER)
                             return@addValueChangeListener
@@ -243,10 +244,4 @@ class StackEntry(parent: MappingStack, var mappingEntry: IMapping) : KComposite(
             }
         }
     }
-}
-
-enum class StackType(val displayName: String, val key: String) {
-    ANILIST("Anilist", "anilist"),
-    TMDB("TMDB", "tmdb"),
-    MAL("MyAnimeList", "mal")
 }

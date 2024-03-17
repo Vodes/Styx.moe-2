@@ -15,6 +15,8 @@ import com.vaadin.flow.component.tabs.Tab
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
 import kotlinx.datetime.Clock
 import moe.styx.common.data.Media
+import moe.styx.common.data.tmdb.StackType
+import moe.styx.common.data.tmdb.getFirstIDFromMap
 import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
@@ -25,7 +27,6 @@ import moe.styx.web.Main.updateChanges
 import moe.styx.web.components.entry.entryListing
 import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.getDBClient
-import moe.styx.web.getFirstIDFromMap
 import moe.styx.web.newGUID
 import moe.styx.web.replaceAll
 import org.vaadin.lineawesome.LineAwesomeIcon

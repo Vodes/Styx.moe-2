@@ -10,12 +10,12 @@ import com.vaadin.flow.theme.lumo.LumoUtility
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
 import moe.styx.common.extension.equalsAny
+import moe.styx.common.extension.readableSize
 import moe.styx.db.delete
 import moe.styx.db.getEntries
 import moe.styx.db.save
 import moe.styx.web.createComponent
 import moe.styx.web.getDBClient
-import moe.styx.web.readableSize
 import org.vaadin.lineawesome.LineAwesomeIcon
 import java.io.File
 

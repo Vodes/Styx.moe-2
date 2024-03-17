@@ -14,6 +14,10 @@ import moe.styx.common.data.Category
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaSchedule
 import moe.styx.common.data.ScheduleWeekday
+import moe.styx.common.data.tmdb.StackType
+import moe.styx.common.data.tmdb.getFirstIDFromMap
+import moe.styx.common.data.tmdb.getFirstTMDBSeason
+import moe.styx.common.extension.capitalize
 import moe.styx.common.extension.eqI
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
@@ -26,8 +30,6 @@ import moe.styx.web.data.getAnisearchIDForAnilistID
 import moe.styx.web.data.scrapeAnisearchDescription
 import moe.styx.web.data.tmdb.getTmdbMetadata
 import moe.styx.web.getDBClient
-import moe.styx.web.getFirstIDFromMap
-import moe.styx.web.getFirstTMDBSeason
 import java.time.Duration
 import java.time.LocalTime
 
@@ -205,7 +207,7 @@ class Other(private var media: Media, mediaProvider: (Media) -> Media) : KCompos
                     setItems(*weekdays)
                     isEmptySelectionAllowed = true
                     value = weekdays.find { it == schedule?.day }
-                    setTextRenderer { it.toString().lowercase().capitalize() }
+                    setTextRenderer { it.toString().capitalize() }
                     setWidthFull()
                 }
                 val time = timePicker("Release Time") {

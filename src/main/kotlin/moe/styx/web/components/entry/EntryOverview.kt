@@ -11,13 +11,13 @@ import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
 import moe.styx.common.data.MediaInfo
 import moe.styx.common.extension.currentUnixSeconds
+import moe.styx.common.extension.readableSize
 import moe.styx.common.extension.toInt
 import moe.styx.db.save
 import moe.styx.downloader.utils.getMediaInfo
 import moe.styx.web.components.media.FileBrowserDialog
 import moe.styx.web.getDBClient
 import moe.styx.web.newGUID
-import moe.styx.web.readableSize
 import moe.styx.web.topNotification
 import org.vaadin.lineawesome.LineAwesomeIcon
 import java.io.File

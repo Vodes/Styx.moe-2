@@ -12,12 +12,16 @@ import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
 import moe.styx.common.data.MediaInfo
 import moe.styx.common.extension.currentUnixSeconds
+import moe.styx.common.extension.readableSize
 import moe.styx.common.extension.toInt
 import moe.styx.db.getEntries
 import moe.styx.db.save
 import moe.styx.downloader.parsing.parseEpisodeAndVersion
 import moe.styx.downloader.utils.getMediaInfo
-import moe.styx.web.*
+import moe.styx.web.Main
+import moe.styx.web.getDBClient
+import moe.styx.web.newGUID
+import moe.styx.web.topNotification
 import org.vaadin.filesystemdataprovider.FileTypeResolver
 import org.vaadin.filesystemdataprovider.FilesystemData
 import org.vaadin.filesystemdataprovider.FilesystemDataProvider

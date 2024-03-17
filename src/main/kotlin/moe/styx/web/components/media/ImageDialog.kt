@@ -21,12 +21,17 @@ import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.runBlocking
 import moe.styx.common.data.Image
 import moe.styx.common.data.Media
+import moe.styx.common.data.tmdb.StackType
+import moe.styx.common.data.tmdb.TmdbImage
+import moe.styx.common.data.tmdb.getFirstIDFromMap
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.http.httpClient
-import moe.styx.web.*
+import moe.styx.common.isWindows
+import moe.styx.web.Main
+import moe.styx.web.createComponent
 import moe.styx.web.data.getAniListDataForID
-import moe.styx.web.data.tmdb.TmdbImage
 import moe.styx.web.data.tmdb.tmdbImageQuery
+import moe.styx.web.topNotification
 import org.vaadin.lineawesome.LineAwesomeIcon
 import java.io.File
 import java.util.*
@@ -159,7 +164,7 @@ private fun downloadImage(url: String, thumbnail: Boolean): Image? = runBlocking
 
     val guid = UUID.randomUUID().toString().uppercase()
 
-    if (isWindows()) {
+    if (isWindows) {
         return@runBlocking Image(guid, externalURL = url, type = if (thumbnail) 0 else 1)
     }
     val stream = response.bodyAsChannel().toInputStream()

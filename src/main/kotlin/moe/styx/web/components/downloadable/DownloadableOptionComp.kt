@@ -13,6 +13,7 @@ import moe.styx.common.data.DownloadableOption
 import moe.styx.common.data.Media
 import moe.styx.common.data.ProcessingOptions
 import moe.styx.common.data.SourceType
+import moe.styx.common.extension.capitalize
 import moe.styx.web.components.addRSSTemplateMenu
 import moe.styx.web.components.addRegexTemplateMenu
 

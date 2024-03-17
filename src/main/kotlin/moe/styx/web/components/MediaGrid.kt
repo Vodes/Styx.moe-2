@@ -16,14 +16,18 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.router.QueryParameters
 import com.vaadin.flow.theme.lumo.LumoUtility
 import moe.styx.common.data.Media
+import moe.styx.common.extension.readableSize
 import moe.styx.common.extension.toBoolean
+import moe.styx.common.isWindows
 import moe.styx.common.util.isClose
 import moe.styx.db.StyxDBClient
 import moe.styx.db.delete
 import moe.styx.db.getEntries
 import moe.styx.db.getMedia
-import moe.styx.web.*
+import moe.styx.web.Main
 import moe.styx.web.components.media.ImportDialog
+import moe.styx.web.getDBClient
+import moe.styx.web.toISODate
 import moe.styx.web.views.sub.DownloadableView
 import moe.styx.web.views.sub.MediaView
 import java.io.File
@@ -168,7 +172,7 @@ private fun onDeleteClick(m: Media?) {
             UI.getCurrent().page.reload()
         }
         addRejectListener {
-            if (isWindows())
+            if (isWindows)
                 return@addRejectListener
             getDBClient().executeAndClose {
                 delete(m)

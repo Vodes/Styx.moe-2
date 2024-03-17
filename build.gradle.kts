@@ -8,8 +8,8 @@ val ktorVersion: String by extra
 val scrimageVersion: String by extra
 
 plugins {
-    kotlin("jvm") version "1.9.22"
-    kotlin("plugin.serialization") version "1.9.22"
+    kotlin("jvm") version "1.9.23"
+    kotlin("plugin.serialization") version "1.9.23"
     id("application")
     id("com.vaadin")
     id("com.github.johnrengelman.shadow") version "8.1.1"
@@ -34,7 +34,7 @@ tasks.withType<Test> {
 dependencies {
     // Kotlin Stuff
     implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.22")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.23")
 
     // Vaadin Stuff
     implementation("com.vaadin:vaadin-core:$vaadinVersion") {
@@ -53,13 +53,13 @@ dependencies {
 
     // Misc
     implementation("com.mysql:mysql-connector-j:8.2.0")
-    implementation("org.slf4j:slf4j-simple:2.0.7")
+    implementation("org.slf4j:slf4j-simple:2.0.9")
     implementation("net.peanuuutz.tomlkt:tomlkt:0.3.7")
     implementation("org.jsoup:jsoup:1.17.2")
 
     // Custom
-    implementation("moe.styx:styx-db:0.0.5")
-    implementation("moe.styx:styx-downloader:0.0.2")
+    implementation("moe.styx:styx-db:0.0.7")
+    implementation("moe.styx:styx-downloader:0.0.4")
 
     // Image Processing
     implementation("com.sksamuel.scrimage:scrimage-core:$scrimageVersion")

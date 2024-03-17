@@ -14,6 +14,7 @@ import moe.styx.common.data.DownloadableOption
 import moe.styx.common.data.DownloaderTarget
 import moe.styx.common.data.Media
 import moe.styx.common.data.SourceType
+import moe.styx.common.extension.readableSize
 import moe.styx.downloader.episodeWanted
 import moe.styx.downloader.ftp.FTPClient
 import moe.styx.downloader.ftp.FTPHandler
@@ -25,7 +26,6 @@ import moe.styx.downloader.torrent.RSSHandler
 import moe.styx.web.components.addRSSTemplateMenu
 import moe.styx.web.components.addRegexTemplateMenu
 import moe.styx.web.createComponent
-import moe.styx.web.readableSize
 import moe.styx.web.replaceAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 import moe.styx.downloader.Main as DownloaderMain

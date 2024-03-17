@@ -10,6 +10,7 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import moe.styx.common.data.BasicMapping
 import moe.styx.common.data.Media
 import moe.styx.common.data.TMDBMapping
+import moe.styx.common.data.tmdb.StackType
 import moe.styx.common.extension.toBoolean
 import moe.styx.web.data.AniListMediaResult
 import moe.styx.web.data.searchAniList

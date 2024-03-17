@@ -10,13 +10,15 @@ import moe.styx.common.data.MappingCollection
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
 import moe.styx.common.data.TMDBMapping
+import moe.styx.common.data.tmdb.TmdbEpisode
+import moe.styx.common.data.tmdb.getMappingForEpisode
 import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.padString
 import moe.styx.common.json
 import moe.styx.db.getEntries
 import moe.styx.db.save
 import moe.styx.web.*
-import moe.styx.web.data.tmdb.TmdbEpisode
+import moe.styx.web.data.tmdb.parseDateUnix
 
 class TMDBMetaDialog(val media: Media) : Dialog() {
 
@@ -61,8 +63,8 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
                     val (metaEN, metaDE) = mapping.getRemoteEpisodes { topNotification(it) }
                     entries.sortedBy { it.entryNumber.toDoubleOrNull() ?: 0.0 }.forEachIndexed { index, entry ->
                         val number = entry.entryNumber.toDouble() + mapping.offset
-                        val epMetaEN = metaEN.find { (if (it.order != null) it.order + 1 else it.episodeNumber) == number.toInt() }
-                        val epMetaDE = metaDE.find { (if (it.order != null) it.order + 1 else it.episodeNumber) == number.toInt() }
+                        val epMetaEN = metaEN.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
+                        val epMetaDE = metaDE.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
                         init(episodeMetaview(entry, index, epMetaEN, epMetaDE))
                     }
                 }
@@ -80,8 +82,8 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
                 val (metaEN, metaDE) = mapping.getRemoteEpisodes()
                 entries.forEach { entry ->
                     val number = entry.entryNumber.toDouble() + mapping.offset
-                    val epMetaEN = metaEN.find { (if (it.order != null) it.order + 1 else it.episodeNumber) == number.toInt() }
-                    val epMetaDE = metaDE.find { (if (it.order != null) it.order + 1 else it.episodeNumber) == number.toInt() }
+                    val epMetaEN = metaEN.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
+                    val epMetaDE = metaDE.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
                     if (epMetaEN == null)
                         return@forEach
                     val nameEN = epMetaEN.filteredName()
@@ -114,7 +116,7 @@ fun episodeMetaview(entry: MediaEntry, index: Int, epMetaEN: TmdbEpisode?, epMet
         if (epMetaEN == null) {
             h4("No remote episode for ${entry.entryNumber} found.") { addClassNames(Padding.Vertical.MEDIUM) }
         } else {
-            val remote = if (epMetaEN.order != null) epMetaEN.order + 1 else epMetaEN.episodeNumber
+            val remote = if (epMetaEN.order != null) epMetaEN.order!! + 1 else epMetaEN.episodeNumber
             h4("EP${entry.entryNumber} | TMDB: ${remote.padString(2)}") {
                 addClassNames(Padding.Top.MEDIUM)
             }
