@@ -16,14 +16,12 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.router.QueryParameters
 import com.vaadin.flow.theme.lumo.LumoUtility
 import moe.styx.common.data.Media
+import moe.styx.common.extension.eqI
 import moe.styx.common.extension.readableSize
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.isWindows
 import moe.styx.common.util.isClose
-import moe.styx.db.StyxDBClient
-import moe.styx.db.delete
-import moe.styx.db.getEntries
-import moe.styx.db.getMedia
+import moe.styx.db.*
 import moe.styx.web.Main
 import moe.styx.web.components.media.ImportDialog
 import moe.styx.web.getDBClient
@@ -35,6 +33,7 @@ import java.io.File
 class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: String? = null, onClickItem: ((Media) -> Unit)? = null) : KComposite() {
     private lateinit var searchField: TextField
     private lateinit var movieCheck: Checkbox
+    private lateinit var hasDownloadableCheck: Checkbox
     private val media = dbClient.executeGet(false) { getMedia() }.sortedByDescending { it.added }.filter { it.GUID != exclude }
     private val mediaProvider = ListDataProvider(media)
 
@@ -54,6 +53,7 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
                         onLeftClick { navigateTo(MediaView::class) }
                     }
                 movieCheck = checkBox("Movies only")
+                hasDownloadableCheck = checkBox("Has download profile")
                 searchField.addValueChangeListener {
                     updateFilter(it.value)
                     if (exclude.isBlank()) {
@@ -66,6 +66,7 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
                     }
                 }
                 movieCheck.addValueChangeListener { updateFilter(searchField.value) }
+                hasDownloadableCheck.addValueChangeListener { updateFilter(searchField.value) }
             }
             grid<Media> {
                 minWidth = "750px"
@@ -118,6 +119,12 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
         mediaProvider.clearFilters()
         if (movieCheck.value)
             mediaProvider.addFilter { !it.isSeries.toBoolean() }
+        if (hasDownloadableCheck.value) {
+            getDBClient().executeAndClose {
+                val targets = getTargets()
+                mediaProvider.addFilter { targets.find { t -> t.mediaID eqI it.GUID } != null }
+            }
+        }
         if (!search.isNullOrBlank() && search.length > 2) {
             mediaProvider.addFilter { media ->
                 media.name.isClose(search) || media.nameEN.isClose(search) || media.nameJP.isClose(search)
