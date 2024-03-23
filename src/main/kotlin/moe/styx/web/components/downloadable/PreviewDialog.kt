@@ -205,7 +205,7 @@ class PreviewDialog(
             setWidthFull()
             setItems(results)
             selectionMode = Grid.SelectionMode.NONE
-            columnFor(PreviewResult::title, converter = { it!!.split("/").last() }, sortable = true) {
+            columnFor(PreviewResult::title, converter = { s -> s!!.split("/").maxBy { it.length } }, sortable = true) {
                 setHeader("Title")
                 setTooltipGenerator(PreviewResult::title)
             }
