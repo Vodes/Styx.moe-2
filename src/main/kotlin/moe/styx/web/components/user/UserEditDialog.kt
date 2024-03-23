@@ -11,7 +11,7 @@ import moe.styx.web.getDBClient
 import moe.styx.web.newGUID
 import moe.styx.web.topNotification
 
-class UserEditDialog(private val userIn: User?) : Dialog() {
+class UserEditDialog(private val userIn: User?, private val readonly: Boolean = false) : Dialog() {
 
     lateinit var permissionsField: IntegerField
     lateinit var discordIDField: TextField
@@ -28,6 +28,7 @@ class UserEditDialog(private val userIn: User?) : Dialog() {
 
                 nameField = textField("Name") {
                     value = userIn?.name ?: ""
+                    isReadOnly = readonly
                     setWidthFull()
                 }
                 permissionsField = integerField("Permissions") {
@@ -35,19 +36,22 @@ class UserEditDialog(private val userIn: User?) : Dialog() {
                     min = -1
                     value = userIn?.permissions ?: 0
                     max = 100
+                    isReadOnly = readonly
                     setWidthFull()
                 }
                 discordIDField = textField("Discord ID") {
                     value = userIn?.discordID ?: ""
+                    isReadOnly = readonly
                     setWidthFull()
                 }
                 if (userIn != null) {
                     details("Devices") {
-                        deviceListView(userIn)
+                        deviceListView(userIn, readonly)
                     }
                 }
             }
             button("Save") {
+                isEnabled = !readonly
                 onLeftClick {
                     if (nameField.value.isNullOrBlank() || discordIDField.value.isNullOrBlank()) {
                         topNotification("Name and Discord ID are required.")

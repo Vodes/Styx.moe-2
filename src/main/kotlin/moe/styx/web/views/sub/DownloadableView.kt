@@ -32,7 +32,7 @@ class DownloadableView : KComposite(), HasUrlParameter<String> {
             isSpacing = false
             authProgress()
         }.also { vert ->
-            checkAuth(UI.getCurrent(), VaadinRequest.getCurrent(), parent = vert) {
+            checkAuth(UI.getCurrent(), VaadinRequest.getCurrent(), minPerms = 99, parent = vert) {
                 target?.let { DownloadableOverview(it, media!!) } ?: h2("Invalid media association!")
             }
         }

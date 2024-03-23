@@ -27,14 +27,14 @@ class AdminView : KComposite(), HasUrlParameter<String> {
             setClassNames2(LumoUtility.Margin.NONE, LumoUtility.Padding.NONE)
             authProgress()
         }.also { layout ->
-            checkAuth(UI.getCurrent(), VaadinRequest.getCurrent(), 99, layout, notLoggedIn = { noAccess() }) {
+            checkAuth(UI.getCurrent(), VaadinRequest.getCurrent(), 50, layout, notLoggedIn = { noAccess() }) {
                 h2("Welcome, ${it.name}!")
-                init(initAdminView())
+                init(initAdminView(it.permissions))
             }
         }
     }
 
-    private fun initAdminView() = createComponent {
+    private fun initAdminView(perms: Int) = createComponent {
         val dbClient = getDBClient()
         accordion {
             setWidthFull()
@@ -42,7 +42,7 @@ class AdminView : KComposite(), HasUrlParameter<String> {
                 init(MediaGrid(dbClient, initialSearch = query))
             }
             panel("User Management") {
-                init(userListing(dbClient))
+                init(userListing(dbClient, perms < 99))
             }
             panel("Misc Utils") {
                 button("Show unwatched shows") {

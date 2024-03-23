@@ -14,7 +14,7 @@ import moe.styx.web.toISODate
 import moe.styx.web.topNotification
 import org.vaadin.lineawesome.LineAwesomeIcon
 
-class DeviceListView(private val user: User) : KComposite() {
+class DeviceListView(private val user: User, private val readonly: Boolean = false) : KComposite() {
     private lateinit var deviceLayout: VerticalLayout
 
 
@@ -23,6 +23,7 @@ class DeviceListView(private val user: User) : KComposite() {
             horizontalLayout(false) {
                 h3("Devices")
                 iconButton(LineAwesomeIcon.PLUS_SOLID.create()) {
+                    isEnabled = !readonly
                     onLeftClick {
                         AddDeviceDialog(user) { updateList() }.open()
                     }
@@ -49,6 +50,7 @@ class DeviceListView(private val user: User) : KComposite() {
                                     defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
                                     h4(device.name)
                                     iconButton(LineAwesomeIcon.TRASH_SOLID.create()) {
+                                        isEnabled = !readonly
                                         onLeftClick {
                                             val deleted = getDBClient().executeGet { delete(device) }
                                             if (!deleted) {
@@ -73,7 +75,8 @@ class DeviceListView(private val user: User) : KComposite() {
 @VaadinDsl
 fun (@VaadinDsl HasComponents).deviceListView(
     user: User,
+    readonly: Boolean = false,
     block: (@VaadinDsl DeviceListView).() -> Unit = {}
 ) = init(
-    DeviceListView(user), block
+    DeviceListView(user, readonly), block
 )
