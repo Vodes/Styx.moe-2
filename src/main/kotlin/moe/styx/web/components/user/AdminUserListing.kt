@@ -37,7 +37,7 @@ fun userListing(dbClient: StyxDBClient, readonly: Boolean = false) = createCompo
         val mapped = ListDataProvider(UserOnlineCombo.fromMap(users).sortedBy { it.name })
         grid<UserOnlineCombo> {
             setItems(mapped)
-            minWidth = "700px"
+            setWidthFull()
             selectionMode = Grid.SelectionMode.NONE
             setWidthFull()
             addItemClickListener {
@@ -47,9 +47,12 @@ fun userListing(dbClient: StyxDBClient, readonly: Boolean = false) = createCompo
                 LitRenderer.of<UserOnlineCombo?>("<a href=\"\${item.link}\" target =\"_blank\">\${item.name}</a>")
                     .withProperty("name", UserOnlineCombo::name)
                     .withProperty("link", UserOnlineCombo::discordURL)
-            ).setHeader("Name").setSortable(true)
-            addColumn(LocalDateTimeRenderer(UserOnlineCombo::addedDate, "yyyy-MM-dd HH:mm")).setHeader("Added").setSortable(true)
-            addColumn(LocalDateTimeRenderer(UserOnlineCombo::lastUsedDate, "yyyy-MM-dd HH:mm")).setHeader("Last Login").setSortable(true)
+            ).setHeader("Name").setFlexGrow(1).setSortable(true)
+            addColumn(LocalDateTimeRenderer(UserOnlineCombo::addedDate, "yyyy-MM-dd HH:mm")).setHeader("Added").setFlexGrow(1).setAutoWidth(true)
+                .setSortable(true)
+            addColumn(LocalDateTimeRenderer(UserOnlineCombo::lastUsedDate, "yyyy-MM-dd HH:mm")).setHeader("Last Login").setFlexGrow(1)
+                .setAutoWidth(true)
+                .setSortable(true)
             addColumn(NativeButtonRenderer({ item -> if (item.user.permissions >= 0) "Disable" else "Enable" }) {
                 if (readonly) {
                     topNotification("You don't have the permissions to do this.")

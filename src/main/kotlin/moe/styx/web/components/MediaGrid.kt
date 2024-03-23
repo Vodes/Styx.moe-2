@@ -4,19 +4,20 @@ import com.github.mvysny.karibudsl.v10.*
 import com.github.mvysny.kaributools.getRouteUrl
 import com.github.mvysny.kaributools.navigateTo
 import com.github.mvysny.kaributools.selectionMode
+import com.vaadin.flow.component.AttachEvent
+import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.grid.GridVariant
-import com.vaadin.flow.component.grid.contextmenu.GridContextMenu
 import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.provider.ListDataProvider
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.router.QueryParameters
-import com.vaadin.flow.theme.lumo.LumoUtility
+import com.vaadin.flow.shared.Registration
 import com.vaadin.flow.theme.lumo.LumoUtility.*
 import moe.styx.common.data.Media
 import moe.styx.common.extension.eqI
@@ -37,18 +38,49 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
     private lateinit var searchField: TextField
     private lateinit var movieCheck: Checkbox
     private lateinit var hasDownloadableCheck: Checkbox
-    private lateinit var gridContextMenu: GridContextMenu<Media>
+    private lateinit var mediaGrid: Grid<Media>
+    private var listener: Registration? = null
     private val media = dbClient.executeGet(false) { getMedia() }.sortedByDescending { it.added }.filter { it.GUID != exclude }
     private val mediaProvider = ListDataProvider(media)
 
+
+    override fun onAttach(attachEvent: AttachEvent?) {
+        super.onAttach(attachEvent)
+        ui.ifPresent {
+            listener = it.page.addBrowserWindowResizeListener {
+                updateGridColumns(it.width)
+            }
+            it.page.retrieveExtendedClientDetails {
+                updateGridColumns(it.bodyClientWidth)
+            }
+        }
+    }
+
+    override fun onDetach(detachEvent: DetachEvent?) {
+        super.onDetach(detachEvent)
+        listener?.remove()
+    }
+
+    private fun updateGridColumns(width: Int) {
+        runCatching {
+            if (width > 700) {
+                mediaGrid.columns[1].isVisible = true
+                mediaGrid.columns[2].isVisible = true
+            } else {
+                mediaGrid.columns[1].isVisible = false
+                mediaGrid.columns[2].isVisible = false
+            }
+        }
+    }
+
     val root = ui {
         verticalLayout(false, false) {
-            addClassNames(LumoUtility.Padding.NONE, LumoUtility.Margin.NONE)
+            addClassNames(Padding.NONE, Margin.NONE)
 
             verticalLayout(false, false) {
-                addClassNames(LumoUtility.Margin.Vertical.MEDIUM, LumoUtility.Margin.Horizontal.SMALL)
+                addClassNames(Margin.Vertical.MEDIUM, Margin.Horizontal.SMALL)
                 horizontalLayout(false) {
-                    addClassNames(LumoUtility.Margin.Vertical.MEDIUM, LumoUtility.Margin.Horizontal.SMALL)
+                    addClassNames(Margin.Vertical.MEDIUM, Margin.Horizontal.SMALL)
                     searchField = textField {
                         placeholder = "Search"
                         valueChangeMode = ValueChangeMode.LAZY
@@ -60,7 +92,7 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
                         }
                 }
                 horizontalLayout(false) {
-                    addClassNames(LumoUtility.Margin.Vertical.MEDIUM, LumoUtility.Margin.Horizontal.SMALL)
+                    addClassNames(Margin.Vertical.MEDIUM, Margin.Horizontal.SMALL)
                     movieCheck = checkBox("Movies only")
                     hasDownloadableCheck = checkBox("Has download profile")
                 }
@@ -78,9 +110,8 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
                 movieCheck.addValueChangeListener { updateFilter(searchField.value) }
                 hasDownloadableCheck.addValueChangeListener { updateFilter(searchField.value) }
             }
-            var selected: Media? = null
-            grid<Media> {
-                minWidth = "750px"
+            mediaGrid = grid<Media> {
+                setWidthFull()
                 addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS, GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_WRAP_CELL_CONTENT)
                 if (onClickItem != null) {
                     addItemClickListener {
@@ -93,10 +124,13 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
                 }
                 selectionMode = Grid.SelectionMode.NONE
                 setItems(mediaProvider)
-                columnFor(Media::name, sortable = true) { setHeader("Name") }
-                columnFor(Media::nameEN, sortable = true) { setHeader("English") }
-                columnFor(Media::nameJP, sortable = true) { setHeader("Romaji") }
-                columnFor(Media::added, sortable = true, converter = { it?.toISODate() ?: "" })
+                columnFor(Media::name, sortable = true) {
+                    setHeader("Name")
+                    setFlexGrow(1)
+                }
+                columnFor(Media::nameEN, sortable = true) { setHeader("English"); setFlexGrow(1) }
+                columnFor(Media::nameJP, sortable = true) { setHeader("Romaji"); setFlexGrow(1) }
+                columnFor(Media::added, sortable = true, converter = { it?.toISODate() ?: "" }) { setHeader("Added"); setFlexGrow(1) }
             }
         }.also {
             if (!initialSearch.isNullOrBlank())
