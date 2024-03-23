@@ -7,14 +7,17 @@ import com.github.mvysny.kaributools.selectionMode
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog
+import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.grid.GridVariant
+import com.vaadin.flow.component.grid.contextmenu.GridContextMenu
 import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.provider.ListDataProvider
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.router.QueryParameters
 import com.vaadin.flow.theme.lumo.LumoUtility
+import com.vaadin.flow.theme.lumo.LumoUtility.*
 import moe.styx.common.data.Media
 import moe.styx.common.extension.eqI
 import moe.styx.common.extension.readableSize
@@ -34,6 +37,7 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
     private lateinit var searchField: TextField
     private lateinit var movieCheck: Checkbox
     private lateinit var hasDownloadableCheck: Checkbox
+    private lateinit var gridContextMenu: GridContextMenu<Media>
     private val media = dbClient.executeGet(false) { getMedia() }.sortedByDescending { it.added }.filter { it.GUID != exclude }
     private val mediaProvider = ListDataProvider(media)
 
@@ -41,19 +45,25 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
         verticalLayout(false, false) {
             addClassNames(LumoUtility.Padding.NONE, LumoUtility.Margin.NONE)
 
-            horizontalLayout {
+            verticalLayout(false, false) {
                 addClassNames(LumoUtility.Margin.Vertical.MEDIUM, LumoUtility.Margin.Horizontal.SMALL)
-                searchField = textField {
-                    placeholder = "Search"
-                    valueChangeMode = ValueChangeMode.LAZY
-                    value = if (initialSearch.isNullOrBlank()) "" else initialSearch
-                }
-                if (exclude.isBlank())
-                    button("Add new") {
-                        onLeftClick { navigateTo(MediaView::class) }
+                horizontalLayout(false) {
+                    addClassNames(LumoUtility.Margin.Vertical.MEDIUM, LumoUtility.Margin.Horizontal.SMALL)
+                    searchField = textField {
+                        placeholder = "Search"
+                        valueChangeMode = ValueChangeMode.LAZY
+                        value = if (initialSearch.isNullOrBlank()) "" else initialSearch
                     }
-                movieCheck = checkBox("Movies only")
-                hasDownloadableCheck = checkBox("Has download profile")
+                    if (exclude.isBlank())
+                        button("Add new") {
+                            onLeftClick { navigateTo(MediaView::class) }
+                        }
+                }
+                horizontalLayout(false) {
+                    addClassNames(LumoUtility.Margin.Vertical.MEDIUM, LumoUtility.Margin.Horizontal.SMALL)
+                    movieCheck = checkBox("Movies only")
+                    hasDownloadableCheck = checkBox("Has download profile")
+                }
                 searchField.addValueChangeListener {
                     updateFilter(it.value)
                     if (exclude.isBlank()) {
@@ -68,12 +78,17 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
                 movieCheck.addValueChangeListener { updateFilter(searchField.value) }
                 hasDownloadableCheck.addValueChangeListener { updateFilter(searchField.value) }
             }
+            var selected: Media? = null
             grid<Media> {
                 minWidth = "750px"
                 addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS, GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_WRAP_CELL_CONTENT)
                 if (onClickItem != null) {
                     addItemClickListener {
                         onClickItem(it.item)
+                    }
+                } else {
+                    addItemClickListener {
+                        MediaClickDialog(it.item).open()
                     }
                 }
                 selectionMode = Grid.SelectionMode.NONE
@@ -82,37 +97,6 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
                 columnFor(Media::nameEN, sortable = true) { setHeader("English") }
                 columnFor(Media::nameJP, sortable = true) { setHeader("Romaji") }
                 columnFor(Media::added, sortable = true, converter = { it?.toISODate() ?: "" })
-                gridContextMenu {
-                    isOpenOnClick = onClickItem == null
-                    item("View", clickListener = {
-                        if (!it.checkValidMedia(true))
-                            return@item
-                        navigateTo(MediaView::class, it!!.GUID)
-                    })
-                    item("View in new tab", clickListener = {
-                        if (!it.checkValidMedia(true))
-                            return@item
-                        val route = getRouteUrl(MediaView::class)
-                        UI.getCurrent().page.open("${Main.config.baseURL}/$route/${it!!.GUID}")
-                    })
-                    item("Delete", clickListener = { onDeleteClick(it) })
-                    separator()
-                    item("Import Episodes", clickListener = {
-                        if (!it.checkValidMedia())
-                            return@item
-                        ImportDialog(it!!).open()
-                    })
-                    item("Configure Downloader", clickListener = {
-                        if (!it.checkValidMedia())
-                            return@item
-                        navigateTo(DownloadableView::class, it!!.GUID)
-                    })
-                    item("Configure Downloader (new Tab)", clickListener = {
-                        if (!it.checkValidMedia())
-                            return@item
-                        UI.getCurrent().page.open("${Main.config.baseURL}/download/${it!!.GUID}")
-                    })
-                }
             }
         }.also {
             if (!initialSearch.isNullOrBlank())
@@ -133,6 +117,50 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
         if (!search.isNullOrBlank() && search.length > 2) {
             mediaProvider.addFilter { media ->
                 media.name.isClose(search) || media.nameEN.isClose(search) || media.nameJP.isClose(search)
+            }
+        }
+    }
+
+    private class MediaClickDialog(private val media: Media) : Dialog() {
+        init {
+            verticalLayout {
+                button("View") {
+                    addClassNames(Padding.Vertical.MEDIUM)
+                    onLeftClick { navigateTo(MediaView::class, media.GUID); close() }
+                }
+                button("View in new tab") {
+                    addClassNames(Padding.Vertical.MEDIUM)
+                    onLeftClick {
+                        val route = getRouteUrl(MediaView::class)
+                        UI.getCurrent().page.open("${Main.config.baseURL}/$route/${media.GUID}")
+                        close()
+                    }
+                }
+                horizontalLayout(padding = false, spacing = false) {
+                    addClassNames(Border.BOTTOM, BorderColor.CONTRAST_30, Margin.Bottom.SMALL, Padding.Top.SMALL, Padding.Bottom.MEDIUM)
+                    button("Delete") {
+                        addClassNames(Padding.NONE, Margin.NONE)
+                        onLeftClick {
+                            close()
+                            onDeleteClick(media)
+                        }
+                    }
+                }
+                button("Import Episodes") {
+                    addClassNames(Padding.Vertical.MEDIUM)
+                    onLeftClick {
+                        close()
+                        ImportDialog(media).open()
+                    }
+                }
+                button("Configure Downloader") {
+                    addClassNames(Padding.Vertical.MEDIUM)
+                    onLeftClick { navigateTo(DownloadableView::class, media.GUID); close() }
+                }
+                button("Configure Downloader in new Tab") {
+                    addClassNames(Padding.Vertical.MEDIUM)
+                    onLeftClick { UI.getCurrent().page.open("${Main.config.baseURL}/download/${media.GUID}") }
+                }
             }
         }
     }
