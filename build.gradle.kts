@@ -52,7 +52,7 @@ dependencies {
     implementation("org.vaadin.filesystemdataprovider:filesystemdataprovider:4.0.0")
 
     // Misc
-    implementation("com.mysql:mysql-connector-j:8.2.0")
+    implementation("com.mysql:mysql-connector-j:8.3.0")
     implementation("org.slf4j:slf4j-simple:2.0.9")
     implementation("net.peanuuutz.tomlkt:tomlkt:0.3.7")
     implementation("org.jsoup:jsoup:1.17.2")
