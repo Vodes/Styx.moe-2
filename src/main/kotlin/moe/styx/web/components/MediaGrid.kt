@@ -107,6 +107,11 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
                             return@item
                         navigateTo(DownloadableView::class, it!!.GUID)
                     })
+                    item("Configure Downloader (new Tab)", clickListener = {
+                        if (!it.checkValidMedia())
+                            return@item
+                        UI.getCurrent().page.open("${Main.config.baseURL}/download/${it!!.GUID}")
+                    })
                 }
             }
         }.also {
