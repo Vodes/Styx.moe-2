@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import moe.styx.web.Main
 import moe.styx.web.auth.DiscordAPI
+import moe.styx.web.data.sendDiscordHookEmbed
 import moe.styx.web.layout.MainLayout
 
 @PageTitle("Styx - Home")
@@ -22,7 +23,10 @@ class HomeView : KComposite() {
             isPadding = false
             h2("No clue what to put here")
             button("Woah") {
-                onLeftClick { doButtonThing(UI.getCurrent(), this) }
+                onLeftClick {
+                    sendDiscordHookEmbed("Test Title", "Wew", "https://i.styx.moe/F3A34DF7-32F5-4AD6-8BEF-DBFB7D81E018.webp")
+//                    doButtonThing(UI.getCurrent(), this)
+                }
             }
         }
     }

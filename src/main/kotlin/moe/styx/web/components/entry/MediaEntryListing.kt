@@ -14,12 +14,13 @@ import moe.styx.common.data.MediaEntry
 import moe.styx.common.extension.equalsAny
 import moe.styx.common.extension.readableSize
 import moe.styx.common.prettyPrintJson
-import moe.styx.db.delete
-import moe.styx.db.getEntries
-import moe.styx.db.save
+import moe.styx.db.tables.MediaEntryTable
 import moe.styx.downloader.utils.getMediaInfo
 import moe.styx.web.createComponent
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 import java.io.File
 
@@ -37,7 +38,8 @@ fun entryListing(media: Media) = createComponent {
                 }
             }
         }
-        val episodes = getDBClient().executeGet { getEntries(mapOf("mediaID" to media.GUID)) }.sortedBy { it.entryNumber.toDoubleOrNull() ?: 0.0 }
+        val episodes = dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }
+            .sortedBy { it.entryNumber.toDoubleOrNull() ?: 0.0 }
         episodes.forEachIndexed { index, entry ->
             verticalLayout(true) {
                 if (index != 0)
@@ -90,15 +92,15 @@ fun entryDeleteDialog(mediaEntry: MediaEntry) {
         addRejectListener {
             val file = File(mediaEntry.filePath)
             if (file.exists() && file.delete())
-                getDBClient().executeAndClose {
-                    save(mediaEntry.copy(originalName = ""))
+                dbClient.transaction {
+                    MediaEntryTable.upsertItem(mediaEntry.copy(originalName = ""))
                 }
         }
         addConfirmListener {
             val file = File(mediaEntry.filePath)
             if (file.exists())
                 file.delete()
-            getDBClient().executeAndClose { delete(mediaEntry) }
+            dbClient.transaction { MediaEntryTable.deleteWhere { GUID eq mediaEntry.GUID } }
         }
     }.open()
 }

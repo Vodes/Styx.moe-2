@@ -21,15 +21,16 @@ import moe.styx.common.extension.capitalize
 import moe.styx.common.extension.eqI
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
-import moe.styx.db.delete
-import moe.styx.db.getCategories
-import moe.styx.db.getSchedules
-import moe.styx.db.save
+import moe.styx.db.tables.CategoryTable
+import moe.styx.db.tables.MediaScheduleTable
 import moe.styx.web.components.mediaSelection
 import moe.styx.web.data.getAnisearchIDForAnilistID
 import moe.styx.web.data.scrapeAnisearchDescription
 import moe.styx.web.data.tmdb.getTmdbMetadata
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.selectAll
 import java.time.Duration
 import java.time.LocalTime
 
@@ -165,9 +166,8 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
 
 class Other(private var media: Media, mediaProvider: (Media) -> Media) : KComposite() {
     val root = ui {
-        val dbClient = getDBClient()
-        val categories = dbClient.executeGet(false) { getCategories() }
-        var schedule = dbClient.executeGet { getSchedules().find { it.mediaID eqI media.GUID } }
+        val categories = dbClient.transaction { CategoryTable.query { selectAll().toList() } }
+        var schedule = dbClient.transaction { MediaScheduleTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }.firstOrNull()
         val weekdays = ScheduleWeekday.entries.toTypedArray()
         verticalLayout {
             isSpacing = false
@@ -234,10 +234,10 @@ class Other(private var media: Media, mediaProvider: (Media) -> Media) : KCompos
                     val test = {
                         updateSchedule(media, weekdaySelect, time, isEstimated, finalEpisodeCount) {
                             if (it != null) {
-                                getDBClient().executeAndClose { save(it) }
+                                dbClient.transaction { MediaScheduleTable.upsertItem(it) }
                                 schedule = it
                             } else if (schedule != null)
-                                getDBClient().executeAndClose { delete(schedule!!) }
+                                dbClient.transaction { MediaScheduleTable.deleteWhere { mediaID eq schedule!!.mediaID } }
                         }
                     }
 

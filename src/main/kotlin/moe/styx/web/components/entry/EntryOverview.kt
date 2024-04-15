@@ -12,11 +12,13 @@ import moe.styx.common.data.MediaEntry
 import moe.styx.common.data.MediaInfo
 import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.readableSize
+import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
-import moe.styx.db.save
+import moe.styx.db.tables.MediaEntryTable
+import moe.styx.db.tables.MediaInfoTable
 import moe.styx.downloader.utils.getMediaInfo
 import moe.styx.web.components.media.FileBrowserDialog
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
 import moe.styx.web.newGUID
 import moe.styx.web.topNotification
 import org.vaadin.lineawesome.LineAwesomeIcon
@@ -119,10 +121,10 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                             }
                             entry = entry.copy(fileSize = file.length())
                             sizeField.value = file.length().readableSize()
-                            getDBClient().executeAndClose {
+                            dbClient.transaction {
                                 val mediainfo = file.getMediaInfo()
-                                if (mediainfo != null)
-                                    save(
+                                if (mediainfo != null) {
+                                    MediaInfoTable.upsertItem(
                                         MediaInfo(
                                             entry.GUID,
                                             mediainfo.videoCodec(),
@@ -133,6 +135,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                                             mediainfo.hasGermanSub().toInt()
                                         )
                                     )
+                                }
                             }
                         }
                     }
@@ -161,7 +164,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
 
             button("Save") {
                 onLeftClick {
-                    if (getDBClient().executeGet { save(entry) })
+                    if (dbClient.transaction { MediaEntryTable.upsertItem(entry) }.insertedCount.toBoolean())
                         UI.getCurrent().page.history.back()
                     else
                         topNotification("Failed to save entry!")

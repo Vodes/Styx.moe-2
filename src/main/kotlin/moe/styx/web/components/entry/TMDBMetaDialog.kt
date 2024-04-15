@@ -12,17 +12,18 @@ import moe.styx.common.data.MediaEntry
 import moe.styx.common.data.TMDBMapping
 import moe.styx.common.data.tmdb.TmdbEpisode
 import moe.styx.common.data.tmdb.getMappingForEpisode
-import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.padString
 import moe.styx.common.json
-import moe.styx.db.getEntries
-import moe.styx.db.save
+import moe.styx.common.util.launchGlobal
+import moe.styx.db.tables.ChangesTable
+import moe.styx.db.tables.MediaEntryTable
+import moe.styx.db.tables.MediaTable
 import moe.styx.downloader.utils.getRemoteEpisodes
-import moe.styx.web.Main
 import moe.styx.web.createComponent
 import moe.styx.web.data.tmdb.parseDateUnix
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
 import moe.styx.web.topNotification
+import org.jetbrains.exposed.sql.selectAll
 
 class TMDBMetaDialog(val media: Media) : Dialog() {
 
@@ -41,7 +42,7 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
                 h2("Could not find mapping for this media.")
                 return@main
             }
-            val episodes = getDBClient().executeGet { getEntries(mapOf("mediaID" to media.GUID)) }
+            val episodes = dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }
             val grouped = episodes.groupBy { collection.getMappingForEpisode(it.entryNumber) as TMDBMapping? }
             horizontalLayout {
                 button("Import metadata") {
@@ -77,7 +78,7 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
     }
 
     private fun doImport(grouped: Map<TMDBMapping?, List<MediaEntry>>) {
-        getDBClient().executeAndClose {
+        dbClient.transaction {
             val dates = mutableSetOf<Long>()
             grouped.forEach groups@{ (mapping, entries) ->
                 if (mapping == null) {
@@ -99,16 +100,15 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
                         synopsisDE = (epMetaDE?.overview ?: "").ifBlank { entry.synopsisDE },
                         timestamp = (if (useReleaseDatesCheckbx.value) epMetaEN.parseDateUnix() else entry.timestamp).also { dates.add(it) }
                     )
-                    save(newEntry)
+                    MediaEntryTable.upsertItem(newEntry)
                 }
             }
             if (updateMediaAddedTime.value) {
                 val newMedia = media.copy(added = dates.min())
-                save(newMedia)
+                MediaTable.upsertItem(newMedia)
             }
         }
-        val now = currentUnixSeconds()
-        Main.updateChanges(now, now)
+        launchGlobal { dbClient.asyncTransaction { ChangesTable.setToNow(true, true) } }
     }
 }
 

@@ -6,9 +6,10 @@ import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap
-import moe.styx.db.getMedia
+import moe.styx.db.tables.MediaTable
 import moe.styx.web.components.media.MediaChooseDialog
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
+import org.jetbrains.exposed.sql.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class MediaSelectionField(title: String, private var selected: String, onSelect: (String) -> Unit, exclude: String? = null) : KComposite() {
@@ -34,7 +35,9 @@ class MediaSelectionField(title: String, private var selected: String, onSelect:
                         return@onLeftClick
                     }
                     if (!tooltip.isOpened) {
-                        tooltip.text = getDBClient().executeGet { getMedia(mapOf("GUID" to value)).firstOrNull() }?.name ?: "No media found."
+                        tooltip.text = dbClient.transaction {
+                            MediaTable.query { selectAll().where { GUID eq value }.toList() }.firstOrNull()?.name ?: "No media found."
+                        }
                     }
                     tooltip.isOpened = !tooltip.isOpened;
                 }

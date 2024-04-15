@@ -6,8 +6,9 @@ import com.vaadin.flow.component.textfield.IntegerField
 import com.vaadin.flow.component.textfield.TextField
 import moe.styx.common.data.User
 import moe.styx.common.extension.currentUnixSeconds
-import moe.styx.db.save
-import moe.styx.web.getDBClient
+import moe.styx.common.extension.toBoolean
+import moe.styx.db.tables.UserTable
+import moe.styx.web.dbClient
 import moe.styx.web.newGUID
 import moe.styx.web.topNotification
 
@@ -59,7 +60,8 @@ class UserEditDialog(private val userIn: User?, private val readonly: Boolean = 
                     }
                     val user = userIn?.copy(permissions = permissionsField.value, name = nameField.value, discordID = discordIDField.value)
                         ?: User(newGUID(), nameField.value, discordIDField.value, currentUnixSeconds(), 0, permissionsField.value)
-                    if (!getDBClient().executeGet { save(user) }) {
+
+                    if (!dbClient.transaction { UserTable.upsertItem(user) }.insertedCount.toBoolean()) {
                         topNotification("Failed to save user!")
                     }
                     close()

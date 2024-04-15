@@ -20,6 +20,7 @@ defaultTasks("clean", "build")
 repositories {
     mavenCentral()
     maven("https://repo.styx.moe/releases")
+    maven("https://repo.styx.moe/snapshots")
     maven("https://jitpack.io")
     maven("https://maven.vaadin.com/vaadin-addons")
 }
@@ -52,13 +53,13 @@ dependencies {
     implementation("org.vaadin.filesystemdataprovider:filesystemdataprovider:4.0.0")
 
     // Misc
-    implementation("com.mysql:mysql-connector-j:8.3.0")
+    implementation("org.postgresql:postgresql:42.7.3")
     implementation("org.slf4j:slf4j-simple:2.0.9")
     implementation("net.peanuuutz.tomlkt:tomlkt:0.3.7")
     implementation("org.jsoup:jsoup:1.17.2")
 
     // Custom
-    implementation("moe.styx:styx-db:0.0.8")
+    implementation("moe.styx:styx-db:0.1.1-SNAPSHOT")
     implementation("moe.styx:styx-downloader:0.0.5")
 
     // Image Processing
@@ -72,12 +73,12 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "17"
+    kotlinOptions.jvmTarget = "21"
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 application {

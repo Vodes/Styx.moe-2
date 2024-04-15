@@ -25,22 +25,28 @@ import moe.styx.common.extension.readableSize
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.isWindows
 import moe.styx.common.util.isClose
-import moe.styx.db.*
+import moe.styx.db.tables.DownloaderTargetsTable
+import moe.styx.db.tables.MediaEntryTable
+import moe.styx.db.tables.MediaTable
 import moe.styx.web.Main
 import moe.styx.web.components.media.ImportDialog
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
 import moe.styx.web.toISODate
 import moe.styx.web.views.sub.DownloadableView
 import moe.styx.web.views.sub.MediaView
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.selectAll
 import java.io.File
 
-class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: String? = null, onClickItem: ((Media) -> Unit)? = null) : KComposite() {
+class MediaGrid(exclude: String = "", initialSearch: String? = null, onClickItem: ((Media) -> Unit)? = null) : KComposite() {
     private lateinit var searchField: TextField
     private lateinit var movieCheck: Checkbox
     private lateinit var hasDownloadableCheck: Checkbox
     private lateinit var mediaGrid: Grid<Media>
     private var listener: Registration? = null
-    private val media = dbClient.executeGet(false) { getMedia() }.sortedByDescending { it.added }.filter { it.GUID != exclude }
+    private val media =
+        dbClient.transaction { MediaTable.query { selectAll().toList() } }.sortedByDescending { it.added }.filter { it.GUID != exclude }
     private val mediaProvider = ListDataProvider(media)
 
 
@@ -143,8 +149,8 @@ class MediaGrid(dbClient: StyxDBClient, exclude: String = "", initialSearch: Str
         if (movieCheck.value)
             mediaProvider.addFilter { !it.isSeries.toBoolean() }
         if (hasDownloadableCheck.value) {
-            getDBClient().executeAndClose {
-                val targets = getTargets()
+            dbClient.transaction {
+                val targets = DownloaderTargetsTable.query { selectAll().toList() }
                 mediaProvider.addFilter { targets.find { t -> t.mediaID eqI it.GUID } != null }
             }
         }
@@ -215,8 +221,7 @@ private fun Media?.checkValidMedia(allowMovie: Boolean = false): Boolean {
 private fun onDeleteClick(m: Media?) {
     if (!m.checkValidMedia(true))
         return
-
-    val entries = getDBClient().executeGet { getEntries(mapOf("mediaID" to m!!.GUID)) }
+    val entries = dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq m!!.GUID }.toList() } }
     val folders = entries.map { File(it.filePath).parentFile }.toSet()
     ConfirmDialog().apply {
         setHeader("Do you really want to delete this?")
@@ -239,18 +244,16 @@ private fun onDeleteClick(m: Media?) {
         setCancelText("No")
 
         addConfirmListener {
-            getDBClient().executeAndClose {
-                delete(m)
-                entries.forEach { delete(it) }
+            dbClient.transaction {
+                entries.forEach { ent -> MediaEntryTable.deleteWhere { GUID eq ent.GUID } }
             }
             UI.getCurrent().page.reload()
         }
         addRejectListener {
             if (isWindows)
                 return@addRejectListener
-            getDBClient().executeAndClose {
-                delete(m)
-                entries.forEach { delete(it) }
+            dbClient.transaction {
+                entries.forEach { ent -> MediaEntryTable.deleteWhere { GUID eq ent.GUID } }
                 if (m.isSeries.toBoolean())
                     folders.forEach {
                         if (it.exists())

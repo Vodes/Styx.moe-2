@@ -2,6 +2,7 @@ package moe.styx.web.components.media
 
 import com.github.mvysny.karibudsl.v10.*
 import com.vaadin.flow.component.DetachEvent
+import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.datepicker.DatePicker
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.grid.Grid
@@ -13,15 +14,16 @@ import moe.styx.common.data.MediaEntry
 import moe.styx.common.data.MediaInfo
 import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.readableSize
+import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
-import moe.styx.db.getEntries
-import moe.styx.db.save
+import moe.styx.db.tables.ImageTable
+import moe.styx.db.tables.MediaEntryTable
+import moe.styx.db.tables.MediaInfoTable
 import moe.styx.downloader.parsing.parseEpisodeAndVersion
 import moe.styx.downloader.utils.getMediaInfo
-import moe.styx.web.Main
-import moe.styx.web.getDBClient
-import moe.styx.web.newGUID
-import moe.styx.web.topNotification
+import moe.styx.web.*
+import moe.styx.web.data.sendDiscordHookEmbed
+import org.jetbrains.exposed.sql.selectAll
 import org.vaadin.filesystemdataprovider.FileTypeResolver
 import org.vaadin.filesystemdataprovider.FilesystemData
 import org.vaadin.filesystemdataprovider.FilesystemDataProvider
@@ -33,6 +35,7 @@ class ImportDialog(val media: Media) : Dialog() {
     private var selected: Set<File> = emptySet()
     private lateinit var layout: VerticalLayout
     private lateinit var firstEpDatePicker: DatePicker
+    private lateinit var notifyDiscord: Checkbox
     private var currentOffset = 0
     private var converted: List<FileEPCombo> = emptyList()
     private lateinit var mainGrid: Grid<FileEPCombo>
@@ -69,7 +72,7 @@ class ImportDialog(val media: Media) : Dialog() {
                     value = LocalDate.of(2000, 1, 1)
                     min = LocalDate.of(1990, 1, 1)
                 }
-                // TODO: Discord Notifications... maybe
+                notifyDiscord = checkBox("Notify Discord")
             }
             layout = verticalLayout {
                 setSizeFull()
@@ -92,9 +95,9 @@ class ImportDialog(val media: Media) : Dialog() {
                         topNotification("No valid episode numbers found.")
                         return@onLeftClick
                     }
-                    val dbClient = getDBClient()
-                    val existing = dbClient.getEntries(mapOf("mediaID" to media.GUID))
+                    val existing = dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }
                     var date = firstEpDatePicker.value
+                    var newEntries = 0
                     list.forEach { combo ->
                         val time = date.atTime(16, 0).atZone(ZoneId.systemDefault()).toInstant().epochSecond
                         val existingEntry = existing.find { it.entryNumber.toDoubleOrNull() == combo.episode.toDoubleOrNull() }
@@ -104,26 +107,42 @@ class ImportDialog(val media: Media) : Dialog() {
                                     newGUID(), media.GUID, time, combo.episode, null, null, null, null, null, combo.file
                                         .absolutePath, combo.file.length(), combo.file.name
                                 )
+                        if (existingEntry == null)
+                            newEntries++
                         val mediaInfoResult = combo.file.getMediaInfo()
                         if (mediaInfoResult != null) {
-                            dbClient.save(
-                                MediaInfo(
-                                    entry.GUID,
-                                    mediaInfoResult.videoCodec(),
-                                    mediaInfoResult.videoBitDepth(),
-                                    mediaInfoResult.videoResolution(),
-                                    mediaInfoResult.hasEnglishDub().toInt(),
-                                    mediaInfoResult.hasGermanDub().toInt(),
-                                    mediaInfoResult.hasGermanSub().toInt()
+                            dbClient.transaction {
+                                MediaInfoTable.upsertItem(
+                                    MediaInfo(
+                                        entry.GUID,
+                                        mediaInfoResult.videoCodec(),
+                                        mediaInfoResult.videoBitDepth(),
+                                        mediaInfoResult.videoResolution(),
+                                        mediaInfoResult.hasEnglishDub().toInt(),
+                                        mediaInfoResult.hasGermanDub().toInt(),
+                                        mediaInfoResult.hasGermanSub().toInt()
+                                    )
                                 )
-                            )
+                            }
                         }
                         date = date.plusDays(7)
-                        dbClient.save(entry)
+                        dbClient.transaction { MediaEntryTable.upsertItem(entry) }
                     }
-                    dbClient.closeConnection()
                     val now = currentUnixSeconds()
                     Main.updateChanges(now, now)
+                    val image = media.thumbID?.let {
+                        dbClient.transaction {
+                            ImageTable.query { selectAll().where { GUID eq it }.toList() }.firstOrNull()
+                        }
+                    }
+                    val thumbnail = image?.getURL()
+                    if (notifyDiscord.value && thumbnail != null) {
+                        if (media.isSeries.toBoolean()) {
+                            sendDiscordHookEmbed("Batch added", "${media.name} ($newEntries EPs)", thumbnail)
+                        } else {
+                            sendDiscordHookEmbed("Movie added", media.name, thumbnail)
+                        }
+                    }
                     this@ImportDialog.close()
                 }
             }

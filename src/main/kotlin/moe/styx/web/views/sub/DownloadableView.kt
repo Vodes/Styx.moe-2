@@ -12,13 +12,14 @@ import com.vaadin.flow.router.Route
 import com.vaadin.flow.server.VaadinRequest
 import moe.styx.common.data.DownloaderTarget
 import moe.styx.common.data.Media
-import moe.styx.db.getMedia
-import moe.styx.db.getTargets
+import moe.styx.db.tables.DownloaderTargetsTable
+import moe.styx.db.tables.MediaTable
 import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.downloadable.DownloadableOverview
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
 import moe.styx.web.views.AdminView
+import org.jetbrains.exposed.sql.selectAll
 
 @Route("download")
 @PageTitle("Styx - Downloader")
@@ -38,14 +39,13 @@ class DownloadableView : KComposite(), HasUrlParameter<String> {
         }
     }
 
-    override fun setParameter(event: BeforeEvent, mediaID: String) {
-        val client = getDBClient()
-        media = client.getMedia(mapOf("GUID" to mediaID)).firstOrNull()
+    override fun setParameter(event: BeforeEvent, id: String) {
+        media = dbClient.transaction { MediaTable.query { selectAll().where { GUID eq id }.toList() }.firstOrNull() }
         if (media == null) {
             navigateTo<AdminView>()
             return
         }
-        target = client.getTargets(mapOf("mediaID" to media!!.GUID)).firstOrNull() ?: DownloaderTarget(media!!.GUID)
-        client.closeConnection()
+        target = dbClient.transaction { DownloaderTargetsTable.query { selectAll().where { mediaID eq id }.toList() }.firstOrNull() }
+            ?: DownloaderTarget(media!!.GUID)
     }
 }

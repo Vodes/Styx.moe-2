@@ -16,9 +16,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import moe.styx.common.data.User
-import moe.styx.db.getUsers
+import moe.styx.db.tables.UserTable
 import moe.styx.web.auth.DiscordAPI
 import moe.styx.web.views.HomeView
+import org.jetbrains.exposed.sql.selectAll
 
 fun createComponent(block: HasComponents.() -> Component): KComposite {
     class Comp : KComposite() {
@@ -55,7 +56,8 @@ inline fun checkAuth(
                 ui.access { navigateTo<HomeView>() }
             return@launch
         }
-        val user = getDBClient().executeGet { getUsers(mapOf("discordID" to discordUser.id)) }.find { it.permissions >= minPerms }
+        val user = dbClient.transaction { UserTable.query { selectAll().where { discordID eq discordUser.id }.toList() } }
+            .find { it.permissions >= minPerms }
         if (user == null) {
             if (notLoggedIn != null)
                 parent?.let { ui.access { it.replaceAll { init(notLoggedIn(it)) } } }

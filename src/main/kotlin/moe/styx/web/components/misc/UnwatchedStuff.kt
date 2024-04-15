@@ -12,17 +12,18 @@ import moe.styx.common.data.MediaEntry
 import moe.styx.common.extension.eqI
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.util.launchGlobal
-import moe.styx.db.getEntries
-import moe.styx.db.getMedia
-import moe.styx.db.getMediaWatched
-import moe.styx.web.getDBClient
+import moe.styx.db.tables.MediaEntryTable
+import moe.styx.db.tables.MediaTable
+import moe.styx.db.tables.MediaWatchedTable
+import moe.styx.web.dbClient
+import org.jetbrains.exposed.sql.selectAll
 
 fun generateUnwatched(ui: UI) {
     launchGlobal {
-        getDBClient().executeAndClose {
-            val watched = getMediaWatched()
-            val medias = getMedia()
-            val entries = getEntries().filter { it.timestamp > 1641038423L } // 2022-01-01
+        dbClient.transaction {
+            val watched = MediaWatchedTable.query { selectAll().toList() }
+            val medias = MediaTable.query { selectAll().toList() }
+            val entries = MediaEntryTable.query { selectAll().where { timestamp greater 1641038423L }.toList() }
             val unwatched = mutableListOf<MediaEntry>()
             for (entry in entries) {
                 val wat = watched.filter { it.entryID eqI entry.GUID && it.maxProgress > 35 }

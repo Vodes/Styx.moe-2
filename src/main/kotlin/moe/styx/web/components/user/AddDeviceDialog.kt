@@ -8,11 +8,13 @@ import com.vaadin.flow.theme.lumo.LumoUtility.BoxShadow
 import kotlinx.datetime.Clock
 import moe.styx.common.data.User
 import moe.styx.common.data.toDevice
-import moe.styx.db.getUnregisteredDevices
-import moe.styx.db.save
+import moe.styx.common.extension.toBoolean
+import moe.styx.db.tables.DeviceTable
+import moe.styx.db.tables.UnregisteredDeviceTable
 import moe.styx.web.Main
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
 import moe.styx.web.topNotification
+import org.jetbrains.exposed.sql.selectAll
 
 class AddDeviceDialog(val user: User, doRefresh: () -> Unit = {}) : Dialog() {
 
@@ -55,26 +57,22 @@ class AddDeviceDialog(val user: User, doRefresh: () -> Unit = {}) : Dialog() {
                         topNotification("Please enter a valid name.")
                         return@onLeftClick
                     }
-                    getDBClient().execute {
-                        val unregistered = getUnregisteredDevices().find { it.code == field.value }
+                    dbClient.transaction {
+                        val unregistered = UnregisteredDeviceTable.query { selectAll().toList() }.find { it.code == field.value }
                         if (unregistered == null) {
                             topNotification("Could not find a device for this code.")
-                            closeConnection()
-                            return@onLeftClick
+                            return@transaction
                         }
                         if (unregistered.codeExpiry < Clock.System.now().epochSeconds) {
                             topNotification("This code is expired.")
-                            closeConnection()
-                            return@onLeftClick
+                            return@transaction
                         }
                         val device = unregistered.toDevice(user.GUID, nameField.value)
-                        if (!save(device)) {
-                            topNotification("Could not save device!")
-                        } else {
+                        if (DeviceTable.upsertItem(device).insertedCount.toBoolean()) {
                             topNotification("Added device!")
-                            close()
-                            closeConnection()
                             doRefresh()
+                        } else {
+                            topNotification("Could not save device!")
                         }
                     }
                 }

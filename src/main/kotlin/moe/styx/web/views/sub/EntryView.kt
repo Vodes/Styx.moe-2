@@ -8,12 +8,13 @@ import com.vaadin.flow.router.*
 import com.vaadin.flow.server.VaadinRequest
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
-import moe.styx.db.getEntries
-import moe.styx.db.getMedia
+import moe.styx.db.tables.MediaEntryTable
+import moe.styx.db.tables.MediaTable
 import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.entry.entryOverview
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
+import org.jetbrains.exposed.sql.selectAll
 
 @Route("/entry")
 class EntryView : KComposite(), HasDynamicTitle, HasUrlParameter<String> {
@@ -44,17 +45,18 @@ class EntryView : KComposite(), HasDynamicTitle, HasUrlParameter<String> {
     }
 
     override fun setParameter(event: BeforeEvent, @OptionalParameter entryID: String?) {
-        getDBClient().executeAndClose {
-            if (!entryID.isNullOrBlank()) {
-                val entryLocal = getEntries(mapOf("GUID" to entryID.split("?")[0])).firstOrNull()
-                if (entryLocal != null)
-                    media = getMedia(mapOf("GUID" to entryLocal.mediaID)).firstOrNull()
+        if (!entryID.isNullOrEmpty()) {
+            dbClient.transaction {
+                val entryLocal = MediaEntryTable.query { selectAll().where { GUID eq entryID.split("?")[0] }.toList() }.firstOrNull()
+                if (entryLocal != null) {
+                    media = MediaTable.query { selectAll().where { GUID eq entryLocal.mediaID }.toList() }.firstOrNull()
+                }
                 entry = entryLocal
             }
-            val parameters = event.location.queryParameters.parameters
-            if (parameters.containsKey("media") && media == null) {
-                media = getMedia(mapOf("GUID" to parameters["media"]!!.first())).firstOrNull()
-            }
+        }
+        val parameters = event.location.queryParameters.parameters
+        if (parameters.containsKey("media") && media == null) {
+            media = dbClient.transaction { MediaTable.query { selectAll().where { GUID eq parameters["media"]!!.first() }.toList() }.firstOrNull() }
         }
     }
 }

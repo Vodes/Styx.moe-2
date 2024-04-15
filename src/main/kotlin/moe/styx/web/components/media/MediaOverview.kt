@@ -20,15 +20,15 @@ import moe.styx.common.data.tmdb.getFirstIDFromMap
 import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
-import moe.styx.db.StyxDBClient
-import moe.styx.db.getMedia
-import moe.styx.db.save
+import moe.styx.db.tables.MediaEntryTable
+import moe.styx.db.tables.MediaTable
 import moe.styx.web.Main.updateChanges
 import moe.styx.web.components.entry.entryListing
 import moe.styx.web.data.getAniListDataForID
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
 import moe.styx.web.newGUID
 import moe.styx.web.replaceAll
+import org.jetbrains.exposed.sql.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class MediaOverview(media: Media?) : KComposite() {
@@ -105,7 +105,7 @@ class MediaOverview(media: Media?) : KComposite() {
                         add(MappingOverview(internalMedia) { internalMedia = it; wasChanged = true; internalMedia })
                     }
                 }
-                val entryCount = getDBClient().executeGet { genericCount("MediaEntry", mapOf("mediaID" to internalMedia.GUID)) }
+                val entryCount = dbClient.transaction { MediaEntryTable.selectAll().where { MediaEntryTable.mediaID eq internalMedia.GUID }.count() }
                 val entryTab = Tab(Span("Entries").apply { addClassNames(Padding.Right.SMALL) },
                     Badge("$entryCount").apply { addClassNames(Padding.Horizontal.SMALL) })
                 entryLayout = VerticalLayout().apply {
@@ -126,9 +126,9 @@ class MediaOverview(media: Media?) : KComposite() {
                 button("Save") {
                     addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_SUCCESS)
                     onLeftClick {
-                        getDBClient().executeAndClose {
-                            save(internalMedia)
-                            updatePrequelSequel(this, internalMedia)
+                        dbClient.transaction {
+                            MediaTable.upsertItem(internalMedia)
+                            updatePrequelSequel(internalMedia)
                         }
                         updateChanges(media = Clock.System.now().epochSeconds)
                         UI.getCurrent().page.history.back()
@@ -160,27 +160,27 @@ class MediaOverview(media: Media?) : KComposite() {
     }
 }
 
-private fun updatePrequelSequel(dbClient: StyxDBClient, media: Media) {
+private fun updatePrequelSequel(media: Media) {
     if (!media.prequel.isNullOrBlank()) {
-        val prequelMedia = dbClient.getMedia(mapOf("GUID" to media.prequel!!)).firstOrNull()
+        val prequelMedia = dbClient.transaction { MediaTable.query { selectAll().where { GUID eq media.prequel!! }.toList() } }.firstOrNull()
         if (prequelMedia != null) {
-            dbClient.save(prequelMedia.copy(sequel = media.GUID))
+            dbClient.transaction { MediaTable.upsertItem(prequelMedia.copy(sequel = media.GUID)) }
         }
     } else {
-        val prequelMedia = dbClient.getMedia(mapOf("sequel" to media.GUID)).firstOrNull()
+        val prequelMedia = dbClient.transaction { MediaTable.query { selectAll().where { sequel eq media.GUID }.toList() } }.firstOrNull()
         if (prequelMedia != null) {
-            dbClient.save(prequelMedia.copy(sequel = ""))
+            dbClient.transaction { MediaTable.upsertItem(prequelMedia.copy(sequel = "")) }
         }
     }
     if (!media.sequel.isNullOrBlank()) {
-        val sequelMedia = dbClient.getMedia(mapOf("GUID" to media.sequel!!)).firstOrNull()
+        val sequelMedia = dbClient.transaction { MediaTable.query { selectAll().where { GUID eq media.sequel!! }.toList() } }.firstOrNull()
         if (sequelMedia != null) {
-            dbClient.save(sequelMedia.copy(prequel = media.GUID))
+            dbClient.transaction { MediaTable.upsertItem(sequelMedia.copy(prequel = media.GUID)) }
         }
     } else {
-        val sequelMedia = dbClient.getMedia(mapOf("prequel" to media.GUID)).firstOrNull()
+        val sequelMedia = dbClient.transaction { MediaTable.query { selectAll().where { prequel eq media.GUID }.toList() } }.firstOrNull()
         if (sequelMedia != null) {
-            dbClient.save(sequelMedia.copy(prequel = ""))
+            dbClient.transaction { MediaTable.upsertItem(sequelMedia.copy(prequel = "")) }
         }
     }
 }

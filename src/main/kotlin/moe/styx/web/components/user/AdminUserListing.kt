@@ -14,14 +14,18 @@ import moe.styx.common.data.MediaActivity
 import moe.styx.common.data.User
 import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.eqI
-import moe.styx.db.*
+import moe.styx.db.tables.ActiveUserTable
+import moe.styx.db.tables.UserTable
 import moe.styx.web.createComponent
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
 import moe.styx.web.topNotification
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.selectAll
 import java.time.Instant
 import java.time.ZoneId
 
-fun userListing(dbClient: StyxDBClient, readonly: Boolean = false) = createComponent {
+fun userListing(readonly: Boolean = false) = createComponent {
     verticalLayout {
         if (readonly)
             nativeLabel("Due to lacking permissions, this view is in readonly mode.")
@@ -32,8 +36,9 @@ fun userListing(dbClient: StyxDBClient, readonly: Boolean = false) = createCompo
             }
         }
         setWidthFull()
-        val online = dbClient.getActiveUsers()
-        val users = dbClient.getUsers().associateWith { user -> online.find { user.GUID eqI it.user.GUID } }
+        val online = dbClient.transaction { ActiveUserTable.query { selectAll().toList() } }
+        val users =
+            dbClient.transaction { UserTable.query { selectAll().toList() } }.associateWith { user -> online.find { user.GUID eqI it.user.GUID } }
         val mapped = ListDataProvider(UserOnlineCombo.fromMap(users).sortedBy { it.name })
         grid<UserOnlineCombo> {
             setItems(mapped)
@@ -58,10 +63,10 @@ fun userListing(dbClient: StyxDBClient, readonly: Boolean = false) = createCompo
                     topNotification("You don't have the permissions to do this.")
                     return@NativeButtonRenderer
                 }
-                getDBClient().executeAndClose {
-                    save(it.user.copy(permissions = if (it.user.permissions >= 0) -1 else 0))
-                    UI.getCurrent().page.reload()
+                dbClient.transaction {
+                    UserTable.upsertItem(it.user.copy(permissions = if (it.user.permissions >= 0) -1 else 0))
                 }
+                UI.getCurrent().page.reload()
             }).setSortable(false).setWidth("60px").setAutoWidth(false)
             addColumn(NativeButtonRenderer("Delete") { user ->
                 if (readonly) {
@@ -76,9 +81,8 @@ fun userListing(dbClient: StyxDBClient, readonly: Boolean = false) = createCompo
                     setCancelable(true)
                     isCloseOnEsc = false
                     addConfirmListener {
-                        getDBClient().executeAndClose {
-                            delete(user.user)
-                            getDevices(mapOf("userID" to user.GUID)).forEach { delete(it) }
+                        dbClient.transaction {
+                            UserTable.deleteWhere { GUID eq user.GUID }
                         }
 
                         UI.getCurrent().page.reload()

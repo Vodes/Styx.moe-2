@@ -13,7 +13,7 @@ import kotlinx.serialization.encodeToString
 import moe.styx.common.data.Changes
 import moe.styx.common.http.getHttpClient
 import moe.styx.common.json
-import moe.styx.db.StyxDBClient
+import moe.styx.db.DBClient
 import moe.styx.downloader.loadConfig
 import net.peanuuutz.tomlkt.Toml
 import java.io.File
@@ -48,13 +48,13 @@ object Main {
     }
 }
 
-fun getDBClient(): StyxDBClient {
-    return StyxDBClient(
-        "com.mysql.cj.jdbc.Driver",
-        "jdbc:mysql://${Main.config.dbConfig.ip}/Styx2?" +
-                "useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Berlin",
+val dbClient by lazy {
+    DBClient(
+        "jdbc:postgresql://${Main.config.dbConfig.ip}/Styx",
+        "org.postgresql.Driver",
         Main.config.dbConfig.user,
-        Main.config.dbConfig.pass
+        Main.config.dbConfig.pass,
+        20
     )
 }
 

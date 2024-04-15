@@ -13,7 +13,6 @@ import moe.styx.web.components.misc.generateUnwatched
 import moe.styx.web.components.noAccess
 import moe.styx.web.components.user.userListing
 import moe.styx.web.createComponent
-import moe.styx.web.getDBClient
 import moe.styx.web.layout.MainLayout
 import moe.styx.web.topNotification
 
@@ -35,14 +34,13 @@ class AdminView : KComposite(), HasUrlParameter<String> {
     }
 
     private fun initAdminView(perms: Int) = createComponent {
-        val dbClient = getDBClient()
         accordion {
             setWidthFull()
             panel("Media Management") {
-                init(MediaGrid(dbClient, initialSearch = query))
+                init(MediaGrid(initialSearch = query))
             }
             panel("User Management") {
-                init(userListing(dbClient, perms < 99))
+                init(userListing(perms < 99))
             }
             panel("Misc Utils") {
                 button("Show unwatched shows") {
@@ -53,8 +51,6 @@ class AdminView : KComposite(), HasUrlParameter<String> {
                     }
                 }
             }
-        }.also {
-            dbClient.closeConnection()
         }
     }
 

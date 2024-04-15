@@ -15,12 +15,13 @@ import moe.styx.common.data.DownloadableOption
 import moe.styx.common.data.DownloaderTarget
 import moe.styx.common.data.Media
 import moe.styx.common.data.SourceType
-import moe.styx.db.delete
-import moe.styx.db.save
+import moe.styx.db.tables.DownloaderTargetsTable
 import moe.styx.web.createComponent
-import moe.styx.web.getDBClient
+import moe.styx.web.dbClient
 import moe.styx.web.replaceAll
 import moe.styx.web.topNotification
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
 
 class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KComposite() {
     private lateinit var layout: VerticalLayout
@@ -141,11 +142,11 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                 button("Save") {
                     addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_SUCCESS)
                     onLeftClick {
-                        getDBClient().executeAndClose {
-                            if (target.options.isEmpty())
-                                delete(target)
-                            else
-                                save(target)
+                        dbClient.transaction {
+                            if (target.options.isEmpty()) {
+                                DownloaderTargetsTable.deleteWhere { mediaID eq target.mediaID }
+                            } else
+                                DownloaderTargetsTable.upsertItem(target)
                         }
                         UI.getCurrent().page.history.back()
                     }

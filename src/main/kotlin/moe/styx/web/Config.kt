@@ -16,6 +16,7 @@ data class Config(
     val imageDir: String = "",
     val buildDir: String = "",
     val androidBuildDir: String = "",
+    val webhookURL: String = "",
     val dbConfig: DbConfig = DbConfig()
 )
 
