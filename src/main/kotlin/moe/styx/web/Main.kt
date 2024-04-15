@@ -10,9 +10,7 @@ import com.vaadin.flow.theme.Theme
 import com.vaadin.flow.theme.lumo.Lumo
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
-import moe.styx.common.data.Changes
 import moe.styx.common.http.getHttpClient
-import moe.styx.common.json
 import moe.styx.db.DBClient
 import moe.styx.downloader.loadConfig
 import net.peanuuutz.tomlkt.Toml
@@ -39,13 +37,6 @@ object Main {
     lateinit var configFile: File
     lateinit var config: Config
     lateinit var changesFile: File
-
-    fun updateChanges(media: Long? = null, entry: Long? = null) {
-        if (!changesFile.exists())
-            return
-        val changes = runCatching { json.decodeFromString<Changes>(changesFile.readText()) }.getOrNull()
-        changesFile.writeText(json.encodeToString(Changes(media ?: (changes?.media ?: 0), entry ?: (changes?.entry ?: 0))))
-    }
 }
 
 val dbClient by lazy {

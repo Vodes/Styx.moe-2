@@ -13,16 +13,15 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.tabs.Tab
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
-import kotlinx.datetime.Clock
 import moe.styx.common.data.Media
 import moe.styx.common.data.tmdb.StackType
 import moe.styx.common.data.tmdb.getFirstIDFromMap
 import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
+import moe.styx.db.tables.ChangesTable
 import moe.styx.db.tables.MediaEntryTable
 import moe.styx.db.tables.MediaTable
-import moe.styx.web.Main.updateChanges
 import moe.styx.web.components.entry.entryListing
 import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.dbClient
@@ -130,7 +129,7 @@ class MediaOverview(media: Media?) : KComposite() {
                             MediaTable.upsertItem(internalMedia)
                             updatePrequelSequel(internalMedia)
                         }
-                        updateChanges(media = Clock.System.now().epochSeconds)
+                        dbClient.transaction { ChangesTable.setToNow(true, false) }
                         UI.getCurrent().page.history.back()
                     }
                 }

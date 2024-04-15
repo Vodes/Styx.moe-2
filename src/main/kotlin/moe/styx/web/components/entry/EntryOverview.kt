@@ -14,6 +14,7 @@ import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.readableSize
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
+import moe.styx.db.tables.ChangesTable
 import moe.styx.db.tables.MediaEntryTable
 import moe.styx.db.tables.MediaInfoTable
 import moe.styx.downloader.utils.getMediaInfo
@@ -33,6 +34,7 @@ import kotlin.math.floor
 class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
     private var entry = mediaEntry ?: MediaEntry(newGUID(), media.GUID, currentUnixSeconds(), "01", "", "", "", "", "", "", 0L, "")
     private lateinit var sizeField: TextField
+    private lateinit var fileField: TextField
 
     val root = ui {
         verticalLayout {
@@ -105,7 +107,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                 maxWidth = "1550px"
                 horizontalLayout(false) {
                     setWidthFull()
-                    val fileField = textField("File Path") {
+                    fileField = textField("File Path") {
                         setWidthFull()
                         value = entry.filePath
                         valueChangeMode = ValueChangeMode.LAZY
@@ -121,20 +123,22 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                             }
                             entry = entry.copy(fileSize = file.length())
                             sizeField.value = file.length().readableSize()
-                            dbClient.transaction {
-                                val mediainfo = file.getMediaInfo()
-                                if (mediainfo != null) {
-                                    MediaInfoTable.upsertItem(
-                                        MediaInfo(
-                                            entry.GUID,
-                                            mediainfo.videoCodec(),
-                                            mediainfo.videoBitDepth(),
-                                            mediainfo.videoResolution(),
-                                            mediainfo.hasEnglishDub().toInt(),
-                                            mediainfo.hasGermanDub().toInt(),
-                                            mediainfo.hasGermanSub().toInt()
+                            if (mediaEntry != null) {
+                                dbClient.transaction {
+                                    val mediainfo = file.getMediaInfo()
+                                    if (mediainfo != null) {
+                                        MediaInfoTable.upsertItem(
+                                            MediaInfo(
+                                                entry.GUID,
+                                                mediainfo.videoCodec(),
+                                                mediainfo.videoBitDepth(),
+                                                mediainfo.videoResolution(),
+                                                mediainfo.hasEnglishDub().toInt(),
+                                                mediainfo.hasGermanDub().toInt(),
+                                                mediainfo.hasGermanSub().toInt()
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                             }
                         }
@@ -164,9 +168,29 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
 
             button("Save") {
                 onLeftClick {
-                    if (dbClient.transaction { MediaEntryTable.upsertItem(entry) }.insertedCount.toBoolean())
+                    if (dbClient.transaction { MediaEntryTable.upsertItem(entry) }.insertedCount.toBoolean()) {
+                        val file = File(fileField.value)
+                        if (file.exists() && mediaEntry != null) {
+                            dbClient.transaction {
+                                val mediainfo = file.getMediaInfo()
+                                if (mediainfo != null) {
+                                    MediaInfoTable.upsertItem(
+                                        MediaInfo(
+                                            entry.GUID,
+                                            mediainfo.videoCodec(),
+                                            mediainfo.videoBitDepth(),
+                                            mediainfo.videoResolution(),
+                                            mediainfo.hasEnglishDub().toInt(),
+                                            mediainfo.hasGermanDub().toInt(),
+                                            mediainfo.hasGermanSub().toInt()
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                        dbClient.transaction { ChangesTable.setToNow(false, true) }
                         UI.getCurrent().page.history.back()
-                    else
+                    } else
                         topNotification("Failed to save entry!")
                 }
             }

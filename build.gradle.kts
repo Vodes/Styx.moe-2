@@ -59,8 +59,8 @@ dependencies {
     implementation("org.jsoup:jsoup:1.17.2")
 
     // Custom
-    implementation("moe.styx:styx-db:0.1.1-SNAPSHOT")
-    implementation("moe.styx:styx-downloader:0.0.5")
+    implementation("moe.styx:styx-db:0.1.1")
+    implementation("moe.styx:styx-downloader:0.1.0")
 
     // Image Processing
     implementation("com.sksamuel.scrimage:scrimage-core:$scrimageVersion")

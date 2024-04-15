@@ -12,17 +12,20 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
 import moe.styx.common.data.MediaInfo
-import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.readableSize
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
+import moe.styx.db.tables.ChangesTable
 import moe.styx.db.tables.ImageTable
 import moe.styx.db.tables.MediaEntryTable
 import moe.styx.db.tables.MediaInfoTable
 import moe.styx.downloader.parsing.parseEpisodeAndVersion
 import moe.styx.downloader.utils.getMediaInfo
-import moe.styx.web.*
 import moe.styx.web.data.sendDiscordHookEmbed
+import moe.styx.web.dbClient
+import moe.styx.web.getURL
+import moe.styx.web.newGUID
+import moe.styx.web.topNotification
 import org.jetbrains.exposed.sql.selectAll
 import org.vaadin.filesystemdataprovider.FileTypeResolver
 import org.vaadin.filesystemdataprovider.FilesystemData
@@ -109,6 +112,8 @@ class ImportDialog(val media: Media) : Dialog() {
                                 )
                         if (existingEntry == null)
                             newEntries++
+                        dbClient.transaction { MediaEntryTable.upsertItem(entry) }
+
                         val mediaInfoResult = combo.file.getMediaInfo()
                         if (mediaInfoResult != null) {
                             dbClient.transaction {
@@ -126,10 +131,8 @@ class ImportDialog(val media: Media) : Dialog() {
                             }
                         }
                         date = date.plusDays(7)
-                        dbClient.transaction { MediaEntryTable.upsertItem(entry) }
                     }
-                    val now = currentUnixSeconds()
-                    Main.updateChanges(now, now)
+                    dbClient.transaction { ChangesTable.setToNow(true, true) }
                     val image = media.thumbID?.let {
                         dbClient.transaction {
                             ImageTable.query { selectAll().where { GUID eq it }.toList() }.firstOrNull()
