@@ -6,14 +6,11 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.theme.lumo.LumoUtility
 import moe.styx.common.data.User
-import moe.styx.common.extension.toBoolean
 import moe.styx.db.tables.DeviceTable
 import moe.styx.web.dbClient
 import moe.styx.web.replaceAll
 import moe.styx.web.toISODate
 import moe.styx.web.topNotification
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 
@@ -54,7 +51,7 @@ class DeviceListView(private val user: User, private val readonly: Boolean = fal
                                 iconButton(LineAwesomeIcon.TRASH_SOLID.create()) {
                                     isEnabled = !readonly
                                     onLeftClick {
-                                        val deleted = dbClient.transaction { DeviceTable.deleteWhere { GUID eq device.GUID } }.toBoolean()
+                                        val deleted = dbClient.transaction { DeviceTable.delete(device) }
                                         if (!deleted) {
                                             topNotification("Could not delete device!")
                                             return@onLeftClick
