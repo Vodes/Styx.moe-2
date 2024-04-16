@@ -26,6 +26,7 @@ import moe.styx.common.extension.toBoolean
 import moe.styx.common.isWindows
 import moe.styx.common.util.isClose
 import moe.styx.db.tables.DownloaderTargetsTable
+import moe.styx.db.tables.ImageTable
 import moe.styx.db.tables.MediaEntryTable
 import moe.styx.db.tables.MediaTable
 import moe.styx.web.Main
@@ -36,6 +37,7 @@ import moe.styx.web.views.sub.DownloadableView
 import moe.styx.web.views.sub.MediaView
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 import java.io.File
 
@@ -219,6 +221,15 @@ private fun Media?.checkValidMedia(allowMovie: Boolean = false): Boolean {
 }
 
 private fun onDeleteClick(m: Media?) {
+    fun deleteMedia(m: Media) {
+        val imagesToDelete =
+            dbClient.transaction { ImageTable.query { selectAll().where { GUID eq (m.thumbID ?: "") or (GUID eq (m.bannerID ?: "")) }.toList() } }
+        dbClient.transaction {
+            imagesToDelete.forEach { img -> ImageTable.deleteWhere { GUID eq img.GUID } }
+        }
+        dbClient.transaction { MediaTable.deleteWhere { GUID eq m.GUID } }
+    }
+
     if (!m.checkValidMedia(true))
         return
     val entries = dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq m!!.GUID }.toList() } }
@@ -247,6 +258,7 @@ private fun onDeleteClick(m: Media?) {
             dbClient.transaction {
                 entries.forEach { ent -> MediaEntryTable.deleteWhere { GUID eq ent.GUID } }
             }
+            deleteMedia(m)
             UI.getCurrent().page.reload()
         }
         addRejectListener {
@@ -262,6 +274,7 @@ private fun onDeleteClick(m: Media?) {
                 else
                     entries.map { File(it.filePath) }.forEach { if (it.exists()) it.delete() }
             }
+            deleteMedia(m)
             UI.getCurrent().page.reload()
         }
     }.open()
