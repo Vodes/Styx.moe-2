@@ -1,18 +1,12 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
-val vaadinVersion: String by extra
-val karibuDslVersion: String by extra
-val ktorVersion: String by extra
-val scrimageVersion: String by extra
 
 plugins {
-    kotlin("jvm") version "1.9.23"
-    kotlin("plugin.serialization") version "1.9.23"
-    id("application")
-    id("com.vaadin")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.vaadin)
+    application
 }
 
 defaultTasks("clean", "build")
@@ -20,7 +14,6 @@ defaultTasks("clean", "build")
 repositories {
     mavenCentral()
     maven("https://repo.styx.moe/releases")
-    maven("https://repo.styx.moe/snapshots")
     maven("https://jitpack.io")
     maven("https://maven.vaadin.com/vaadin-addons")
 }
@@ -35,45 +28,41 @@ tasks.withType<Test> {
 dependencies {
     // Kotlin Stuff
     implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.23")
+    implementation(kotlin("reflect"))
 
     // Vaadin Stuff
-    implementation("com.vaadin:vaadin-core:$vaadinVersion") {
-        afterEvaluate {
-            if (vaadin.productionMode.get()) {
-                exclude(module = "vaadin-dev")
-            }
+    implementation(libs.vaadin.core) {
+        if (vaadin.effective.productionMode.get()) {
+            exclude(module = "vaadin-dev")
         }
     }
-    implementation("com.github.mvysny.karibudsl:karibu-dsl-v23:$karibuDslVersion")
-    //implementation("eu.vaadinonkotlin:vok-util-vaadin:0.16.0")
-    //implementation("in.virit:viritin:2.3.1")
-    implementation("com.github.mvysny.vaadin-boot:vaadin-boot:12.2")
-    implementation("org.parttio:line-awesome:2.0.0")
-    implementation("org.vaadin.filesystemdataprovider:filesystemdataprovider:4.0.0")
+    implementation(libs.vaadin.boot)
+    implementation(libs.vaadin.filesystemdataprovider)
+    implementation(libs.karibu.dsl)
+    implementation(libs.lineawesome)
 
     // Misc
-    implementation("org.postgresql:postgresql:42.7.3")
-    implementation("org.slf4j:slf4j-simple:2.0.9")
-    implementation("net.peanuuutz.tomlkt:tomlkt:0.3.7")
-    implementation("org.jsoup:jsoup:1.17.2")
+    implementation(libs.postgres)
+    implementation(libs.slf4j.simple)
+    implementation(libs.tomlkt)
+    implementation(libs.jsoup)
 
     // Custom
-    implementation("moe.styx:styx-db:0.1.1")
-    implementation("moe.styx:styx-downloader:0.1.0")
+    implementation(libs.styx.db)
+    implementation(libs.styx.downloader)
 
     // Image Processing
-    implementation("com.sksamuel.scrimage:scrimage-core:$scrimageVersion")
-    implementation("com.sksamuel.scrimage:scrimage-webp:$scrimageVersion")
-    implementation("com.sksamuel.scrimage:scrimage-formats-extra:$scrimageVersion")
+    implementation(libs.scrimage.core)
+    implementation(libs.scrimage.webp)
+    implementation(libs.scrimage.extra)
 
     // test support
-    testImplementation("com.github.mvysny.kaributesting:karibu-testing-v24:2.1.0")
-    testImplementation("com.github.mvysny.dynatest:dynatest:0.24")
+    testImplementation(libs.karibu.testing)
+    testImplementation(libs.dynatest)
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "21"
+kotlin {
+    jvmToolchain(21)
 }
 
 java {
