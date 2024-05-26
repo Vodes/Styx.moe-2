@@ -44,7 +44,7 @@ class AdminView : KComposite(), HasUrlParameter<String> {
             }
             panel("Misc Utils") {
                 button("Show unwatched shows") {
-                    onLeftClick {
+                    onClick {
                         topNotification("Please wait.")
                         val ui = UI.getCurrent()
                         generateUnwatched(ui)

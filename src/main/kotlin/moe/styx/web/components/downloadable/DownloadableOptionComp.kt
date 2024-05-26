@@ -160,9 +160,9 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
                 }
                 processingButton = button("Choose processing") {
                     isEnabled = option.processingOptions != null
-                    onLeftClick {
+                    onClick {
                         if (option.processingOptions == null)
-                            return@onLeftClick
+                            return@onClick
                         ProcessingDialog(option.processingOptions!!, option.priority) {
                             option = onUpdate(option.copy(processingOptions = it))
                         }.open()

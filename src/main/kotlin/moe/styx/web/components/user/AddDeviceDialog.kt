@@ -48,14 +48,14 @@ class AddDeviceDialog(val user: User, doRefresh: () -> Unit = {}) : Dialog() {
             button("Save") {
                 addClickShortcut(Key.ENTER)
                 addClickShortcut(Key.NUMPAD_ENTER)
-                onLeftClick {
+                onClick {
                     if (field.value == null || field.value !in 100000..999999) {
                         topNotification("Please enter a valid code.")
-                        return@onLeftClick
+                        return@onClick
                     }
                     if (nameField.value.isNullOrBlank() || nameField.value.length !in 1..30) {
                         topNotification("Please enter a valid name.")
-                        return@onLeftClick
+                        return@onClick
                     }
                     dbClient.transaction {
                         val unregistered = UnregisteredDeviceTable.query { selectAll().toList() }.find { it.code == field.value }

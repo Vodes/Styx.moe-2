@@ -39,7 +39,7 @@ class ThumbnailComponent(var media: Media, val mediaProvider: (Media) -> Media) 
                     maxHeight = "300px"
                 }
                 button(if (currentThumbnail != null) "Replace" else "Add") {
-                    onLeftClick {
+                    onClick {
                         ImageDialog(media, true) { handleResult(it, true) }.open()
                     }
                 }
@@ -55,7 +55,7 @@ class ThumbnailComponent(var media: Media, val mediaProvider: (Media) -> Media) 
                     maxHeight = "300px"
                 }
                 button(if (currentBanner != null) "Replace" else "Add") {
-                    onLeftClick {
+                    onClick {
                         ImageDialog(media, false) { handleResult(it, false) }.open()
                     }
                 }

@@ -115,11 +115,11 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                     }
                     iconButton(LineAwesomeIcon.SYNC_SOLID.create()) {
                         setTooltipText("Update file size & mediainfo")
-                        onLeftClick {
+                        onClick {
                             val file = File(fileField.value)
                             if (!file.exists()) {
                                 topNotification("The file couldn't be found.")
-                                return@onLeftClick
+                                return@onClick
                             }
                             entry = entry.copy(fileSize = file.length())
                             sizeField.value = file.length().readableSize()
@@ -145,7 +145,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                     }
                     iconButton(LineAwesomeIcon.FOLDER_OPEN_SOLID.create()) {
                         setTooltipText("Open file chooser")
-                        onLeftClick {
+                        onClick {
                             FileBrowserDialog(false) {
                                 val file = it.firstOrNull() ?: return@FileBrowserDialog
                                 fileField.value = file.absolutePath
@@ -167,7 +167,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
             }
 
             button("Save") {
-                onLeftClick {
+                onClick {
                     if (dbClient.transaction { MediaEntryTable.upsertItem(entry) }.insertedCount.toBoolean()) {
                         val file = File(fileField.value)
                         if (file.exists() && mediaEntry != null) {

@@ -46,7 +46,7 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
             val grouped = episodes.groupBy { collection.getMappingForEpisode(it.entryNumber) as TMDBMapping? }
             horizontalLayout {
                 button("Import metadata") {
-                    onLeftClick {
+                    onClick {
                         doImport(grouped)
                         UI.getCurrent().page.reload()
                     }

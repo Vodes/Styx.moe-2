@@ -24,7 +24,7 @@ class DeviceListView(private val user: User, private val readonly: Boolean = fal
                 h3("Devices")
                 iconButton(LineAwesomeIcon.PLUS_SOLID.create()) {
                     isEnabled = !readonly
-                    onLeftClick {
+                    onClick {
                         AddDeviceDialog(user) { updateList() }.open()
                     }
                 }
@@ -50,11 +50,11 @@ class DeviceListView(private val user: User, private val readonly: Boolean = fal
                                 h4(device.name)
                                 iconButton(LineAwesomeIcon.TRASH_SOLID.create()) {
                                     isEnabled = !readonly
-                                    onLeftClick {
+                                    onClick {
                                         val deleted = dbClient.transaction { DeviceTable.delete(device) }
                                         if (!deleted) {
                                             topNotification("Could not delete device!")
-                                            return@onLeftClick
+                                            return@onClick
                                         }
                                         topNotification("Deleted device.")
                                         updateList()

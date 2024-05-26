@@ -24,7 +24,7 @@ class HomeView : KComposite() {
             isPadding = false
             h2("No clue what to put here")
 //            button("Woah") {
-//                onLeftClick {
+//                onClick {
 //                    sendDiscordHookEmbed("Test Title", "Wew", "https://i.styx.moe/F3A34DF7-32F5-4AD6-8BEF-DBFB7D81E018.webp")
 ////                    doButtonThing(UI.getCurrent(), this)
 //                }

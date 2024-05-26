@@ -50,7 +50,7 @@ class ImportDialog(val media: Media) : Dialog() {
         verticalLayout {
             setSizeFull()
             button("Select Files/Folder") {
-                onLeftClick {
+                onClick {
                     FileBrowserDialog {
                         selected = it
                         update()
@@ -92,11 +92,11 @@ class ImportDialog(val media: Media) : Dialog() {
                 }
             }
             button("Import") {
-                onLeftClick {
+                onClick {
                     val list = converted.filter { it.episode.isNotBlank() }.sortedBy { it.episode }
                     if (list.isEmpty()) {
                         topNotification("No valid episode numbers found.")
-                        return@onLeftClick
+                        return@onClick
                     }
                     val existing = dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }
                     var date = firstEpDatePicker.value

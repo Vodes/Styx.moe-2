@@ -44,14 +44,14 @@ class MediaOverview(media: Media?) : KComposite() {
             horizontalLayout(false) {
                 defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
                 button("Fill from AniList") {
-                    onLeftClick {
+                    onClick {
                         val id = internalMedia.getFirstIDFromMap(StackType.ANILIST)
                         if (id == null)
-                            Notification.show("No AniList ID was found in the mapping.").also { return@onLeftClick }
+                            Notification.show("No AniList ID was found in the mapping.").also { return@onClick }
 
                         val result = getAniListDataForID(id!!)
                         if (result == null)
-                            Notification.show("Could not get data from AniList API.").also { return@onLeftClick }
+                            Notification.show("Could not get data from AniList API.").also { return@onClick }
 
                         internalMedia = internalMedia.copy(
                             nameJP = result!!.title.romaji,
@@ -65,7 +65,7 @@ class MediaOverview(media: Media?) : KComposite() {
                 }
                 iconButton(LineAwesomeIcon.FAST_FORWARD_SOLID.create()) {
                     setTooltipText("Quick Add (Anilist)")
-                    onLeftClick {
+                    onClick {
                         QuickAddDialog(internalMedia) {
                             internalMedia = it
                             updateTabs()
@@ -124,7 +124,7 @@ class MediaOverview(media: Media?) : KComposite() {
             horizontalLayout {
                 button("Save") {
                     addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_SUCCESS)
-                    onLeftClick {
+                    onClick {
                         dbClient.transaction {
                             MediaTable.upsertItem(internalMedia)
                             updatePrequelSequel(internalMedia)
@@ -135,7 +135,7 @@ class MediaOverview(media: Media?) : KComposite() {
                 }
                 button("Delete") {
                     addThemeVariants(ButtonVariant.LUMO_ERROR)
-                    onLeftClick {
+                    onClick {
                         UI.getCurrent().page.history.back()
                     }
                 }

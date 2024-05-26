@@ -96,7 +96,7 @@ class MediaGrid(exclude: String = "", initialSearch: String? = null, onClickItem
                     }
                     if (exclude.isBlank())
                         button("Add new") {
-                            onLeftClick { navigateTo(MediaView::class) }
+                            onClick { navigateTo(MediaView::class) }
                         }
                 }
                 horizontalLayout(false) {
@@ -168,11 +168,11 @@ class MediaGrid(exclude: String = "", initialSearch: String? = null, onClickItem
             verticalLayout {
                 button("View") {
                     addClassNames(Padding.Vertical.MEDIUM)
-                    onLeftClick { navigateTo(MediaView::class, media.GUID); close() }
+                    onClick { navigateTo(MediaView::class, media.GUID); close() }
                 }
                 button("View in new tab") {
                     addClassNames(Padding.Vertical.MEDIUM)
-                    onLeftClick {
+                    onClick {
                         val route = getRouteUrl(MediaView::class)
                         UI.getCurrent().page.open("${Main.config.baseURL}/$route/${media.GUID}")
                         close()
@@ -182,7 +182,7 @@ class MediaGrid(exclude: String = "", initialSearch: String? = null, onClickItem
                     addClassNames(Border.BOTTOM, BorderColor.CONTRAST_30, Margin.Bottom.SMALL, Padding.Top.SMALL, Padding.Bottom.MEDIUM)
                     button("Delete") {
                         addClassNames(Padding.NONE, Margin.NONE)
-                        onLeftClick {
+                        onClick {
                             close()
                             onDeleteClick(media)
                         }
@@ -190,18 +190,18 @@ class MediaGrid(exclude: String = "", initialSearch: String? = null, onClickItem
                 }
                 button("Import Episodes") {
                     addClassNames(Padding.Vertical.MEDIUM)
-                    onLeftClick {
+                    onClick {
                         close()
                         ImportDialog(media).open()
                     }
                 }
                 button("Configure Downloader") {
                     addClassNames(Padding.Vertical.MEDIUM)
-                    onLeftClick { navigateTo(DownloadableView::class, media.GUID); close() }
+                    onClick { navigateTo(DownloadableView::class, media.GUID); close() }
                 }
                 button("Configure Downloader in new Tab") {
                     addClassNames(Padding.Vertical.MEDIUM)
-                    onLeftClick { UI.getCurrent().page.open("${Main.config.baseURL}/download/${media.GUID}") }
+                    onClick { UI.getCurrent().page.open("${Main.config.baseURL}/download/${media.GUID}") }
                 }
             }
         }

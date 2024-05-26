@@ -117,44 +117,44 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
             contextMenu {
                 target = synopsisDE
                 item("Fill from TMDB (Series)") {
-                    onLeftClick {
+                    onClick {
                         val id = media.getFirstIDFromMap(StackType.TMDB)
                         if (id == null)
-                            Notification.show("No TMDB ID was found in the mapping.").also { return@onLeftClick }
+                            Notification.show("No TMDB ID was found in the mapping.").also { return@onClick }
 
                         val meta = getTmdbMetadata(id!!, media.isSeries.toBoolean(), "de-DE")
                         if (meta == null)
-                            Notification.show("Could not get metadata from TMDB!").also { return@onLeftClick }
+                            Notification.show("Could not get metadata from TMDB!").also { return@onClick }
                         synopsisDE.value = meta!!.overview
                         media = mediaProvider(media.copy(synopsisDE = meta.overview))
                     }
                 }
                 item("Fill from TMDB (Season)") {
-                    onLeftClick {
+                    onClick {
                         val id = media.getFirstIDFromMap(StackType.TMDB)
                         if (id == null)
-                            Notification.show("No TMDB ID was found in the mapping.").also { return@onLeftClick }
+                            Notification.show("No TMDB ID was found in the mapping.").also { return@onClick }
                         val season = media.getFirstTMDBSeason()
                         if (season == null || !media.isSeries.toBoolean())
-                            Notification.show("No season number was found in the mapping.").also { return@onLeftClick }
+                            Notification.show("No season number was found in the mapping.").also { return@onClick }
                         val meta = getTmdbMetadata(id!!, media.isSeries.toBoolean(), "de-DE", season)
                         if (meta == null)
-                            Notification.show("Could not get metadata from TMDB!").also { return@onLeftClick }
+                            Notification.show("Could not get metadata from TMDB!").also { return@onClick }
                         synopsisDE.value = meta!!.overview
                         media = mediaProvider(media.copy(synopsisDE = meta.overview))
                     }
                 }
                 item("Fill from AniSearch") {
-                    onLeftClick {
+                    onClick {
                         val id = media.getFirstIDFromMap(StackType.ANILIST)
                         if (id == null)
-                            Notification.show("No AniList ID was found in the mapping.").also { return@onLeftClick }
+                            Notification.show("No AniList ID was found in the mapping.").also { return@onClick }
                         val anisearchID = getAnisearchIDForAnilistID(id!!)
                         if (anisearchID == null)
-                            Notification.show("No AniSearch ID was found for this AniList ID.").also { return@onLeftClick }
+                            Notification.show("No AniSearch ID was found for this AniList ID.").also { return@onClick }
                         val scrape = scrapeAnisearchDescription(anisearchID!!)
                         if (scrape == null)
-                            Notification.show("Could not scrape description from AniSearch!").also { return@onLeftClick }
+                            Notification.show("Could not scrape description from AniSearch!").also { return@onClick }
                         synopsisDE.value = scrape!!
                         media = mediaProvider(media.copy(synopsisDE = scrape))
                     }

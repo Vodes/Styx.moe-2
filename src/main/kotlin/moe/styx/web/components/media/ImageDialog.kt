@@ -84,29 +84,29 @@ class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?
 
                     button("From Anilist") {
                         addClassNames(Padding.Horizontal.SMALL)
-                        onLeftClick {
+                        onClick {
                             val id = media.getFirstIDFromMap(StackType.ANILIST)
                             if (id == null) {
                                 topNotification("No AniList ID found in mappings!")
-                                return@onLeftClick
+                                return@onClick
                             }
                             val data = getAniListDataForID(id)
                             if (data == null || (!thumbnail && data.bannerImage.isNullOrBlank()) || (thumbnail && data.coverImage.getURL()
                                     .isNullOrBlank())
                             ) {
                                 topNotification("Could not fetch images for this ID!")
-                                return@onLeftClick
+                                return@onClick
                             }
                             urlField.value = if (thumbnail) data.coverImage.getURL() else data.bannerImage
                         }
                     }
                     button("Choose from TMDB") {
                         addClassNames(Padding.Horizontal.SMALL)
-                        onLeftClick {
+                        onClick {
                             val id = media.getFirstIDFromMap(StackType.TMDB)
                             if (id == null) {
                                 topNotification("No TMDB ID found in mappings!")
-                                return@onLeftClick
+                                return@onClick
                             }
                             TMDBImageDialog(id, media.isSeries.toBoolean(), thumbnail) {
                                 current = it
@@ -197,7 +197,7 @@ fun imagePreview(img: TmdbImage, onSelect: () -> Unit) = createComponent {
         maxHeight = if (thumb) "320px" else "365px"
         image(img.getPreviewURL()) {
             maxHeight = "280px"
-            onLeftClick {
+            onClick {
                 UI.getCurrent().page.open(img.getURL())
             }
         }
@@ -212,7 +212,7 @@ fun imagePreview(img: TmdbImage, onSelect: () -> Unit) = createComponent {
             button("Select") {
                 maxWidth = "110px"
                 addClassNames(Margin.Top.AUTO)
-                onLeftClick {
+                onClick {
                     onSelect()
                 }
             }

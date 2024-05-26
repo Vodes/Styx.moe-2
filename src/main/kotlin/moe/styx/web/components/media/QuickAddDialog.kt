@@ -35,15 +35,15 @@ class QuickAddDialog(media: Media, val onChoose: (Media) -> Unit) : Dialog() {
                 defaultVerticalComponentAlignment = FlexComponent.Alignment.END
                 idField = integerField("ID")
                 button("Use") {
-                    onLeftClick {
+                    onClick {
                         if (idField.value == null) {
                             topNotification("No ID given.")
-                            return@onLeftClick
+                            return@onClick
                         }
                         val meta = getAniListDataForID(idField.value)
                         if (meta == null) {
                             topNotification("Could not get metadata for this ID.")
-                            return@onLeftClick
+                            return@onClick
                         }
                         val malID = getMalIDForAnilistID(meta.id)
                         val tmdbResult = tmdbFindMedia(meta.anyTitle(), media.isSeries.toBoolean()).filter { it.name.isClose(meta.anyTitle()) }

@@ -31,7 +31,7 @@ fun userListing(readonly: Boolean = false) = createComponent {
             nativeLabel("Due to lacking permissions, this view is in readonly mode.")
         button("Add new") {
             isEnabled = !readonly
-            onLeftClick {
+            onClick {
                 UserEditDialog(null).open()
             }
         }

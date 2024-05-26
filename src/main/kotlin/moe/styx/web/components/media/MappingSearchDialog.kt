@@ -51,7 +51,7 @@ class MappingSearchDialog(val parent: MappingStack, val media: Media) : Dialog()
                             meta.name
                         ).apply { setTarget(AnchorTarget.BLANK) }
                         button("Add") {
-                            onLeftClick {
+                            onClick {
                                 val entryMeta = getTmdbMetadata(meta.id, media.isSeries.toBoolean())
                                 if ((entryMeta?.numberSeasons ?: 1) > 1) {
                                     Notification.show(
@@ -91,7 +91,7 @@ fun updateAnilistResults(search: String, layout: VerticalLayout, onClick: (AniLi
                 isPadding = false
                 anchor(meta.listingURL(), meta.anyTitle()).apply { setTarget(AnchorTarget.BLANK) }
                 button("Add") {
-                    onLeftClick {
+                    onClick {
                         onClick(meta)
                     }
                 }

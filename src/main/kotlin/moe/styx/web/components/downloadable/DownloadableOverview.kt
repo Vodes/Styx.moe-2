@@ -58,7 +58,7 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
             }
             horizontalLayout {
                 button("Add") {
-                    onLeftClick {
+                    onClick {
                         val num = target.options.maxOfOrNull { it.priority } ?: -1
                         target.options.add(DownloadableOption(num + 1, ""))
                         updateTargetRef()
@@ -67,7 +67,7 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                 removeButton = button("Remove") {
                     addThemeVariants(ButtonVariant.LUMO_ERROR)
                     isEnabled = target.options.isNotEmpty()
-                    onLeftClick {
+                    onClick {
                         val num = tabSheet?.selectedTab?.label?.toIntOrNull()
                         if (target.options.removeIf { it.priority == num }) {
                             tabSheet?.remove(tabSheet!!.selectedTab)
@@ -78,7 +78,7 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                 }
                 moveDownButton = button("Move down") {
                     isEnabled = (tabSheet?.selectedTab?.label?.toIntOrNull() ?: 0) > 0
-                    onLeftClick {
+                    onClick {
                         val num = tabSheet?.selectedTab?.label?.toIntOrNull()
                         if (num != null) {
                             target.options[num] = target.options[num].copy(priority = num - 1)
@@ -91,7 +91,7 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                 }
                 moveUpButton = button("Move up") {
                     isEnabled = (tabSheet?.selectedTab?.label?.toIntOrNull() ?: 0) < (target.options.size - 1)
-                    onLeftClick {
+                    onClick {
                         val num = tabSheet?.selectedTab?.label?.toIntOrNull()
                         if (num != null) {
                             target.options[num] = target.options[num].copy(priority = num + 1)
@@ -103,11 +103,11 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                     }
                 }
                 button("Preview") {
-                    onLeftClick {
+                    onClick {
                         if (target.options.isEmpty())
-                            topNotification("No targets in the list.").also { return@onLeftClick }
+                            topNotification("No targets in the list.").also { return@onClick }
 
-                        val num = tabSheet?.selectedTab?.label?.toIntOrNull() ?: return@onLeftClick
+                        val num = tabSheet?.selectedTab?.label?.toIntOrNull() ?: return@onClick
                         val option = target.options[num]
                         if (option.source in listOf(SourceType.LOCAL, SourceType.XDCC) || (option.source in listOf(
                                 SourceType.TORRENT,
@@ -118,7 +118,7 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                                 topNotification("Cannot preview XDCC or Local.")
                             else
                                 topNotification("Please make sure you have a valid rss feed or ftp path.")
-                            return@onLeftClick
+                            return@onClick
                         }
                         PreviewDialog(media, target, option) { updatedOption ->
                             val num = tabSheet?.selectedTab?.label?.toIntOrNull()
@@ -141,7 +141,7 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
             horizontalLayout {
                 button("Save") {
                     addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_SUCCESS)
-                    onLeftClick {
+                    onClick {
                         dbClient.transaction {
                             if (target.options.isEmpty()) {
                                 DownloaderTargetsTable.deleteWhere { mediaID eq target.mediaID }

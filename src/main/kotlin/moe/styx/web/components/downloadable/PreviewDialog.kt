@@ -83,7 +83,7 @@ class PreviewDialog(
                 }
                 if (isRSS)
                     iconButton(LineAwesomeIcon.EXTERNAL_LINK_SQUARE_ALT_SOLID.create()) {
-                        onLeftClick {
+                        onClick {
                             UI.getCurrent().page.open(option.sourcePath ?: "")
                         }
                     }

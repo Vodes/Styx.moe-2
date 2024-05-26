@@ -37,7 +37,7 @@ class MappingOverview(private var media: Media, mediaProvider: (Media) -> Media)
             add(tmdbStack, anilistStack, malStack)
             button("Save") {
                 addThemeVariants(ButtonVariant.LUMO_SUCCESS)
-                onLeftClick {
+                onClick {
                     val mappings = MappingCollection(
                         tmdbStack.getMappings() as MutableList<TMDBMapping>,
                         anilistStack.getMappings() as MutableList<BasicMapping>,
@@ -62,16 +62,16 @@ class MappingStack(val media: Media, val type: StackType, private val mappings: 
                 defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
                 h3(type.displayName)
                 iconButton(LineAwesomeIcon.PLUS_SOLID.create()) {
-                    onLeftClick {
+                    onClick {
                         addEntry(StackEntry(this@MappingStack, if (type == StackType.TMDB) TMDBMapping() else BasicMapping()))
                     }
                 }
                 if (type == StackType.MAL) {
                     iconButton(LineAwesomeIcon.SYNC_SOLID.create()) {
                         setTooltipText("Sync with Anilist Stack (converting IDs)")
-                        onLeftClick {
+                        onClick {
                             if (anilistStack == null || anilistStack.entries.isEmpty())
-                                return@onLeftClick
+                                return@onClick
                             entries.clear()
                             entryLayout.removeAll()
                             anilistStack.entries.forEach {
@@ -84,7 +84,7 @@ class MappingStack(val media: Media, val type: StackType, private val mappings: 
                     }
                 } else {
                     iconButton(LineAwesomeIcon.SEARCH_SOLID.create()) {
-                        onLeftClick {
+                        onClick {
                             MappingSearchDialog(this@MappingStack, media).open()
                         }
                     }
@@ -220,7 +220,7 @@ class StackEntry(parent: MappingStack, var mappingEntry: IMapping) : KComposite(
                         (mappingEntry as TMDBMapping).orderType = event.value
                         (mappingEntry as TMDBMapping).orderID = selectedGroup.id
                         val notification = Notification(Span("Selected group \"${selectedGroup.name}\"!"), Button("Show").apply {
-                            onLeftClick {
+                            onClick {
                                 UI.getCurrent().page.open("https://www.themoviedb.org/tv/${idMappingField.value}/episode_group/${selectedGroup.id}")
                             }
                         })
@@ -237,7 +237,7 @@ class StackEntry(parent: MappingStack, var mappingEntry: IMapping) : KComposite(
                     addValueChangeListener { mappingEntry.offset = it.value }
                 }
                 iconButton(LineAwesomeIcon.TRASH_SOLID.create()) {
-                    onLeftClick {
+                    onClick {
                         parent.removeEntry(this@StackEntry)
                     }
                 }

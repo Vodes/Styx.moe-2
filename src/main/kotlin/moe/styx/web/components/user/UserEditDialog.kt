@@ -53,10 +53,10 @@ class UserEditDialog(private val userIn: User?, private val readonly: Boolean = 
             }
             button("Save") {
                 isEnabled = !readonly
-                onLeftClick {
+                onClick {
                     if (nameField.value.isNullOrBlank() || discordIDField.value.isNullOrBlank()) {
                         topNotification("Name and Discord ID are required.")
-                        return@onLeftClick
+                        return@onClick
                     }
                     val user = userIn?.copy(permissions = permissionsField.value, name = nameField.value, discordID = discordIDField.value)
                         ?: User(newGUID(), nameField.value, discordIDField.value, currentUnixSeconds(), 0, permissionsField.value)

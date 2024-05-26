@@ -28,11 +28,11 @@ class MediaSelectionField(title: String, private var selected: String, onSelect:
                 val tooltip = tooltip.withManual(true)
                 val tooltipButton = Button(LineAwesomeIcon.INFO_SOLID.create())
                 suffixComponent = tooltipButton
-                tooltipButton.onLeftClick {
+                tooltipButton.onClick {
                     if (value.isNullOrBlank()) {
                         if (tooltip.isOpened)
                             tooltip.isOpened = false
-                        return@onLeftClick
+                        return@onClick
                     }
                     if (!tooltip.isOpened) {
                         tooltip.text = dbClient.transaction {
@@ -43,7 +43,7 @@ class MediaSelectionField(title: String, private var selected: String, onSelect:
                 }
             }
             iconButton(LineAwesomeIcon.SEARCH_SOLID.create()) {
-                onLeftClick { MediaChooseDialog(exclude ?: "") { selectionField.value = it?.GUID ?: "" }.open() }
+                onClick { MediaChooseDialog(exclude ?: "") { selectionField.value = it?.GUID ?: "" }.open() }
                 height = "39px"
             }
         }

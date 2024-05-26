@@ -28,12 +28,12 @@ fun entryListing(media: Media) = createComponent {
     verticalLayout {
         horizontalLayout(false) {
             button("Fetch TMDB Metadata") {
-                onLeftClick {
+                onClick {
                     TMDBMetaDialog(media).open()
                 }
             }
             button("Add new") {
-                onLeftClick {
+                onClick {
                     UI.getCurrent().navigate("/entry?media=${media.GUID}")
                 }
             }
@@ -60,16 +60,16 @@ fun entryListing(media: Media) = createComponent {
                 horizontalLayout(false) {
                     defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
                     iconButton(LineAwesomeIcon.PEN_SOLID.create()) {
-                        onLeftClick {
+                        onClick {
                             UI.getCurrent().navigate("/entry/${entry.GUID}?media=${media.GUID}")
                         }
                     }
                     iconButton(LineAwesomeIcon.TRASH_SOLID.create()) {
                         addThemeVariants(ButtonVariant.LUMO_ERROR)
-                        onLeftClick { entryDeleteDialog(entry) }
+                        onClick { entryDeleteDialog(entry) }
                     }
                     iconButton(LineAwesomeIcon.INFO_CIRCLE_SOLID.create()) {
-                        onLeftClick { entryMediaInfoDialog(entry) }
+                        onClick { entryMediaInfoDialog(entry) }
                     }
                     h5("Size: ${entry.fileSize.readableSize()}")
                 }
