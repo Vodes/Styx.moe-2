@@ -45,7 +45,7 @@ val dbClient by lazy {
         "org.postgresql.Driver",
         Main.config.dbConfig.user,
         Main.config.dbConfig.pass,
-        20
+        10
     )
 }
 
