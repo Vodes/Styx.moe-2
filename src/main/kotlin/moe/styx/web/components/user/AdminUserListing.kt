@@ -44,13 +44,12 @@ fun userListing(readonly: Boolean = false) = createComponent {
             setItems(mapped)
             setWidthFull()
             selectionMode = Grid.SelectionMode.NONE
-            setWidthFull()
             addItemClickListener {
                 UserEditDialog(it.item.user, readonly).open()
             }
             addColumn(
                 LitRenderer.of<UserOnlineCombo?>("<a href=\"\${item.link}\" target =\"_blank\">\${item.name}</a>")
-                    .withProperty("name", UserOnlineCombo::name)
+                    .withProperty("name", UserOnlineCombo::nameOnline)
                     .withProperty("link", UserOnlineCombo::discordURL)
             ).setHeader("Name").setFlexGrow(1).setSortable(true)
             addColumn(LocalDateTimeRenderer(UserOnlineCombo::addedDate, "yyyy-MM-dd HH:mm")).setHeader("Added").setFlexGrow(1).setAutoWidth(true)
@@ -109,6 +108,9 @@ private data class UserOnlineCombo(
 
     val discordURL: String
         get() = "https://discord.com/users/$discordID"
+
+    val nameOnline: String
+        get() = name + (if (isOnline) " (Online)" else "")
 
     companion object {
         fun fromMap(map: Map<User, ActiveUser?>): List<UserOnlineCombo> {

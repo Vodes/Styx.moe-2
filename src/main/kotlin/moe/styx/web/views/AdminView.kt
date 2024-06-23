@@ -9,6 +9,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility
 import moe.styx.web.checkAuth
 import moe.styx.web.components.MediaGrid
 import moe.styx.web.components.authProgress
+import moe.styx.web.components.misc.categoryListing
 import moe.styx.web.components.misc.generateUnwatched
 import moe.styx.web.components.noAccess
 import moe.styx.web.components.user.userListing
@@ -41,6 +42,9 @@ class AdminView : KComposite(), HasUrlParameter<String> {
             }
             panel("User Management") {
                 init(userListing(perms < 99))
+            }
+            panel("Category Management") {
+                init(categoryListing(perms < 99))
             }
             panel("Misc Utils") {
                 button("Show unwatched shows") {
