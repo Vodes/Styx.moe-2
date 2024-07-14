@@ -51,6 +51,7 @@ dependencies {
     // Custom
     implementation(libs.styx.db)
     implementation(libs.styx.downloader)
+    implementation(libs.anitomyj)
 
     // Image Processing
     implementation(libs.scrimage.core)
