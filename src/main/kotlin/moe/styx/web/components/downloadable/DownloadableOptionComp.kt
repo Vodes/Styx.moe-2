@@ -57,15 +57,15 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
                 }
                 rssRegexField = textField("RSS Regex") {
                     setTooltipText("File Regex will be used if empty")
-                    isVisible = option.source == SourceType.TORRENT
+                    isVisible = option.source in arrayOf(SourceType.TORRENT, SourceType.USENET)
                     value = option.rssRegex ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
                     addRegexTemplateMenu(media, true)
                     addValueChangeListener { option = onUpdate(option.copy(rssRegex = it.value)) }
                     flexGrow = 1.0
                 }
-                pathField = textField(if (option.source == SourceType.TORRENT) "RSS Feed" else "FTP Path") {
-                    isVisible = option.source in arrayOf(SourceType.TORRENT, SourceType.FTP)
+                pathField = textField(if (option.source in arrayOf(SourceType.TORRENT, SourceType.USENET)) "RSS Feed" else "FTP Path") {
+                    isVisible = option.source in arrayOf(SourceType.TORRENT, SourceType.USENET, SourceType.FTP)
                     value = option.sourcePath ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
                     addRSSTemplateMenu()
@@ -115,12 +115,6 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
                         setTooltipText("Require previous option to exist before downloading")
                         value = option.waitForPrevious
                         addValueChangeListener { option = onUpdate(option.copy(waitForPrevious = it.value)) }
-                        height = "35px"
-                    }
-                    checkBox("Add to legacy DB") {
-                        addClassNames("meme-checkbox")
-                        value = option.addToLegacyDatabase
-                        addValueChangeListener { option = onUpdate(option.copy(addToLegacyDatabase = it.value)) }
                         height = "35px"
                     }
                 }
@@ -174,10 +168,10 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
 
     private fun updateVisibility(source: SourceType) {
         when (source) {
-            SourceType.TORRENT -> {
+            SourceType.TORRENT, SourceType.USENET -> {
                 rssRegexField.isVisible = true
                 pathField.isVisible = true
-                keepSeedingCheck.isVisible = true
+                keepSeedingCheck.isVisible = source == SourceType.TORRENT
                 ftpConnField.isVisible = false
                 pathField.label = "RSS Feed"
             }

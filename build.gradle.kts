@@ -14,6 +14,7 @@ defaultTasks("clean", "build")
 repositories {
     mavenCentral()
     maven("https://repo.styx.moe/releases")
+    maven("https://repo.styx.moe/snapshots")
     maven("https://jitpack.io")
     maven("https://maven.vaadin.com/vaadin-addons")
 }

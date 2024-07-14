@@ -109,13 +109,11 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
 
                         val num = tabSheet?.selectedTab?.label?.toIntOrNull() ?: return@onClick
                         val option = target.options[num]
-                        if (option.source in listOf(SourceType.LOCAL, SourceType.XDCC) || (option.source in listOf(
-                                SourceType.TORRENT,
-                                SourceType.FTP
-                            ) && option.sourcePath.isNullOrBlank())
+                        if (option.source in listOf(SourceType.LOCAL, SourceType.XDCC)
+                            || (option.source in listOf(SourceType.TORRENT, SourceType.FTP, SourceType.USENET) && option.sourcePath.isNullOrBlank())
                         ) {
                             if (option.source in listOf(SourceType.LOCAL, SourceType.XDCC))
-                                topNotification("Cannot preview XDCC or Local.")
+                                ParsingDialog("", false, true, target)
                             else
                                 topNotification("Please make sure you have a valid rss feed or ftp path.")
                             return@onClick

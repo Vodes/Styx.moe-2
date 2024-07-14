@@ -1,7 +1,6 @@
 package moe.styx.web.components.downloadable
 
 import com.github.mvysny.karibudsl.v10.*
-import com.github.mvysny.kaributools.selectionMode
 import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.dialog.Dialog
@@ -21,12 +20,13 @@ import moe.styx.downloader.ftp.FTPHandler
 import moe.styx.downloader.loadConfig
 import moe.styx.downloader.parsing.ParseDenyReason
 import moe.styx.downloader.parsing.ParseResult
-import moe.styx.downloader.torrent.FeedItem
-import moe.styx.downloader.torrent.RSSHandler
+import moe.styx.downloader.rss.FeedItem
+import moe.styx.downloader.rss.RSSHandler
 import moe.styx.web.components.addRSSTemplateMenu
 import moe.styx.web.components.addRegexTemplateMenu
 import moe.styx.web.createComponent
 import moe.styx.web.replaceAll
+import moe.styx.web.toReadableString
 import org.vaadin.lineawesome.LineAwesomeIcon
 import moe.styx.downloader.Main as DownloaderMain
 
@@ -40,7 +40,7 @@ class PreviewDialog(
 ) : Dialog() {
     private lateinit var layout: VerticalLayout
     private var ftpClient: FTPClient? = null
-    private val isRSS = option.source == SourceType.TORRENT
+    private val isRSS = option.source in arrayOf(SourceType.TORRENT, SourceType.USENET)
     private var pathChanged = true
     private var rssResults: List<RSSResult> = emptyList()
     private var ftpResults: List<FTPResult> = emptyList()
@@ -136,7 +136,7 @@ class PreviewDialog(
             } else {
                 rssResults = reevaluateRss()
             }
-            rssResults.map { rssToDataClass(it) }
+            rssResults.map { rssToDataClass(it, option.source == SourceType.USENET) }
         } else {
             if (pathChanged || ftpResults.isEmpty()) {
                 pathChanged = false
@@ -153,7 +153,7 @@ class PreviewDialog(
         }
 
         layout.replaceAll {
-            if (option.source == SourceType.TORRENT)
+            if (isRSS)
                 init(rssResultsGrid(results))
             else
                 init(ftpResultsGrid(results))
@@ -186,16 +186,15 @@ class PreviewDialog(
                 setHeader("Size")
                 isExpand = false
             }
-            columnFor(PreviewResult::parseResult, converter = {
-                return@columnFor when (it!!) {
-                    is ParseResult.OK -> "Would download"
-                    is ParseResult.DENIED -> "Denied: ${(it as ParseResult.DENIED).parseFailReason.name}"
-                    else -> "Failed: ${(it as ParseResult.FAILED).parseFailReason.name}"
-                }
-            }, sortable = false) {
+            columnFor(PreviewResult::parseResult, converter = { it!!.toReadableString() }, sortable = false) {
                 setHeader("Result")
                 setWidth("250px")
                 isExpand = false
+            }
+            gridContextMenu {
+                item("Check parsing", clickListener = {
+                    ParsingDialog(it!!.title, false, target = this@PreviewDialog.target).open()
+                })
             }
         }
     }
@@ -209,13 +208,7 @@ class PreviewDialog(
                 setHeader("Title")
                 setTooltipGenerator(PreviewResult::title)
             }
-            columnFor(PreviewResult::parseResult, converter = {
-                return@columnFor when (it!!) {
-                    is ParseResult.OK -> "Would download"
-                    is ParseResult.DENIED -> "Denied: ${(it as ParseResult.DENIED).parseFailReason.name}"
-                    else -> "Failed: ${(it as ParseResult.FAILED).parseFailReason.name}"
-                }
-            }, sortable = false) {
+            columnFor(PreviewResult::parseResult, converter = { it!!.toReadableString() }, sortable = false) {
                 setHeader("Result")
                 setWidth("250px")
                 isExpand = false
@@ -226,6 +219,9 @@ class PreviewDialog(
                 })
                 item("Download Torrent", clickListener = {
                     UI.getCurrent().page.open(it!!.torrentURL)
+                })
+                item("Check parsing", clickListener = {
+                    ParsingDialog(it!!.title, true, target = this@PreviewDialog.target).open()
                 })
             }
         }
@@ -263,6 +259,12 @@ fun ftpToDataClass(result: FTPResult): PreviewResult {
     return PreviewResult(result.first.first, "", "", result.first.second, result.second)
 }
 
-fun rssToDataClass(result: RSSResult): PreviewResult {
-    return PreviewResult(result.first.title, result.first.getPostURL(), result.first.getTorrentURL(), 0L, result.second)
+fun rssToDataClass(result: RSSResult, usenet: Boolean = false): PreviewResult {
+    return PreviewResult(
+        result.first.title,
+        result.first.getPostURL(),
+        if (!usenet) result.first.getTorrentURL() else result.first.getNZBURL() ?: "",
+        0L,
+        result.second
+    )
 }

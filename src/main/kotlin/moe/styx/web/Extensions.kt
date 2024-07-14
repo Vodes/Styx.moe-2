@@ -6,6 +6,7 @@ import kotlinx.datetime.toLocalDateTime
 import moe.styx.common.data.Image
 import moe.styx.common.extension.formattedStr
 import moe.styx.common.extension.toBoolean
+import moe.styx.downloader.parsing.ParseResult
 import java.io.File
 import java.util.*
 
@@ -26,6 +27,15 @@ fun Image.getURL(): String {
         "${Main.config.imageURL}/$GUID.png"
     } else {
         return externalURL as String
+    }
+}
+
+fun ParseResult.toReadableString(): String {
+    return when (this) {
+        is ParseResult.OK -> "Would download"
+        is ParseResult.DENIED -> "Denied: ${parseFailReason.name}"
+        is ParseResult.FAILED -> "Failed: ${parseFailReason.name}"
+        else -> "Failed to parse!"
     }
 }
 
