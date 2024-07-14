@@ -193,7 +193,7 @@ class PreviewDialog(
             }
             gridContextMenu {
                 item("Check parsing", clickListener = {
-                    ParsingDialog(it!!.title, false, target = this@PreviewDialog.target).open()
+                    ParsingDialog(it!!.title.split("/").last(), false, target = this@PreviewDialog.target).open()
                 })
             }
         }

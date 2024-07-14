@@ -113,7 +113,7 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                             || (option.source in listOf(SourceType.TORRENT, SourceType.FTP, SourceType.USENET) && option.sourcePath.isNullOrBlank())
                         ) {
                             if (option.source in listOf(SourceType.LOCAL, SourceType.XDCC))
-                                ParsingDialog("", false, true, target)
+                                ParsingDialog("", false, true, target).open()
                             else
                                 topNotification("Please make sure you have a valid rss feed or ftp path.")
                             return@onClick

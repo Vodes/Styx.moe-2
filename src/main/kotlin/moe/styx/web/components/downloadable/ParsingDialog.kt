@@ -19,12 +19,13 @@ class ParsingDialog(toParse: String, val rss: Boolean, openedForLocal: Boolean =
     lateinit var resultLabel: NativeLabel
 
     init {
+        width = "95%"
+        maxWidth = "700px"
         isModal = true
         isDraggable = true
 
         verticalLayout {
-            width = "95%"
-            maxWidth = "500px"
+            setWidthFull()
             h2("Metadata Parsing")
             textField("To parse") {
                 setWidthFull()
@@ -43,7 +44,7 @@ class ParsingDialog(toParse: String, val rss: Boolean, openedForLocal: Boolean =
                 h5("XDCC/Local do not support previewing. Feel free to test the parsing here.")
             parsingGrid = grid<MappedParsing> {
                 setWidthFull()
-                columnFor(MappedParsing::category) { setHeader("Type"); setFlexGrow(1) }
+                columnFor(MappedParsing::category) { setHeader("Type"); setAutoWidth(true); setFlexGrow(0) }
                 columnFor(MappedParsing::value) { setHeader("Value"); setFlexGrow(1) }
             }
             h3("EP wanted?")
