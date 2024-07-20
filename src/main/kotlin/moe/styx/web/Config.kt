@@ -10,7 +10,7 @@ import moe.styx.downloader.Main as DownloaderMain
 data class Config(
     val debugToken: String = "",
     val tmdbToken: String = "",
-    val serveHost: String = "localhost",
+    val serveHost: String = if (isDocker) "0.0.0.0" else "localhost",
     @TomlComment("Would not recommend changing the port if you're running this in docker.")
     val servePort: Int = 8080,
     val baseURL: String = "https://example.com",
