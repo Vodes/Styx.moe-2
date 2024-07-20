@@ -89,3 +89,11 @@ tasks.withType<Jar> {
 tasks.withType<ShadowJar> {
     mergeServiceFiles()
 }
+
+tasks.register("shadow-ci") {
+    dependsOn("shadowJar")
+    doLast {
+        val buildDir = File(projectDir, "build")
+        buildDir.walk().find { it.extension == "jar" && it.name.contains("-all") }?.copyTo(File(projectDir, "app.jar"))
+    }
+}
