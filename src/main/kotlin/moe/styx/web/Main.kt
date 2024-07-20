@@ -12,7 +12,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import moe.styx.common.http.getHttpClient
 import moe.styx.db.DBClient
-import moe.styx.downloader.loadConfig
 import net.peanuuutz.tomlkt.Toml
 import java.io.File
 import kotlin.system.exitProcess
@@ -39,6 +38,10 @@ object Main {
     lateinit var changesFile: File
 }
 
+val isDocker by lazy {
+    File("/.dockerenv").exists()
+}
+
 val dbClient by lazy {
     DBClient(
         "jdbc:postgresql://${Main.config.dbConfig.ip}/Styx",
@@ -50,7 +53,6 @@ val dbClient by lazy {
 }
 
 fun main(args: Array<String>) {
-    loadConfig()
     getHttpClient("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     Main.appDir = if (args.isEmpty()) getAppDir() else File(args[0]).also { it.mkdirs() }
     Main.changesFile = File(Main.appDir.parentFile, "changes.json")

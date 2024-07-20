@@ -8,16 +8,15 @@ import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.data.value.ValueChangeMode
-import kotlinx.datetime.Clock
 import moe.styx.common.data.DownloadableOption
 import moe.styx.common.data.DownloaderTarget
 import moe.styx.common.data.Media
 import moe.styx.common.data.SourceType
 import moe.styx.common.extension.readableSize
+import moe.styx.downloader.downloaderConfig
 import moe.styx.downloader.episodeWanted
 import moe.styx.downloader.ftp.FTPClient
 import moe.styx.downloader.ftp.FTPHandler
-import moe.styx.downloader.loadConfig
 import moe.styx.downloader.parsing.ParseDenyReason
 import moe.styx.downloader.parsing.ParseResult
 import moe.styx.downloader.rss.FeedItem
@@ -28,9 +27,6 @@ import moe.styx.web.createComponent
 import moe.styx.web.replaceAll
 import moe.styx.web.toReadableString
 import org.vaadin.lineawesome.LineAwesomeIcon
-import moe.styx.downloader.Main as DownloaderMain
-
-var lastInitialized = 0L
 
 class PreviewDialog(
     private val media: Media,
@@ -48,10 +44,8 @@ class PreviewDialog(
     init {
         setWidthFull()
         maxWidth = "1200px"
-        if (!DownloaderMain.isInitialized() || lastInitialized < (Clock.System.now().epochSeconds - 300)) {
-            loadConfig()
-            lastInitialized = Clock.System.now().epochSeconds
-        }
+
+        run { downloaderConfig }
 
         if (!isRSS) {
             FTPHandler.initClient()
