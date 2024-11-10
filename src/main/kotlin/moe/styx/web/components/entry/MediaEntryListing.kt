@@ -13,11 +13,16 @@ import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
 import moe.styx.common.extension.equalsAny
 import moe.styx.common.extension.readableSize
+import moe.styx.common.extension.toBoolean
 import moe.styx.common.prettyPrintJson
+import moe.styx.db.tables.ImageTable
 import moe.styx.db.tables.MediaEntryTable
 import moe.styx.downloader.utils.getMediaInfo
 import moe.styx.web.createComponent
+import moe.styx.web.data.sendDiscordHookEmbed
 import moe.styx.web.dbClient
+import moe.styx.web.getURL
+import moe.styx.web.topNotification
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.selectAll
@@ -26,6 +31,8 @@ import java.io.File
 
 fun entryListing(media: Media) = createComponent {
     verticalLayout {
+        val episodes = dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }
+            .sortedBy { it.entryNumber.toDoubleOrNull() ?: 0.0 }
         horizontalLayout(false) {
             button("Fetch TMDB Metadata") {
                 onClick {
@@ -37,9 +44,23 @@ fun entryListing(media: Media) = createComponent {
                     UI.getCurrent().navigate("/entry?media=${media.GUID}")
                 }
             }
+            if(!media.isSeries.toBoolean() && episodes.isNotEmpty()) {
+                button("Notify Discord") {
+                    onClick {
+                        val image = media.thumbID?.let {
+                            dbClient.transaction {
+                                ImageTable.query { selectAll().where { GUID eq it }.toList() }.firstOrNull()
+                            }
+                        }
+                        if(image == null) {
+                            topNotification("This media has no thumbnail!")
+                            return@onClick
+                        }
+                        sendDiscordHookEmbed("Movie added", media.name, image.getURL())
+                    }
+                }
+            }
         }
-        val episodes = dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }
-            .sortedBy { it.entryNumber.toDoubleOrNull() ?: 0.0 }
         episodes.forEachIndexed { index, entry ->
             verticalLayout(true) {
                 if (index != 0)
