@@ -8,9 +8,9 @@ import jakarta.servlet.http.Cookie
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import moe.styx.common.config.UnifiedConfig
 import moe.styx.common.http.httpClient
 import moe.styx.common.json
-import moe.styx.web.Main
 
 object DiscordAPI {
     fun getUserFromToken(token: String): DiscordUser? = runBlocking {
@@ -36,7 +36,7 @@ object DiscordAPI {
         if (tokenCookie != null)
             return tokenCookie.value
 
-        return Main.config.debugToken
+        return UnifiedConfig.current.webConfig.debugAuthToken
     }
 }
 

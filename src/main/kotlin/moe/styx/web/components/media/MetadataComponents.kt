@@ -228,6 +228,7 @@ class Other(private var media: Media, mediaProvider: (Media) -> Media) : KCompos
                     val isEstimated = checkBox("Time estimated") {
                         width = "170px"
                         height = "35px"
+                        value = schedule?.isEstimated?.toBoolean() == true
                     }
                     setAlignSelf(FlexComponent.Alignment.END, isEstimated)
 

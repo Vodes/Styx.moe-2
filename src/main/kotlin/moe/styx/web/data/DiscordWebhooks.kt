@@ -7,8 +7,8 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import moe.styx.common.config.UnifiedConfig
 import moe.styx.common.http.httpClient
-import moe.styx.web.Main
 
 @OptIn(ExperimentalSerializationApi::class)
 val explicitNullJson = Json {
@@ -33,7 +33,7 @@ fun sendDiscordHookEmbed(title: String, description: String, imageURL: String) =
             )
         )
     )
-    httpClient.post(Main.config.webhookURL) {
+    httpClient.post(UnifiedConfig.current.discord.announcementWebhookURL()) {
         contentType(ContentType.Application.Json)
         setBody(explicitNullJson.encodeToString(content))
     }

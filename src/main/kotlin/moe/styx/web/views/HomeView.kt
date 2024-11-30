@@ -11,8 +11,6 @@ import com.vaadin.flow.router.RouteAlias
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import moe.styx.web.Main
-import moe.styx.web.auth.DiscordAPI
 import moe.styx.web.layout.MainLayout
 
 @PageTitle("Styx - Home")
@@ -35,12 +33,12 @@ class HomeView : KComposite() {
 
 private fun doButtonThing(ui: UI, button: Button) {
     CoroutineScope(Dispatchers.IO).launch {
-        val user = DiscordAPI.getUserFromToken(Main.config.debugToken)
-        ui.access {
-            if (user != null)
-                button.text = "Hello, ${user.username}!"
-            else
-                button.text = "You are not logged in."
-        }
+//        val user = DiscordAPI.getUserFromToken(Main.config.debugToken)
+//        ui.access {
+//            if (user != null)
+//                button.text = "Hello, ${user.username}!"
+//            else
+//                button.text = "You are not logged in."
+//        }
     }
 }

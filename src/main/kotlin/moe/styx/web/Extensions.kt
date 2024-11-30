@@ -3,6 +3,7 @@ package moe.styx.web
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import moe.styx.common.config.UnifiedConfig
 import moe.styx.common.data.Image
 import moe.styx.common.extension.formattedStr
 import moe.styx.common.extension.toBoolean
@@ -19,12 +20,13 @@ fun Long.toISODate(): String {
 fun newGUID() = UUID.randomUUID().toString().uppercase()
 
 fun Image.getURL(): String {
+    val config = UnifiedConfig.current.base
     return if (hasWEBP?.toBoolean() == true) {
-        "${Main.config.imageURL}/$GUID.webp"
+        "${config.imageBaseURL()}/$GUID.webp"
     } else if (hasJPG?.toBoolean() == true) {
-        "${Main.config.imageURL}/$GUID.jpg"
+        "${config.imageBaseURL()}/$GUID.jpg"
     } else if (hasPNG?.toBoolean() == true) {
-        "${Main.config.imageURL}/$GUID.png"
+        "${config.imageBaseURL()}/$GUID.png"
     } else {
         return externalURL as String
     }
@@ -41,9 +43,9 @@ fun ParseResult.toReadableString(): String {
 
 fun Image.deleteIfExists() {
     val url = getURL()
-    if (!url.contains(Main.config.imageURL, true))
+    if (!url.contains(UnifiedConfig.current.base.imageBaseURL(), true))
         return
-    val file = File(Main.config.imageDir, url.split("/").last())
+    val file = File(UnifiedConfig.current.base.imageDir(), url.split("/").last())
     if (file.exists())
         file.delete()
 }

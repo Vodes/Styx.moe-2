@@ -9,8 +9,8 @@ import com.vaadin.flow.router.Route
 import com.vaadin.flow.server.StreamResource
 import com.vaadin.flow.server.VaadinRequest
 import com.vaadin.flow.theme.lumo.LumoUtility.*
+import moe.styx.common.config.UnifiedConfig
 import moe.styx.common.data.User
-import moe.styx.web.Main
 import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.linkButton
@@ -57,7 +57,7 @@ class UserView : KComposite() {
                 }
             }
             linkButton(
-                "${Main.config.baseAPIURL}/discord/logout",
+                "${UnifiedConfig.current.base.apiBaseURL()}/discord/logout",
                 "Logout",
                 LineAwesomeIcon.USER_ALT_SLASH_SOLID.create(),
                 target = AnchorTarget.DEFAULT
@@ -68,11 +68,12 @@ class UserView : KComposite() {
     private fun desktopDownloadButtons() = createComponent {
         horizontalLayout {
             setClassNames2(Padding.Horizontal.SMALL)
-            if (!File(Main.config.buildDir).exists() || File(Main.config.buildDir).listFiles().isNullOrEmpty()) {
+            val buildDir = UnifiedConfig.current.base.buildDir()
+            if (!File(buildDir).exists() || File(buildDir).listFiles().isNullOrEmpty()) {
                 h3("Could not find builds on the server.")
                 return@horizontalLayout
             }
-            val latest = File(Main.config.buildDir).listFiles()!!.filter { it.isDirectory }.maxBy { it.name }
+            val latest = File(buildDir).listFiles()!!.filter { it.isDirectory }.maxBy { it.name }
             val winMsi = latest.walkTopDown().find { it.name.endsWith(".msi") }
             val linuxDeb = latest.walkTopDown().find { it.name.endsWith(".deb") }
             val linuxRpm = latest.walkTopDown().find { it.name.endsWith(".rpm") }
@@ -116,16 +117,14 @@ class UserView : KComposite() {
     private fun androidDownloadButtons() = createComponent {
         horizontalLayout {
             setClassNames2(Padding.Horizontal.SMALL)
-            if (!File(Main.config.androidBuildDir).exists() || File(Main.config.androidBuildDir).listFiles().isNullOrEmpty()) {
+            val androidBuildDir = UnifiedConfig.current.base.androidBuildDir()
+            if (!File(androidBuildDir).exists() || File(androidBuildDir).listFiles().isNullOrEmpty()) {
                 h3("Could not find builds on the server.")
                 return@horizontalLayout
             }
-            val latest = File(Main.config.androidBuildDir).listFiles()!!.filter { it.isDirectory }.maxBy { it.name }
+            val latest = File(androidBuildDir).listFiles()!!.filter { it.isDirectory }.maxBy { it.name }
             val universalAPK = latest.walkTopDown().find { it.name.endsWith("-universal-release.apk") }
             val arm64APK = latest.walkTopDown().find { it.name.endsWith("-arm64-v8a-release.apk") }
-            val armAPK = latest.walkTopDown().find { it.name.endsWith("-armeabi-v7a-release.apk") }
-            val x86APK = latest.walkTopDown().find { it.name.endsWith("-x86-release.apk") }
-            val x64APK = latest.walkTopDown().find { it.name.endsWith("-x86_64-release.apk") }
             verticalLayout {
                 h3("Android")
                 unorderedList {
@@ -142,27 +141,10 @@ class UserView : KComposite() {
                             setHref(arm64APK.streamResource())
                         }
                     }
-                    if (armAPK != null) {
-                        linkButton("", "ARM APK") {
-                            element.setAttribute("download", true)
-                            setHref(armAPK.streamResource())
-                        }
-                    }
-                    if (x86APK != null) {
-                        linkButton("", "x86 APK") {
-                            element.setAttribute("download", true)
-                            setHref(x86APK.streamResource())
-                        }
-                    }
-                    if (x64APK != null) {
-                        linkButton("", "x86-64 APK") {
-                            element.setAttribute("download", true)
-                            setHref(x64APK.streamResource())
-                        }
-                    }
                 }
                 htmlSpan("If you don't know what to pick here or don't care about filesize just go with <b>Universal</b>.")
                 htmlSpan("Chances are that if you have a modern device <b>ARM-64</b> will be what you want.")
+                htmlSpan("ARMv7 and X86 Builds are not available anymore because the demand for that is quite low and <b>Universal</b> will still work.")
             }
         }
     }

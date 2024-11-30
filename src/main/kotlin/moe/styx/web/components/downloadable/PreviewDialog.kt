@@ -225,7 +225,7 @@ class PreviewDialog(
         val new = rssResults.map {
             var parseResult = it.second
             if (it.second !is ParseResult.DENIED || (it.second as ParseResult.DENIED).parseFailReason != ParseDenyReason.PostIsTooOld) {
-                parseResult = option.episodeWanted(it.first.title, target, true)
+                parseResult = option.episodeWanted(it.first.title, null, target, true)
             }
             return@map it.first to parseResult
         }
@@ -236,7 +236,7 @@ class PreviewDialog(
         val new = ftpResults.map {
             var parseResult = it.second
             if (it.second !is ParseResult.DENIED || (it.second as ParseResult.DENIED).parseFailReason != ParseDenyReason.PostIsTooOld) {
-                parseResult = option.episodeWanted(it.first.first, target)
+                parseResult = option.episodeWanted(it.first.first, (it.second as? ParseResult.OK)?.parentDir, target)
             }
             return@map it.first to parseResult
         }

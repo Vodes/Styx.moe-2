@@ -45,7 +45,6 @@ dependencies {
     // Misc
     implementation(libs.postgres)
     implementation(libs.slf4j.simple)
-    implementation(libs.tomlkt)
     implementation(libs.jsoup)
 
     // Custom

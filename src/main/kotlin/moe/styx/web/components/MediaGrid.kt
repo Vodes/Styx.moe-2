@@ -3,7 +3,6 @@ package moe.styx.web.components
 import com.github.mvysny.karibudsl.v10.*
 import com.github.mvysny.kaributools.getRouteUrl
 import com.github.mvysny.kaributools.navigateTo
-import com.github.mvysny.kaributools.selectionMode
 import com.vaadin.flow.component.AttachEvent
 import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.UI
@@ -19,6 +18,7 @@ import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.router.QueryParameters
 import com.vaadin.flow.shared.Registration
 import com.vaadin.flow.theme.lumo.LumoUtility.*
+import moe.styx.common.config.UnifiedConfig
 import moe.styx.common.data.Media
 import moe.styx.common.extension.eqI
 import moe.styx.common.extension.readableSize
@@ -29,7 +29,6 @@ import moe.styx.db.tables.DownloaderTargetsTable
 import moe.styx.db.tables.ImageTable
 import moe.styx.db.tables.MediaEntryTable
 import moe.styx.db.tables.MediaTable
-import moe.styx.web.Main
 import moe.styx.web.components.media.ImportDialog
 import moe.styx.web.dbClient
 import moe.styx.web.toISODate
@@ -174,7 +173,7 @@ class MediaGrid(exclude: String = "", initialSearch: String? = null, onClickItem
                     addClassNames(Padding.Vertical.MEDIUM)
                     onClick {
                         val route = getRouteUrl(MediaView::class)
-                        UI.getCurrent().page.open("${Main.config.baseURL}/$route/${media.GUID}")
+                        UI.getCurrent().page.open("${UnifiedConfig.current.base.siteBaseURL()}/$route/${media.GUID}")
                         close()
                     }
                 }
@@ -201,7 +200,7 @@ class MediaGrid(exclude: String = "", initialSearch: String? = null, onClickItem
                 }
                 button("Configure Downloader in new Tab") {
                     addClassNames(Padding.Vertical.MEDIUM)
-                    onClick { UI.getCurrent().page.open("${Main.config.baseURL}/download/${media.GUID}") }
+                    onClick { UI.getCurrent().page.open("${UnifiedConfig.current.base.siteBaseURL()}/download/${media.GUID}") }
                 }
             }
         }

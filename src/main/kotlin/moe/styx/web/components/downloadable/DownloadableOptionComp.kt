@@ -23,6 +23,7 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
     private lateinit var pathField: TextField
     private lateinit var ftpConnField: TextField
     private lateinit var keepSeedingCheck: Checkbox
+    private lateinit var ignoreParentCheck: Checkbox
     private lateinit var processingButton: Button
 
     val root = ui {
@@ -117,6 +118,14 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
                         addValueChangeListener { option = onUpdate(option.copy(waitForPrevious = it.value)) }
                         height = "35px"
                     }
+                    ignoreParentCheck = checkBox("Ignore Parent Folder") {
+                        addClassNames("meme-checkbox")
+                        setTooltipText("Ignore parent folder when checking for FTP matches.")
+                        value = option.ignoreParentFolder
+                        isVisible = option.source == SourceType.FTP
+                        addValueChangeListener { option = onUpdate(option.copy(ignoreParentFolder = it.value)) }
+                        height = "35px"
+                    }
                 }
             }
             h3("Overrides") { addClassNames(Padding.Vertical.MEDIUM) }
@@ -173,6 +182,7 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
                 pathField.isVisible = true
                 keepSeedingCheck.isVisible = source == SourceType.TORRENT
                 ftpConnField.isVisible = false
+                ignoreParentCheck.isVisible = false
                 pathField.label = "RSS Feed"
             }
 
@@ -180,13 +190,15 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
                 rssRegexField.isVisible = false
                 keepSeedingCheck.isVisible = false
                 ftpConnField.isVisible = true
+                ignoreParentCheck.isVisible = true
                 pathField.isVisible = true
                 pathField.label = "FTP Path"
             }
 
             else -> {
-                keepSeedingCheck.isVisible = false
                 rssRegexField.isVisible = false
+                keepSeedingCheck.isVisible = false
+                ignoreParentCheck.isVisible = false
                 ftpConnField.isVisible = false
                 pathField.isVisible = false
             }

@@ -5,7 +5,7 @@ import com.vaadin.flow.component.HasComponents
 import com.vaadin.flow.component.Unit
 import com.vaadin.flow.component.html.AnchorTarget
 import com.vaadin.flow.theme.lumo.LumoUtility
-import moe.styx.web.Main
+import moe.styx.common.config.UnifiedConfig
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class AuthProgressBar : KComposite() {
@@ -27,7 +27,12 @@ class NoAccessComp : KComposite() {
     val root = ui {
         verticalLayout(false) {
             h3("You are not logged in or don't have sufficient permissions.")
-            linkButton("${Main.config.baseAPIURL}/discord/auth", "Login", LineAwesomeIcon.USER_LOCK_SOLID.create(), target = AnchorTarget.DEFAULT)
+            linkButton(
+                "${UnifiedConfig.current.base.apiBaseURL()}/discord/auth",
+                "Login",
+                LineAwesomeIcon.USER_LOCK_SOLID.create(),
+                target = AnchorTarget.DEFAULT
+            )
         }
     }
 }

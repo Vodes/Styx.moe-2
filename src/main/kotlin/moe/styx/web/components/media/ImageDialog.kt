@@ -19,6 +19,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.runBlocking
+import moe.styx.common.config.UnifiedConfig
 import moe.styx.common.data.Image
 import moe.styx.common.data.Media
 import moe.styx.common.data.tmdb.StackType
@@ -27,7 +28,6 @@ import moe.styx.common.data.tmdb.getFirstIDFromMap
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.http.httpClient
 import moe.styx.common.isWindows
-import moe.styx.web.Main
 import moe.styx.web.createComponent
 import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.data.tmdb.tmdbImageQuery
@@ -183,7 +183,7 @@ private fun downloadImage(url: String, thumbnail: Boolean): Image? = runBlocking
     else if (image.ratio() > 1 && image.width > 1600)
         image = image.scaleToWidth(1600, ScaleMethod.Bicubic)
 
-    val output = File(Main.config.imageDir, "$guid.webp")
+    val output = File(UnifiedConfig.current.base.imageDir(), "$guid.webp")
     image.output(WebpWriter.DEFAULT.withQ(100).withM(6), output)
     return@runBlocking Image(guid, hasWEBP = 1, type = if (thumbnail) 0 else 1)
 }

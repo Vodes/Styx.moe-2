@@ -6,15 +6,14 @@ scrimage = "4.1.3"
 karibu-dsl = "2.1.3"
 
 [libraries]
-styx-db = { module = "moe.styx:styx-db", version = "0.3.0" }
-styx-downloader = { module = "moe.styx:styx-downloader", version = "0.4.2" }
+styx-db = { module = "moe.styx:styx-db", version = "0.4.1" }
+styx-downloader = { module = "moe.styx:styx-downloader", version = "0.5.1" }
 anitomyj = { module = "com.github.Vodes:anitomyJ", version = "99a355bf0d" }
 scrimage-core = { module = "com.sksamuel.scrimage:scrimage-core", version.ref = "scrimage" }
 scrimage-webp = { module = "com.sksamuel.scrimage:scrimage-webp", version.ref = "scrimage" }
 scrimage-extra = { module = "com.sksamuel.scrimage:scrimage-formats-extra", version.ref = "scrimage" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version = "2.0.13" }
 postgres = { module = "org.postgresql:postgresql", version = "42.7.3" }
-tomlkt = { module = "net.peanuuutz.tomlkt:tomlkt", version = "0.3.7" }
 jsoup = { module = "org.jsoup:jsoup", version = "1.17.2" }
 
 vaadin-core = { module = "com.vaadin:vaadin-core", version.ref = "vaadin" }
