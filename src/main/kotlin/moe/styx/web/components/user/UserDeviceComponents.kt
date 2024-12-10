@@ -62,6 +62,35 @@ class DeviceListView(private val user: User, private val readonly: Boolean = fal
                                 }
                             }
                             nativeLabel("Last used: ${device.lastUsed.toISODate()}")
+                            details("Hardware Info") {
+                                val info = device.deviceInfo
+                                verticalLayout(false) {
+                                    horizontalLayout(false) {
+                                        defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
+                                        when (device.deviceInfo.type.lowercase()) {
+                                            "pc" -> add(LineAwesomeIcon.DESKTOP_SOLID.create())
+                                            "laptop" -> add(LineAwesomeIcon.LAPTOP_SOLID.create())
+                                            "phone" -> add(LineAwesomeIcon.MOBILE_SOLID.create())
+                                            "tablet" -> add(LineAwesomeIcon.TABLET_SOLID.create())
+                                        }
+                                        nativeLabel(info.os + if (info.osVersion.isNullOrBlank()) "" else " (${info.osVersion})")
+                                    }
+                                    if (info.type.lowercase() in arrayOf("phone", "tablet"))
+                                        htmlSpan("<b>Model:</b> ${if (info.model.isNullOrBlank()) "Unknown" else info.model}")
+
+                                    htmlSpan("<b>CPU:</b> ${if (info.cpu.isNullOrBlank()) "Unknown" else info.cpu}")
+
+                                    if (info.type.lowercase() !in arrayOf("phone", "tablet")) {
+                                        htmlSpan("<b>GPU:</b> ${if (info.gpu.isNullOrBlank()) "Unknown" else info.gpu}")
+                                        val jvmString = info.jvm?.let {
+                                            if (!info.jvmVersion.isNullOrBlank() && info.jvm?.contains(info.jvmVersion!!) == false)
+                                                "$it (${info.jvmVersion}"
+                                            it
+                                        }
+                                        htmlSpan("<b>JVM:</b> ${if (info.jvm.isNullOrBlank()) "Unknown" else jvmString}")
+                                    }
+                                }
+                            }
                         }
                     }
                 }
