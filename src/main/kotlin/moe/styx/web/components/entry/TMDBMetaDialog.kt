@@ -42,7 +42,8 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
                 h2("Could not find mapping for this media.")
                 return@main
             }
-            val episodes = dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }
+            val episodes =
+                dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }
             val grouped = episodes.groupBy { collection.getMappingForEpisode(it.entryNumber) as TMDBMapping? }
             horizontalLayout {
                 button("Import metadata") {
@@ -68,8 +69,10 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
                     val (metaEN, metaDE) = mapping.getRemoteEpisodes { topNotification(it) }
                     entries.sortedBy { it.entryNumber.toDoubleOrNull() ?: 0.0 }.forEachIndexed { index, entry ->
                         val number = entry.entryNumber.toDouble() + mapping.offset
-                        val epMetaEN = metaEN.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
-                        val epMetaDE = metaDE.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
+                        val epMetaEN =
+                            metaEN.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
+                        val epMetaDE =
+                            metaDE.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
                         init(episodeMetaview(entry, index, epMetaEN, epMetaDE))
                     }
                 }
@@ -87,8 +90,10 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
                 val (metaEN, metaDE) = mapping.getRemoteEpisodes()
                 entries.forEach { entry ->
                     val number = entry.entryNumber.toDouble() + mapping.offset
-                    val epMetaEN = metaEN.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
-                    val epMetaDE = metaDE.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
+                    val epMetaEN =
+                        metaEN.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
+                    val epMetaDE =
+                        metaDE.find { (if (it.order != null) it.order!! + 1 else it.episodeNumber) == number.toInt() }
                     if (epMetaEN == null)
                         return@forEach
                     val nameEN = epMetaEN.filteredName()
@@ -98,7 +103,10 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
                         nameDE = nameDE.ifBlank { entry.nameDE },
                         synopsisEN = epMetaEN.overview.ifBlank { entry.synopsisEN },
                         synopsisDE = (epMetaDE?.overview ?: "").ifBlank { entry.synopsisDE },
-                        timestamp = (if (useReleaseDatesCheckbx.value) epMetaEN.parseDateUnix() else entry.timestamp).also { dates.add(it) }
+                        timestamp = (if (useReleaseDatesCheckbx.value && !epMetaEN.airDate.isNullOrBlank())
+                            epMetaEN.parseDateUnix()
+                        else
+                            entry.timestamp).also { dates.add(it) }
                     )
                     MediaEntryTable.upsertItem(newEntry)
                 }

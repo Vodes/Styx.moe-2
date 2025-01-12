@@ -68,27 +68,45 @@ class ProcessingDialog(private var options: ProcessingOptions, private val prior
                 value = options.sushiSubs
                 addValueChangeListener { options = options.copy(sushiSubs = it.value) }
             }
-            checkBox("Apply TPP to subs") {
-                value = options.tppSubs
-                addValueChangeListener {
-                    options = options.copy(tppSubs = it.value)
-                    tppstylesField.isEnabled = it.value
-                }
-            }
-            tppstylesField = textField("TPP Styles") {
-                setTooltipText("Styles to apply the tpp to")
-                isEnabled = options.tppSubs
-                value = options.tppStyles
-                valueChangeMode = ValueChangeMode.LAZY
-                addValueChangeListener { options = options.copy(tppStyles = it.value) }
-            }
             checkBox("Restyle subs") {
                 value = options.restyleSubs
                 addValueChangeListener { options = options.copy(restyleSubs = it.value) }
             }
+            checkBox("Remove unnnecessary subs/audio") {
+                value = options.removeUnnecessary
+                addValueChangeListener { options = options.copy(removeUnnecessary = it.value) }
+            }
             checkBox("Fix tagging") {
                 value = options.fixTagging
                 addValueChangeListener { options = options.copy(fixTagging = it.value) }
+            }
+            details("Other settings") {
+                checkBox("Apply TPP to subs") {
+                    value = options.tppSubs
+                    addValueChangeListener {
+                        options = options.copy(tppSubs = it.value)
+                        tppstylesField.isEnabled = it.value
+                    }
+                }
+                tppstylesField = textField("TPP Styles") {
+                    setTooltipText("Styles to apply the tpp to")
+                    isEnabled = options.tppSubs
+                    value = options.tppStyles
+                    valueChangeMode = ValueChangeMode.LAZY
+                    addValueChangeListener { options = options.copy(tppStyles = it.value) }
+                }
+                textField("Sub languages") {
+                    setTooltipText("Subtitles that will be processed and/or kept if removal is enabled.")
+                    value = options.subLanguages
+                    valueChangeMode = ValueChangeMode.LAZY
+                    addValueChangeListener { options = options.copy(subLanguages = it.value) }
+                }
+                textField("Audio languages") {
+                    setTooltipText("Audio languages that will be kept if removal is enabled.")
+                    value = options.audioLanguages
+                    valueChangeMode = ValueChangeMode.LAZY
+                    addValueChangeListener { options = options.copy(audioLanguages = it.value) }
+                }
             }
         }
     }

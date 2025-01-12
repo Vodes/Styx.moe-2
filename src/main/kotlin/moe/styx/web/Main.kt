@@ -35,5 +35,9 @@ val dbClient by lazy {
 
 fun main(args: Array<String>) {
     getHttpClient("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-    VaadinBoot().listenOn(UnifiedConfig.current.webConfig.serveHost()).setPort(UnifiedConfig.current.webConfig.servePort).run()
+    val config = UnifiedConfig.current
+    val boot = VaadinBoot()
+    boot.listenOn = config.webConfig.serveHost()
+    boot.port = config.webConfig.servePort
+    boot.run()
 }

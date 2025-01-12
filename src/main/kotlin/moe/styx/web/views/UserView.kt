@@ -52,6 +52,7 @@ class UserView : KComposite() {
                     }
                 }
                 panel("Devices") {
+                    isOpened = true
                     setClassNames2(Padding.XSMALL)
                     content { deviceListView(user) }
                 }
