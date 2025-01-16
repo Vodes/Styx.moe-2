@@ -75,13 +75,16 @@ class DeviceListView(private val user: User, private val readonly: Boolean = fal
                         h4("A device that will be deleted automatically after 3 days.\nYou can however get a copyable refresh-token for it here.")
                         if (devDevice == null) {
                             button("Create new") {
-                                dbClient.transaction { DeviceTable.upsertItem(getNewDevDevice()) }
-                                updateList()
+                                onClick {
+                                    dbClient.transaction { DeviceTable.upsertItem(getNewDevDevice()) }
+                                    updateList()
+                                }
                             }
                         } else {
                             passwordField("Refresh Token") {
                                 isRevealButtonVisible = true
                                 value = devDevice.refreshToken
+                                minWidth = "400px"
                             }
                         }
                     }

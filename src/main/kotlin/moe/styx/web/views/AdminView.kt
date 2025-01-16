@@ -35,8 +35,8 @@ class AdminView : KComposite(), HasUrlParameter<String> {
                 else {
                     verticalLayout {
                         h2("There are no registered users just yet.\nPlease create an admin user now.")
-                        val nameField = textField("Name")
-                        val discordIDField = textField("Discord-ID")
+                        val nameField = textField("Name") { minWidth = "400px" }
+                        val discordIDField = textField("Discord-ID") { minWidth = "400px" }
                         button("Create") {
                             onClick {
                                 if (nameField.value.isNullOrBlank()) {
