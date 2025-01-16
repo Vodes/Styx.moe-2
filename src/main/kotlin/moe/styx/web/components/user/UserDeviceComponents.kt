@@ -5,18 +5,19 @@ import com.vaadin.flow.component.HasComponents
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.theme.lumo.LumoUtility
+import moe.styx.common.data.Device
+import moe.styx.common.data.DeviceInfo
 import moe.styx.common.data.User
+import moe.styx.common.extension.currentUnixSeconds
+import moe.styx.common.extension.toBoolean
 import moe.styx.db.tables.DeviceTable
-import moe.styx.web.dbClient
-import moe.styx.web.replaceAll
-import moe.styx.web.toISODate
-import moe.styx.web.topNotification
+import moe.styx.web.*
 import org.jetbrains.exposed.sql.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class DeviceListView(private val user: User, private val readonly: Boolean = false) : KComposite() {
     private lateinit var deviceLayout: VerticalLayout
-
+    private lateinit var devDeviceLayout: VerticalLayout
 
     val root = ui {
         verticalLayout {
@@ -29,19 +30,72 @@ class DeviceListView(private val user: User, private val readonly: Boolean = fal
                     }
                 }
             }
+            devDeviceLayout = verticalLayout {}
             deviceLayout = verticalLayout {}
             updateList()
         }
     }
 
+    private fun getNewDevDevice(): Device {
+        return Device(
+            newGUID(),
+            user.GUID,
+            "DEV",
+            DeviceInfo(
+                "Unknown",
+                null,
+                null,
+                null,
+                null,
+                "null",
+                null,
+                null,
+                null,
+                ""
+            ),
+            0L,
+            newGUID(),
+            newGUID(),
+            newGUID(),
+            currentUnixSeconds(),
+            currentUnixSeconds(),
+            1
+        )
+    }
+
     private fun updateList() {
+        val devices = dbClient.transaction { DeviceTable.query { selectAll().where { userID eq user.GUID }.toList() } }
+        val devDevice = devices.find { it.isDevDevice.toBoolean() }
+        if (user.permissions > 70) {
+            devDeviceLayout.replaceAll {
+                details("Development Device") {
+                    isOpened = true
+                    verticalLayout {
+                        isPadding = false
+                        h4("A device that will be deleted automatically after 3 days.\nYou can however get a copyable refresh-token for it here.")
+                        if (devDevice == null) {
+                            button("Create new") {
+                                dbClient.transaction { DeviceTable.upsertItem(getNewDevDevice()) }
+                                updateList()
+                            }
+                        } else {
+                            passwordField("Refresh Token") {
+                                isRevealButtonVisible = true
+                                value = devDevice.refreshToken
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
         deviceLayout.replaceAll {
-            val devices = dbClient.transaction { DeviceTable.query { selectAll().where { userID eq user.GUID }.toList() } }
-            if (devices.isEmpty()) {
+            if (devices.none { !it.isDevDevice.toBoolean() }) {
                 h3("No devices found.")
             } else {
                 verticalLayout(false) {
-                    devices.forEachIndexed { index, device ->
+                    devices.filter { !it.isDevDevice.toBoolean() }.forEachIndexed { index, device ->
                         verticalLayout(false) {
                             if (index != 0)
                                 addClassNames(LumoUtility.Border.TOP, LumoUtility.BorderColor.CONTRAST_30)
