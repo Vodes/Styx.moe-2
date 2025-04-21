@@ -16,6 +16,7 @@ import moe.styx.web.components.authProgress
 import moe.styx.web.components.linkButton
 import moe.styx.web.components.noAccess
 import moe.styx.web.components.user.deviceListView
+import moe.styx.web.components.user.userAnilistView
 import moe.styx.web.createComponent
 import moe.styx.web.layout.MainLayout
 import moe.styx.web.unorderedList
@@ -40,25 +41,30 @@ class UserView : KComposite() {
     private fun userSettings(user: User) = createComponent {
         verticalLayout(false) {
             setSizeFull()
-            h2("Welcome, ${user.name}!") { addClassNames(Padding.XSMALL) }
+            val config = UnifiedConfig.current
+            h2("Welcome, ${user.name}!") { addClassNames(Padding.SMALL) }
             accordion {
                 setWidthFull()
                 panel("Downloads") {
                     isOpened = true
-                    setClassNames2(Padding.XSMALL)
+                    setClassNames2(Padding.SMALL)
                     content {
                         add(desktopDownloadButtons())
                         add(androidDownloadButtons())
                     }
                 }
                 panel("Devices") {
-                    isOpened = true
-                    setClassNames2(Padding.XSMALL)
+                    setClassNames2(Padding.SMALL)
                     content { deviceListView(user) }
                 }
+                if (config.webConfig.anilistClientID.isNotBlank() && config.webConfig.anilistClientSecret.isNotBlank())
+                    panel("Anilist") {
+                        setClassNames2(Padding.SMALL)
+                        content { userAnilistView(user) }
+                    }
             }
             linkButton(
-                "${UnifiedConfig.current.base.apiBaseURL()}/discord/logout",
+                "${config.base.apiBaseURL()}/discord/logout",
                 "Logout",
                 LineAwesomeIcon.USER_ALT_SLASH_SOLID.create(),
                 target = AnchorTarget.DEFAULT
@@ -78,9 +84,10 @@ class UserView : KComposite() {
             val winMsi = latest.walkTopDown().find { it.name.endsWith(".msi") }
             val linuxDeb = latest.walkTopDown().find { it.name.endsWith(".deb") }
             val linuxRpm = latest.walkTopDown().find { it.name.endsWith(".rpm") }
+            val linuxTarZst = latest.walkTopDown().find { it.name.endsWith(".pkg.tar.zst") }
             val linuxJar = latest.walkTopDown().find { it.name.contains("linux", true) && it.name.endsWith(".jar") }
             verticalLayout {
-                if (linuxJar != null || linuxDeb != null || linuxRpm != null) {
+                if (linuxJar != null || linuxDeb != null || linuxRpm != null || linuxTarZst != null) {
                     h3("Linux")
                     unorderedList {
                         addClassNames(Display.FLEX, Gap.SMALL, ListStyleType.NONE, Margin.NONE, Padding.NONE)
@@ -94,6 +101,12 @@ class UserView : KComposite() {
                             linkButton("", "RPM", LineAwesomeIcon.FEDORA.create()) {
                                 element.setAttribute("download", true)
                                 setHref(linuxRpm.streamResource())
+                            }
+                        }
+                        if (linuxTarZst != null) {
+                            linkButton("", "PKG.TAR.ZST (Arch)", LineAwesomeIcon.LINUX.create()) {
+                                element.setAttribute("download", true)
+                                setHref(linuxTarZst.streamResource())
                             }
                         }
                         if (linuxJar != null) {

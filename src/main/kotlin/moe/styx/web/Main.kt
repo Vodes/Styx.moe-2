@@ -11,6 +11,7 @@ import com.vaadin.flow.theme.lumo.Lumo
 import moe.styx.common.config.UnifiedConfig
 import moe.styx.common.http.getHttpClient
 import moe.styx.db.DBClient
+import pw.vodes.anilistkmp.AnilistApiClient
 
 @Theme("my-theme", variant = Lumo.DARK)
 @Push(PushMode.AUTOMATIC, transport = Transport.WEBSOCKET_XHR)
@@ -31,6 +32,10 @@ val dbClient by lazy {
         config.pass(),
         10
     )
+}
+
+val anilistClient by lazy {
+    AnilistApiClient()
 }
 
 fun main(args: Array<String>) {
