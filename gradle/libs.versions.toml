@@ -1,12 +1,12 @@
 [versions]
-kotlin = "2.0.21"
+kotlin = "2.1.21"
 vaadin = "24.7.1"
 slf4j = "2.0.16"
 scrimage = "4.1.3"
 karibu-dsl = "2.3.2"
 
 [libraries]
-styx-db = { module = "moe.styx:styx-db", version = "0.5.2" }
+styx-db = { module = "moe.styx:styx-db", version = "0.5.5" }
 styx-downloader = { module = "moe.styx:styx-downloader", version = "0.5.5" }
 anilistkmp = { module = "pw.vodes:anilist-kmp", version = "0.0.1" }
 anitomyj = { module = "com.github.Vodes:anitomyJ", version = "99a355bf0d" }
