@@ -19,15 +19,19 @@ import io.ktor.http.*
 import kotlinx.coroutines.delay
 import moe.styx.common.config.UnifiedConfig
 import moe.styx.common.data.User
+import moe.styx.common.extension.toBoolean
 import moe.styx.common.http.httpClient
 import moe.styx.common.json
 import moe.styx.common.util.Log
 import moe.styx.common.util.launchThreaded
+import moe.styx.db.tables.UserTable
+import moe.styx.libs.mal.NoRefreshMALClient
 import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.linkButton
 import moe.styx.web.components.noAccess
 import moe.styx.web.data.PKCEUtil
+import moe.styx.web.dbClient
 import moe.styx.web.replaceAll
 import kotlin.jvm.optionals.getOrNull
 
@@ -72,7 +76,7 @@ class MALCodeReceiveView : KComposite(), BeforeEnterObserver {
             runCatching {
                 val current = UnifiedConfig.current
                 val redirectURI = "${current.base.siteBaseURL()}/mal"
-                val verifier = PKCEUtil.generatedVerifiers[state!!]!!
+                val verifier = PKCEUtil.generatedVerifiers.remove(state)!!
                 val response = httpClient.submitForm("https://myanimelist.net/v1/oauth2/token", formParameters = parameters {
                     append("grant_type", "authorization_code")
                     append("client_id", current.webConfig.malClientID)
@@ -96,41 +100,31 @@ class MALCodeReceiveView : KComposite(), BeforeEnterObserver {
                     return@launchThreaded
                 }
                 val responseBody = json.decodeFromString<GenericTokenResponse>(textBody)
-                println(responseBody)
-//                val client = AnilistApiClient(responseBody.accessToken)
-//                val viewerResponse = client.fetchViewer()
-//                if (viewerResponse.data == null) {
-//                    ui.access {
-//                        currentLayout.replaceAll {
-//                            h3("Could not fetch user via received token. Please check back with the admin.")
-//                        }
-//                    }
-//                    Log.e { "Failed to fetch mal viewer.\nException: ${viewerResponse.exception}\nErrors: ${viewerResponse.errors?.joinToString { it.toString() }}" }
-//                    return@launchThreaded
-//                }
-//                val anilistData = AnilistData(
-//                    responseBody.accessToken,
-//                    "",
-//                    currentUnixSeconds() + responseBody.expiresIn,
-//                    viewerResponse.data!!.name,
-//                    viewerResponse.data!!.id
-//                )
-//                val success = dbClient.transaction {
-//                    UserTable.upsertItem(user.copy(anilistData = anilistData))
-//                }.insertedCount.toBoolean()
-//
-//                if (!success) {
-//                    ui.access {
-//                        currentLayout.replaceAll {
-//                            h3("Could not update anilist data for this user. Please check back with the admin.")
-//                        }
-//                    }
-//                    return@launchThreaded
-//                }
+
+                val malData = NoRefreshMALClient.refreshTokenAndFetchUser(responseBody.refreshToken)
+                if (malData == null) {
+                    ui.access {
+                        currentLayout.replaceAll {
+                            h3("Could not fetch user via received token. Please check back with the admin.")
+                        }
+                    }
+                }
+                val success = dbClient.transaction {
+                    UserTable.upsertItem(user.copy(malData = malData))
+                }.insertedCount.toBoolean()
+
+                if (!success) {
+                    ui.access {
+                        currentLayout.replaceAll {
+                            h3("Could not update MAL data for this user. Please check back with the admin.")
+                        }
+                    }
+                    return@launchThreaded
+                }
                 ui.access {
                     currentLayout.replaceAll {
                         verticalLayout(padding = true) {
-                            h3("Successfully authenticated anilist user.")
+                            h3("Successfully authenticated MyAnimeList user.")
                             linkButton("${UnifiedConfig.current.base.siteBaseURL()}/user", "Return to user page", target = AnchorTarget.DEFAULT)
                         }
                     }
@@ -141,7 +135,7 @@ class MALCodeReceiveView : KComposite(), BeforeEnterObserver {
                         h3("Could not fetch authorization token. Please check back with the admin.")
                     }
                 }
-                Log.e(null, it) { "Failed to fetch authorization token from anilist" }
+                Log.e(null, it) { "Failed to fetch authorization token from MyAnimeList" }
             }
         }
     }

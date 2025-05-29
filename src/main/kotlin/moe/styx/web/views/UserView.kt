@@ -64,7 +64,7 @@ class UserView : KComposite() {
                         content { userAnilistView(user) }
                     }
 
-                if (config.webConfig.malClientID.isNotBlank() && config.webConfig.malClientSecret.isNotBlank() && user.permissions >= 50)
+                if (config.webConfig.malClientID.isNotBlank() && config.webConfig.malClientSecret.isNotBlank())
                     panel("MyAnimeList") {
                         setClassNames2(Padding.SMALL)
                         content { userMalView(user) }

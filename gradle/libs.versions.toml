@@ -8,6 +8,7 @@ karibu-dsl = "2.3.2"
 [libraries]
 styx-db = { module = "moe.styx:styx-db", version = "0.5.5" }
 styx-downloader = { module = "moe.styx:styx-downloader", version = "0.5.5" }
+styx-mal = { module = "moe.styx:styx-lib-mal", version = "0.0.3" }
 anilistkmp = { module = "pw.vodes:anilist-kmp", version = "0.0.1" }
 anitomyj = { module = "com.github.Vodes:anitomyJ", version = "99a355bf0d" }
 scrimage-core = { module = "com.sksamuel.scrimage:scrimage-core", version.ref = "scrimage" }
