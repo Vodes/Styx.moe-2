@@ -17,6 +17,7 @@ import moe.styx.web.components.linkButton
 import moe.styx.web.components.noAccess
 import moe.styx.web.components.user.deviceListView
 import moe.styx.web.components.user.userAnilistView
+import moe.styx.web.components.user.userMalView
 import moe.styx.web.createComponent
 import moe.styx.web.layout.MainLayout
 import moe.styx.web.unorderedList
@@ -61,6 +62,12 @@ class UserView : KComposite() {
                     panel("Anilist") {
                         setClassNames2(Padding.SMALL)
                         content { userAnilistView(user) }
+                    }
+
+                if (config.webConfig.malClientID.isNotBlank() && config.webConfig.malClientSecret.isNotBlank())
+                    panel("MyAnimeList") {
+                        setClassNames2(Padding.SMALL)
+                        content { userMalView(user) }
                     }
             }
             linkButton(
