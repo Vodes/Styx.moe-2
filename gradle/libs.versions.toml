@@ -7,15 +7,15 @@ karibu-dsl = "2.3.2"
 
 [libraries]
 styx-db = { module = "moe.styx:styx-db", version = "0.5.5" }
-styx-downloader = { module = "moe.styx:styx-downloader", version = "0.5.5" }
-styx-mal = { module = "moe.styx:styx-lib-mal", version = "0.0.3" }
-anilistkmp = { module = "pw.vodes:anilist-kmp", version = "0.0.1" }
-anitomyj = { module = "com.github.Vodes:anitomyJ", version = "99a355bf0d" }
+styx-downloader = { module = "moe.styx:styx-downloader", version = "0.5.8" }
+styx-mal = { module = "moe.styx:styx-lib-mal", version = "0.0.4" }
+anilistkmp = { module = "pw.vodes:anilist-kmp", version = "0.0.4" }
+anitomyj = { module = "com.github.Vodes:anitomyJ", version = "80f36aceb2" }
 scrimage-core = { module = "com.sksamuel.scrimage:scrimage-core", version.ref = "scrimage" }
 scrimage-webp = { module = "com.sksamuel.scrimage:scrimage-webp", version.ref = "scrimage" }
 scrimage-extra = { module = "com.sksamuel.scrimage:scrimage-formats-extra", version.ref = "scrimage" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
-postgres = { module = "org.postgresql:postgresql", version = "42.7.3" }
+postgres = { module = "org.postgresql:postgresql", version = "42.7.7" }
 jsoup = { module = "org.jsoup:jsoup", version = "1.17.2" }
 
 vaadin-core = { module = "com.vaadin:vaadin-core", version.ref = "vaadin" }
