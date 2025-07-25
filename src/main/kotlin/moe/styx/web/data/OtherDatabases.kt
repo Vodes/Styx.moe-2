@@ -55,7 +55,7 @@ data class MultiIDStorage(val title: String, val anilistID: Int, val malID: Int,
 
 private fun updateDataset() = runBlocking {
     val response =
-        httpClient.get("https://raw.githubusercontent.com/manami-project/anime-offline-database/master/anime-offline-database-minified.json")
+        httpClient.get("https://github.com/manami-project/anime-offline-database/releases/download/latest/anime-offline-database-minified.json")
     if (response.status != HttpStatusCode.OK)
         return@runBlocking
     val parsedDB = json.decodeFromString<Database>(response.bodyAsText())
