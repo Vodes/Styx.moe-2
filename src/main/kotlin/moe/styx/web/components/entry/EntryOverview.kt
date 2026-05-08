@@ -43,6 +43,19 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
 
     private fun updateEntry(update: (MediaEntry) -> MediaEntry) = entryState.update(update)
 
+    private fun buildMediaInfo(file: File, entryID: String): MediaInfo? {
+        val mediainfo = file.getMediaInfo() ?: return null
+        return MediaInfo(
+            entryID,
+            mediainfo.videoCodec(),
+            mediainfo.videoBitDepth(),
+            mediainfo.videoResolution(),
+            mediainfo.hasEnglishDub().toInt(),
+            mediainfo.hasGermanDub().toInt(),
+            mediainfo.hasGermanSub().toInt()
+        )
+    }
+
     val root = ui {
         val entry = currentEntry()
         verticalLayout {
@@ -134,20 +147,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                             if (mediaEntry != null) {
                                 val entry = currentEntry()
                                 dbClient.transaction {
-                                    val mediainfo = file.getMediaInfo()
-                                    if (mediainfo != null) {
-                                        MediaInfoTable.upsertItem(
-                                            MediaInfo(
-                                                entry.GUID,
-                                                mediainfo.videoCodec(),
-                                                mediainfo.videoBitDepth(),
-                                                mediainfo.videoResolution(),
-                                                mediainfo.hasEnglishDub().toInt(),
-                                                mediainfo.hasGermanDub().toInt(),
-                                                mediainfo.hasGermanSub().toInt()
-                                            )
-                                        )
-                                    }
+                                    buildMediaInfo(file, entry.GUID)?.let { MediaInfoTable.upsertItem(it) }
                                 }
                             }
                         }
@@ -178,26 +178,16 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
             button("Save") {
                 onClick {
                     val entry = currentEntry()
-                    if (dbClient.transaction { MediaEntryTable.upsertItem(entry) }.insertedCount.toBoolean()) {
-                        val file = File(fileField.value)
-                        if (file.exists() && mediaEntry != null) {
-                            dbClient.transaction {
-                                val mediainfo = file.getMediaInfo()
-                                if (mediainfo != null) {
-                                    MediaInfoTable.upsertItem(
-                                        MediaInfo(
-                                            entry.GUID,
-                                            mediainfo.videoCodec(),
-                                            mediainfo.videoBitDepth(),
-                                            mediainfo.videoResolution(),
-                                            mediainfo.hasEnglishDub().toInt(),
-                                            mediainfo.hasGermanDub().toInt(),
-                                            mediainfo.hasGermanSub().toInt()
-                                        )
-                                    )
-                                }
-                            }
+                    val saved = dbClient.transaction {
+                        val result = MediaEntryTable.upsertItem(entry).insertedCount.toBoolean()
+                        if (result) {
+                            val file = File(fileField.value)
+                            if (file.exists())
+                                buildMediaInfo(file, entry.GUID)?.let { MediaInfoTable.upsertItem(it) }
                         }
+                        result
+                    }
+                    if (saved) {
                         dbClient.transaction { ChangesTable.setToNow(false, true) }
                         UI.getCurrent().page.history.back()
                     } else
