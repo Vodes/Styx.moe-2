@@ -34,7 +34,12 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.time.Duration
 import java.time.LocalTime
 
-class MetadataView(private var media: Media, mediaProvider: (Media) -> Media) : KComposite() {
+class MetadataView(private var media: Media, private val mediaProvider: (Media) -> Media) : KComposite() {
+    private fun updateMedia(update: (Media) -> Media): Media {
+        media = mediaProvider(update(media))
+        return media
+    }
+
     val root = ui {
         verticalLayout {
             isPadding = false
@@ -48,45 +53,50 @@ class MetadataView(private var media: Media, mediaProvider: (Media) -> Media) : 
                 val nameField = textField("Name") {
                     value = media.name
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { this@MetadataView.media = mediaProvider(media.copy(name = it.value.trim())) }
+                    addValueChangeListener { updateMedia { it.copy(name = this.value.trim()) } }
                 }
                 val englishField = textField("English") {
                     value = media.nameEN ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { this@MetadataView.media = mediaProvider(media.copy(nameEN = it.value.trim())) }
+                    addValueChangeListener { updateMedia { it.copy(nameEN = this.value.trim()) } }
                 }
                 val romajiField = textField("Romaji") {
                     value = media.nameJP ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { this@MetadataView.media = mediaProvider(media.copy(nameJP = it.value.trim())) }
+                    addValueChangeListener { updateMedia { it.copy(nameJP = this.value.trim()) } }
                 }
                 setFlexGrow(1.0, nameField, englishField, romajiField)
             }
             h3("Relations") { addClassNames(Padding.Horizontal.NONE, Padding.Vertical.SMALL) }
-            add(RelationsView(media) { media = mediaProvider(it); media })
+            add(RelationsView({ media }) { updated -> media = mediaProvider(updated); media })
 
             h3("Descriptions") { addClassNames(Padding.Horizontal.NONE, Padding.Vertical.SMALL) }
-            add(SynopsisView(media) { media = mediaProvider(it); media })
+            add(SynopsisView({ media }) { updated -> media = mediaProvider(updated); media })
 
             h3("Misc") { addClassNames(Padding.Horizontal.NONE, Padding.Vertical.SMALL) }
-            add(Other(media) { media = mediaProvider(it); media })
+            add(Other({ media }) { updated -> media = mediaProvider(updated); media })
         }
     }
 }
 
-class RelationsView(private var media: Media, mediaProvider: (Media) -> Media) : KComposite() {
+class RelationsView(private val currentMedia: () -> Media, private val mediaProvider: (Media) -> Media) : KComposite() {
+    private fun updateMedia(update: (Media) -> Media): Media {
+        return mediaProvider(update(currentMedia()))
+    }
+
     val root = ui {
+        val media = currentMedia()
         flexLayout {
             addClassNames(LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL, "flex-container")
             setWidthFull()
             maxWidth = "1250px"
             mediaSelection("Prequel", media.prequel ?: "", {
-                media = mediaProvider(media.copy(prequel = it))
+                updateMedia { media -> media.copy(prequel = it) }
             }, media.GUID) {
                 setWidthFull()
             }
             mediaSelection("Sequel", media.sequel ?: "", {
-                media = mediaProvider(media.copy(sequel = it))
+                updateMedia { media -> media.copy(sequel = it) }
             }, media.GUID) {
                 setWidthFull()
             }
@@ -94,8 +104,13 @@ class RelationsView(private var media: Media, mediaProvider: (Media) -> Media) :
     }
 }
 
-class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : KComposite() {
+class SynopsisView(private val currentMedia: () -> Media, private val mediaProvider: (Media) -> Media) : KComposite() {
+    private fun updateMedia(update: (Media) -> Media): Media {
+        return mediaProvider(update(currentMedia()))
+    }
+
     val root = ui {
+        val media = currentMedia()
         flexLayout {
             addClassNames(LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL, "flex-container")
             setWidthFull()
@@ -103,14 +118,14 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
             textArea("Synopsis EN") {
                 value = media.synopsisEN ?: ""
                 valueChangeMode = ValueChangeMode.LAZY
-                addValueChangeListener { media = mediaProvider(media.copy(synopsisEN = it.value.trim())) }
+                addValueChangeListener { updateMedia { media -> media.copy(synopsisEN = this.value.trim()) } }
                 height = "250px"
                 setWidthFull()
             }
             val synopsisDE = textArea("Synopsis DE") {
                 value = media.synopsisDE ?: ""
                 valueChangeMode = ValueChangeMode.LAZY
-                addValueChangeListener { media = mediaProvider(media.copy(synopsisDE = it.value.trim())) }
+                addValueChangeListener { updateMedia { media -> media.copy(synopsisDE = this.value.trim()) } }
                 height = "250px"
                 setWidthFull()
             }
@@ -126,7 +141,7 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
                         if (meta == null)
                             Notification.show("Could not get metadata from TMDB!").also { return@onClick }
                         synopsisDE.value = meta!!.overview
-                        media = mediaProvider(media.copy(synopsisDE = meta.overview))
+                        updateMedia { media -> media.copy(synopsisDE = meta.overview) }
                     }
                 }
                 item("Fill from TMDB (Season)") {
@@ -141,7 +156,7 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
                         if (meta == null)
                             Notification.show("Could not get metadata from TMDB!").also { return@onClick }
                         synopsisDE.value = meta!!.overview
-                        media = mediaProvider(media.copy(synopsisDE = meta.overview))
+                        updateMedia { media -> media.copy(synopsisDE = meta.overview) }
                     }
                 }
                 item("Fill from AniSearch") {
@@ -156,7 +171,7 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
                         if (scrape == null)
                             Notification.show("Could not scrape description from AniSearch!").also { return@onClick }
                         synopsisDE.value = scrape!!
-                        media = mediaProvider(media.copy(synopsisDE = scrape))
+                        updateMedia { media -> media.copy(synopsisDE = scrape) }
                     }
                 }
             }
@@ -164,8 +179,13 @@ class SynopsisView(private var media: Media, mediaProvider: (Media) -> Media) : 
     }
 }
 
-class Other(private var media: Media, mediaProvider: (Media) -> Media) : KComposite() {
+class Other(private val currentMedia: () -> Media, private val mediaProvider: (Media) -> Media) : KComposite() {
+    private fun updateMedia(update: (Media) -> Media): Media {
+        return mediaProvider(update(currentMedia()))
+    }
+
     val root = ui {
+        val media = currentMedia()
         val categories = dbClient.transaction { CategoryTable.query { selectAll().toList() } }
         var schedule = dbClient.transaction { MediaScheduleTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }.firstOrNull()
         val weekdays = ScheduleWeekday.entries.toTypedArray()
@@ -182,19 +202,19 @@ class Other(private var media: Media, mediaProvider: (Media) -> Media) : KCompos
                     isEmptySelectionAllowed = true
                     value = categories.find { it.GUID eqI media.categoryID }
                     setTextRenderer { it.name }
-                    addValueChangeListener { media = mediaProvider(media.copy(categoryID = it.value?.GUID ?: "")) }
+                    addValueChangeListener { updateMedia { media -> media.copy(categoryID = it.value?.GUID ?: "") } }
                     setWidthFull()
                 }
                 textField("Genres") {
                     value = media.genres ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { media = mediaProvider(media.copy(genres = it.value)) }
+                    addValueChangeListener { updateMedia { media -> media.copy(genres = this.value) } }
                     setWidthFull()
                 }
                 textField("Tags") {
                     value = media.tags ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { media = mediaProvider(media.copy(tags = it.value)) }
+                    addValueChangeListener { updateMedia { media -> media.copy(tags = this.value) } }
                     setWidthFull()
                 }
             }

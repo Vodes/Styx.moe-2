@@ -5,6 +5,7 @@ import com.vaadin.flow.component.HasComponents
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.component.select.Select
 import com.vaadin.flow.component.textfield.TextArea
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
@@ -19,7 +20,15 @@ class TokenGroupsComponent(
     private var tokenGroups: List<TokenGroup>,
     private val onUpdate: (List<TokenGroup>) -> Unit
 ) : KComposite() {
+    private data class GroupRowState(
+        val targetSelect: Select<TokenTarget>,
+        val methodSelect: Select<TokenMatchMethod>,
+        val matchSelect: Select<TokenMatchType>,
+        val tokensField: TextArea
+    )
+
     private lateinit var groupLayout: VerticalLayout
+    private val rowStates = mutableMapOf<Int, GroupRowState>()
 
     val root = ui {
         verticalLayout {
@@ -35,7 +44,7 @@ class TokenGroupsComponent(
                 iconButton(LineAwesomeIcon.PLUS_SOLID.create()) {
                     setTooltipText("Add token group")
                     onClick {
-                        updateGroups(tokenGroups + TokenGroup(), true)
+                        updateGroups(readGroups() + TokenGroup(), true)
                     }
                 }
             }
@@ -46,17 +55,22 @@ class TokenGroupsComponent(
 
     private fun renderGroups() {
         groupLayout.removeAll()
+        rowStates.clear()
         if (tokenGroups.isEmpty()) {
             groupLayout.add(createComponent { h4("No token groups added yet!") })
             return
         }
 
         tokenGroups.forEachIndexed { index, group ->
-            groupLayout.add(createComponent {
+            lateinit var targetSelect: Select<TokenTarget>
+            lateinit var methodSelect: Select<TokenMatchMethod>
+            lateinit var matchSelect: Select<TokenMatchType>
+            lateinit var tokensField: TextArea
+
+            val component = createComponent {
                 verticalLayout {
                     setWidthFull()
                     isPadding = false
-                    lateinit var tokensField: TextArea
                     if (index != 0)
                         addClassNames(LumoUtility.Border.TOP, LumoUtility.BorderColor.CONTRAST_30, LumoUtility.Padding.Top.MEDIUM)
 
@@ -65,37 +79,37 @@ class TokenGroupsComponent(
                         addClassNames(LumoUtility.Gap.SMALL, "flex-container", "token-group-row")
                         setWidthFull()
 
-                        select<TokenTarget>("Target") {
+                        targetSelect = select<TokenTarget>("Target") {
                             setItems(TokenTarget.entries)
                             value = group.target
                             isEmptySelectionAllowed = false
                             setTextRenderer { it.label() }
                             addValueChangeListener {
-                                val updated = group.copy(target = it.value)
+                                val updated = readGroup(index)
                                 validateTokens(updated, tokensField)
                                 updateGroup(index, updated)
                             }
                             width = "130px"
                         }
-                        select<TokenMatchMethod>("Method") {
+                        methodSelect = select<TokenMatchMethod>("Method") {
                             setItems(TokenMatchMethod.entries)
                             value = group.method
                             isEmptySelectionAllowed = false
                             setTextRenderer { it.label() }
                             addValueChangeListener {
-                                val updated = group.copy(method = it.value)
+                                val updated = readGroup(index)
                                 validateTokens(updated, tokensField)
                                 updateGroup(index, updated)
                             }
                             width = "150px"
                         }
-                        select<TokenMatchType>("Match") {
+                        matchSelect = select<TokenMatchType>("Match") {
                             setItems(TokenMatchType.entries)
                             value = group.matchType
                             isEmptySelectionAllowed = false
                             setTextRenderer { it.label() }
                             addValueChangeListener {
-                                val updated = group.copy(matchType = it.value)
+                                val updated = readGroup(index)
                                 validateTokens(updated, tokensField)
                                 updateGroup(index, updated)
                             }
@@ -106,7 +120,7 @@ class TokenGroupsComponent(
                             setTooltipText("Remove token group")
                             addThemeVariants(ButtonVariant.LUMO_ERROR)
                             onClick {
-                                updateGroups(tokenGroups.filterIndexed { i, _ -> i != index }, true)
+                                updateGroups(readGroups().filterIndexed { i, _ -> i != index }, true)
                             }
                         }
                     }
@@ -119,13 +133,15 @@ class TokenGroupsComponent(
                         valueChangeMode = ValueChangeMode.LAZY
                         validateTokens(group, this)
                         addValueChangeListener {
-                            val updated = group.copy(tokens = parseTokens(it.value))
+                            val updated = readGroup(index)
                             validateTokens(updated, this)
                             updateGroup(index, updated)
                         }
                     }
                 }
-            })
+            }
+            rowStates[index] = GroupRowState(targetSelect, methodSelect, matchSelect, tokensField)
+            groupLayout.add(component)
         }
     }
 
@@ -139,6 +155,23 @@ class TokenGroupsComponent(
         onUpdate(groups)
         if (rerender)
             renderGroups()
+    }
+
+    private fun readGroups(): List<TokenGroup> {
+        if (rowStates.isEmpty())
+            return tokenGroups
+
+        return tokenGroups.indices.map { index -> readGroup(index) }
+    }
+
+    private fun readGroup(index: Int): TokenGroup {
+        val state = rowStates[index] ?: return tokenGroups[index]
+        return TokenGroup(
+            tokens = parseTokens(state.tokensField.value),
+            method = state.methodSelect.value,
+            matchType = state.matchSelect.value,
+            target = state.targetSelect.value,
+        )
     }
 
     private fun parseTokens(input: String): List<String> {
