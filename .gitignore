@@ -11,3 +11,4 @@ frontend/generated
 !**/src/main/dev-bundle/webapp/VAADIN/build
 /src/main/bundles
 /.kotlin/sessions
+/.kotlin/metadata

@@ -204,7 +204,7 @@ class DLOptionComponent(
         val option = currentOption()
         if (option.useTokens) {
             matchingLayout.add(createComponent {
-                tokenGroupsComponent(option.tokenGroups, {
+                tokenGroupsComponent(media, option.tokenGroups, {
                     updateOption { option -> option.copy(tokenGroups = it) }
                 })
             })

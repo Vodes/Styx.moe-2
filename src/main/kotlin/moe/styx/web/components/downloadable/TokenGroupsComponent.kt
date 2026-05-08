@@ -13,10 +13,13 @@ import moe.styx.common.data.TokenGroup
 import moe.styx.common.data.TokenMatchMethod
 import moe.styx.common.data.TokenMatchType
 import moe.styx.common.data.TokenTarget
+import moe.styx.common.data.Media
+import moe.styx.web.components.addTokenGroupTemplateMenu
 import moe.styx.web.createComponent
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class TokenGroupsComponent(
+    private val media: Media,
     private var tokenGroups: List<TokenGroup>,
     private val onUpdate: (List<TokenGroup>) -> Unit
 ) : KComposite() {
@@ -45,6 +48,12 @@ class TokenGroupsComponent(
                     setTooltipText("Add token group")
                     onClick {
                         updateGroups(readGroups() + TokenGroup(), true)
+                    }
+                }
+                button("Templates") {
+                    setTooltipText("Append a preset to the current token groups")
+                    addTokenGroupTemplateMenu(media) {
+                        updateGroups(readGroups() + it, true)
                     }
                 }
             }
@@ -206,9 +215,10 @@ private fun TokenMatchType.label() = when (this) {
 
 @VaadinDsl
 fun (@VaadinDsl HasComponents).tokenGroupsComponent(
+    media: Media,
     tokenGroups: List<TokenGroup>,
     onUpdate: (List<TokenGroup>) -> Unit,
     block: (@VaadinDsl TokenGroupsComponent).() -> Unit = {}
 ) = init(
-    TokenGroupsComponent(tokenGroups, onUpdate), block
+    TokenGroupsComponent(media, tokenGroups, onUpdate), block
 )
