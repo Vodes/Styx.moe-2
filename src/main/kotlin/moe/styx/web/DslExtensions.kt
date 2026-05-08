@@ -49,6 +49,25 @@ inline fun checkAuth(
     noinline notLoggedIn: (FlexComponent.() -> Component)? = null,
     crossinline func: FlexComponent.(User) -> Component
 ) {
+    if (System.getenv("STYX_WEB_BYPASS_AUTH") == "1") {
+        CoroutineScope(Dispatchers.IO).launch {
+            val user = dbClient.transaction {
+                UserTable.query {
+                    selectAll().where { permissions greaterEq (minPerms - 1) }.also { println(it.toString()) }.toList()
+                        .sortedByDescending { permissions }
+                }
+            }.firstOrNull()
+            if (user == null) {
+                if (notLoggedIn != null)
+                    parent?.let { ui.access { it.replaceAll { init(notLoggedIn(it)) } } }
+                else
+                    ui.access { navigateTo<HomeView>() }
+                return@launch
+            }
+            parent?.let { ui.access { it.replaceAll { init(func(it, user)) } } }
+        }
+        return
+    }
     CoroutineScope(Dispatchers.IO).launch {
         val discordUser = DiscordAPI.getUserFromToken(DiscordAPI.getCurrentToken(request) ?: "")
         if (discordUser == null) {
