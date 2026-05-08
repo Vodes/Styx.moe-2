@@ -22,6 +22,7 @@ import moe.styx.common.extension.toInt
 import moe.styx.db.tables.ChangesTable
 import moe.styx.db.tables.MediaEntryTable
 import moe.styx.db.tables.MediaTable
+import moe.styx.web.components.LocalEditorState
 import moe.styx.web.components.entry.entryListing
 import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.dbClient
@@ -32,7 +33,11 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class MediaOverview(media: Media?) : KComposite() {
-    private var internalMedia = media ?: Media(newGUID(), "", "", "", "", "", "", added = currentUnixSeconds())
+    private val mediaState = LocalEditorState(
+        media ?: Media(newGUID(), "", "", "", "", "", "", added = currentUnixSeconds())
+    ) {
+        wasChanged = true
+    }
     private lateinit var metadataLayout: VerticalLayout
     private lateinit var imagesLayout: VerticalLayout
     private lateinit var mappingLayout: VerticalLayout
@@ -46,7 +51,7 @@ class MediaOverview(media: Media?) : KComposite() {
                 defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
                 button("Fill from AniList") {
                     onClick {
-                        val id = internalMedia.getFirstIDFromMap(StackType.ANILIST)
+                        val id = mediaState.current().getFirstIDFromMap(StackType.ANILIST)
                         if (id == null)
                             Notification.show("No AniList ID was found in the mapping.").also { return@onClick }
 
@@ -54,29 +59,31 @@ class MediaOverview(media: Media?) : KComposite() {
                         if (result == null)
                             Notification.show("Could not get data from AniList API.").also { return@onClick }
 
-                        internalMedia = internalMedia.copy(
+                        mediaState.update {
+                            it.copy(
                             nameJP = result!!.title.romaji,
                             nameEN = result.title.english,
                             synopsisEN = result.description,
                             genres = result.genres.joinToString(", "),
                             tags = result.tags.filter { it.rank > 60 && !it.isMediaSpoiler }.take(10).joinToString(", ") { it.name }
                         )
+                        }
                         updateTabs()
                     }
                 }
                 iconButton(LineAwesomeIcon.FAST_FORWARD_SOLID.create()) {
                     setTooltipText("Quick Add (Anilist)")
                     onClick {
-                        QuickAddDialog(internalMedia) {
-                            internalMedia = it
+                        QuickAddDialog(mediaState.current()) {
+                            mediaState.replace(it)
                             updateTabs()
                         }.open()
                     }
                 }
                 checkBox("Movie") {
-                    value = !internalMedia.isSeries.toBoolean()
+                    value = !mediaState.current().isSeries.toBoolean()
                     addValueChangeListener {
-                        internalMedia = internalMedia.copy(isSeries = (!it.value).toInt())
+                        mediaState.update { media -> media.copy(isSeries = (!it.value).toInt()) }
                         updateTabs()
                     }
                 }
@@ -88,30 +95,30 @@ class MediaOverview(media: Media?) : KComposite() {
                         isPadding = false
                         isSpacing = false
                         setWidthFull()
-                        add(MetadataView(internalMedia) { internalMedia = it; wasChanged = true; internalMedia })
+                        add(MetadataView(mediaState))
                     }
                 }
                 tab("Images") {
                     imagesLayout = verticalLayout {
                         isPadding = false
                         isSpacing = false
-                        add(ThumbnailComponent(internalMedia) { internalMedia = it; wasChanged = true; internalMedia })
+                        add(ThumbnailComponent(mediaState))
                     }
                 }
                 tab("Mapping") {
                     mappingLayout = verticalLayout {
                         isPadding = false
                         isSpacing = false
-                        add(MappingOverview(internalMedia) { internalMedia = it; wasChanged = true; internalMedia })
+                        add(MappingOverview(mediaState))
                     }
                 }
-                val entryCount = dbClient.transaction { MediaEntryTable.selectAll().where { MediaEntryTable.mediaID eq internalMedia.GUID }.count() }
+                val entryCount = dbClient.transaction { MediaEntryTable.selectAll().where { MediaEntryTable.mediaID eq mediaState.current().GUID }.count() }
                 val entryTab = Tab(
                     Span("Entries").apply { addClassNames(Padding.Right.SMALL) },
                     Badge("$entryCount").apply { addClassNames(Padding.Horizontal.SMALL) })
                 entryLayout = VerticalLayout().apply {
                     setSizeFull()
-                    init(entryListing(internalMedia))
+                    init(entryListing(mediaState.current()))
                 }
                 add(entryTab, entryLayout)
 
@@ -128,8 +135,8 @@ class MediaOverview(media: Media?) : KComposite() {
                     addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_SUCCESS)
                     onClick {
                         dbClient.transaction {
-                            MediaTable.upsertItem(internalMedia)
-                            updatePrequelSequel(internalMedia)
+                            MediaTable.upsertItem(mediaState.current())
+                            updatePrequelSequel(mediaState.current())
                         }
                         dbClient.transaction { ChangesTable.setToNow(true, false) }
                         UI.getCurrent().page.history.back()
@@ -147,16 +154,16 @@ class MediaOverview(media: Media?) : KComposite() {
 
     private fun updateTabs() {
         metadataLayout.replaceAll {
-            MetadataView(internalMedia) { internalMedia = it; wasChanged = true; internalMedia }
+            MetadataView(mediaState)
         }
         imagesLayout.replaceAll {
-            ThumbnailComponent(internalMedia) { internalMedia = it; wasChanged = true; internalMedia }
+            ThumbnailComponent(mediaState)
         }
         mappingLayout.replaceAll {
-            MappingOverview(internalMedia) { internalMedia = it; wasChanged = true; internalMedia }
+            MappingOverview(mediaState)
         }
         entryLayout.replaceAll {
-            entryListing(internalMedia)
+            entryListing(mediaState.current())
         }
     }
 }

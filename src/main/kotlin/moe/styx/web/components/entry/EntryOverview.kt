@@ -18,6 +18,7 @@ import moe.styx.db.tables.ChangesTable
 import moe.styx.db.tables.MediaEntryTable
 import moe.styx.db.tables.MediaInfoTable
 import moe.styx.downloader.utils.getMediaInfo
+import moe.styx.web.components.LocalEditorState
 import moe.styx.web.components.media.FileBrowserDialog
 import moe.styx.web.dbClient
 import moe.styx.web.newGUID
@@ -32,11 +33,18 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.floor
 
 class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
-    private var entry = mediaEntry ?: MediaEntry(newGUID(), media.GUID, currentUnixSeconds(), "01", "", "", "", "", "", "", 0L, "")
+    private val entryState = LocalEditorState(
+        mediaEntry ?: MediaEntry(newGUID(), media.GUID, currentUnixSeconds(), "01", "", "", "", "", "", "", 0L, "")
+    )
     private lateinit var sizeField: TextField
     private lateinit var fileField: TextField
 
+    private fun currentEntry() = entryState.current()
+
+    private fun updateEntry(update: (MediaEntry) -> MediaEntry) = entryState.update(update)
+
     val root = ui {
+        val entry = currentEntry()
         verticalLayout {
             h2(if (mediaEntry == null) "Creating new Entry for ${media.name}" else "Editing ${media.name} - ${entry.entryNumber}")
             numberField("Episode") {
@@ -51,14 +59,14 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                         it.value.toInt().toString()
                     } else
                         String.format("%.1f", it.value)
-                    entry = entry.copy(entryNumber = ep.padStart(2, '0'))
+                    updateEntry { entry -> entry.copy(entryNumber = ep.padStart(2, '0')) }
                 }
             }
             dateTimePicker("Release Date & Time") {
                 value = LocalDateTime.ofInstant(Instant.ofEpochSecond(entry.timestamp), ZoneId.systemDefault())
                 step = Duration.of(30, ChronoUnit.MINUTES)
                 addValueChangeListener {
-                    entry = entry.copy(timestamp = it.value.atZone(ZoneId.systemDefault()).toInstant().epochSecond)
+                    updateEntry { entry -> entry.copy(timestamp = it.value.atZone(ZoneId.systemDefault()).toInstant().epochSecond) }
                 }
             }
             flexLayout {
@@ -70,13 +78,13 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                 textField("Name EN") {
                     value = entry.nameEN ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { entry = entry.copy(nameEN = it.value) }
+                    addValueChangeListener { updateEntry { entry -> entry.copy(nameEN = it.value) } }
                     setWidthFull()
                 }
                 textField("Name DE") {
                     value = entry.nameDE ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { entry = entry.copy(nameDE = it.value) }
+                    addValueChangeListener { updateEntry { entry -> entry.copy(nameDE = it.value) } }
                     setWidthFull()
                 }
             }
@@ -89,7 +97,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                 textArea("Synopsis EN") {
                     value = entry.synopsisEN ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { entry = entry.copy(synopsisEN = it.value) }
+                    addValueChangeListener { updateEntry { entry -> entry.copy(synopsisEN = it.value) } }
                     setWidthFull()
                     height = "230px"
                 }
@@ -97,7 +105,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                 textArea("Synopsis DE") {
                     value = entry.synopsisDE ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { entry = entry.copy(synopsisDE = it.value) }
+                    addValueChangeListener { updateEntry { entry -> entry.copy(synopsisDE = it.value) } }
                     setWidthFull()
                     height = "230px"
                 }
@@ -111,7 +119,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                         setWidthFull()
                         value = entry.filePath
                         valueChangeMode = ValueChangeMode.LAZY
-                        addValueChangeListener { entry = entry.copy(filePath = it.value) }
+                        addValueChangeListener { updateEntry { entry -> entry.copy(filePath = it.value) } }
                     }
                     iconButton(LineAwesomeIcon.SYNC_SOLID.create()) {
                         setTooltipText("Update file size & mediainfo")
@@ -121,9 +129,10 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                                 topNotification("The file couldn't be found.")
                                 return@onClick
                             }
-                            entry = entry.copy(fileSize = file.length())
+                            updateEntry { entry -> entry.copy(fileSize = file.length()) }
                             sizeField.value = file.length().readableSize()
                             if (mediaEntry != null) {
+                                val entry = currentEntry()
                                 dbClient.transaction {
                                     val mediainfo = file.getMediaInfo()
                                     if (mediainfo != null) {
@@ -150,7 +159,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
                                 val file = it.firstOrNull() ?: return@FileBrowserDialog
                                 fileField.value = file.absolutePath
                                 sizeField.value = file.length().readableSize()
-                                entry = entry.copy(filePath = file.absolutePath, fileSize = file.length())
+                                updateEntry { entry -> entry.copy(filePath = file.absolutePath, fileSize = file.length()) }
                             }.open()
                         }
                     }
@@ -168,6 +177,7 @@ class EntryOverview(mediaEntry: MediaEntry?, media: Media) : KComposite() {
 
             button("Save") {
                 onClick {
+                    val entry = currentEntry()
                     if (dbClient.transaction { MediaEntryTable.upsertItem(entry) }.insertedCount.toBoolean()) {
                         val file = File(fileField.value)
                         if (file.exists() && mediaEntry != null) {

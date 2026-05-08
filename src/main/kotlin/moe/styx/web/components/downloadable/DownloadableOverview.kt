@@ -16,6 +16,7 @@ import moe.styx.common.data.DownloaderTarget
 import moe.styx.common.data.Media
 import moe.styx.common.data.SourceType
 import moe.styx.db.tables.DownloaderTargetsTable
+import moe.styx.web.components.delegatingEditorState
 import moe.styx.web.createComponent
 import moe.styx.web.dbClient
 import moe.styx.web.replaceAll
@@ -183,10 +184,13 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                 }
                 target.options.forEachIndexed { index, option ->
                     tab(option.priority.toString()) {
-                        dlOpComponent(media, option, {
-                            target.options[index] = it
-                            it
-                        })
+                        dlOpComponent(media, delegatingEditorState(
+                            current = { target.options[index] },
+                            replace = {
+                                target.options[index] = it
+                                it
+                            }
+                        ))
                     }
                 }
             }.also { tabSheet = it }

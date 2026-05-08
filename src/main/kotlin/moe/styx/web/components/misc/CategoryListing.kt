@@ -15,6 +15,7 @@ import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
 import moe.styx.db.tables.CategoryTable
 import moe.styx.db.tables.MediaTable
+import moe.styx.web.components.LocalEditorState
 import moe.styx.web.createComponent
 import moe.styx.web.dbClient
 import moe.styx.web.newGUID
@@ -60,10 +61,15 @@ fun categoryListing(readonly: Boolean) = createComponent {
 }
 
 class CategoryDialog(private var initial: Category? = null, private val categories: List<Category>) : Dialog() {
-    private var category = initial ?: Category(newGUID(), 0, 1, 1, "")
+    private val categoryState = LocalEditorState(initial ?: Category(newGUID(), 0, 1, 1, ""))
     private lateinit var categorySelect: Select<Category>
 
+    private fun currentCategory() = categoryState.current()
+    private fun updateCategory(update: (Category) -> Category) = categoryState.update(update)
+
+
     init {
+        val category = currentCategory()
         setWidthFull()
         maxWidth = "450px"
         verticalLayout {
@@ -75,7 +81,7 @@ class CategoryDialog(private var initial: Category? = null, private val categori
             textField("Name") {
                 value = category.name
                 valueChangeMode = ValueChangeMode.LAZY
-                addValueChangeListener { category = category.copy(name = it.value) }
+                addValueChangeListener { updateCategory { category -> category.copy(name = it.value) } }
                 setWidthFull()
             }
             integerField("Sort") {
@@ -84,22 +90,22 @@ class CategoryDialog(private var initial: Category? = null, private val categori
                 isStepButtonsVisible = true
                 value = category.sort
                 valueChangeMode = ValueChangeMode.LAZY
-                addValueChangeListener { category = category.copy(sort = it.value) }
+                addValueChangeListener { updateCategory { category -> category.copy(sort = it.value) } }
             }
             checkBox("Is Visible") {
                 alignSelf = FlexComponent.Alignment.START
                 value = category.isVisible.toBoolean()
-                addValueChangeListener { category = category.copy(isVisible = it.value.toInt()) }
+                addValueChangeListener { updateCategory { category -> category.copy(isVisible = it.value.toInt()) } }
             }
             checkBox("Series only") {
                 alignSelf = FlexComponent.Alignment.START
                 value = category.isSeries.toBoolean()
-                addValueChangeListener { category = category.copy(isSeries = it.value.toInt()) }
+                addValueChangeListener { updateCategory { category -> category.copy(isSeries = it.value.toInt()) } }
             }
 
             button("Save") {
                 onClick {
-                    val result = dbClient.transaction { CategoryTable.upsertItem(category).insertedCount.toBoolean() }
+                    val result = dbClient.transaction { CategoryTable.upsertItem(currentCategory()).insertedCount.toBoolean() }
                     if (!result) {
                         topNotification("Could not save category!")
                     } else {
@@ -119,6 +125,7 @@ class CategoryDialog(private var initial: Category? = null, private val categori
                             return@onClick
                         }
                         dbClient.transaction {
+                            val category = currentCategory()
                             val media = MediaTable.query { selectAll().where { categoryID eq category.GUID }.toList() }
                             var successful = true
                             for (m in media) {
@@ -149,7 +156,7 @@ class CategoryDialog(private var initial: Category? = null, private val categori
                     }
                 }
                 categorySelect = select("Move media into") {
-                    setItems(categories.filter { it.GUID != category.GUID })
+                    setItems(categories.filter { it.GUID != currentCategory().GUID })
                     setItemLabelGenerator { it.name }
                 }
             }

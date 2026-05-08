@@ -23,6 +23,7 @@ import moe.styx.common.extension.toBoolean
 import moe.styx.common.extension.toInt
 import moe.styx.db.tables.CategoryTable
 import moe.styx.db.tables.MediaScheduleTable
+import moe.styx.web.components.EditorState
 import moe.styx.web.components.mediaSelection
 import moe.styx.web.data.getAnisearchIDForAnilistID
 import moe.styx.web.data.scrapeAnisearchDescription
@@ -34,13 +35,11 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.time.Duration
 import java.time.LocalTime
 
-class MetadataView(private var media: Media, private val mediaProvider: (Media) -> Media) : KComposite() {
-    private fun updateMedia(update: (Media) -> Media): Media {
-        media = mediaProvider(update(media))
-        return media
-    }
+class MetadataView(private val mediaState: EditorState<Media>) : KComposite() {
+    private fun updateMedia(update: (Media) -> Media) = mediaState.update(update)
 
     val root = ui {
+        val media = mediaState.current()
         verticalLayout {
             isPadding = false
             h3("Names") { addClassNames(Padding.Horizontal.NONE, Padding.Bottom.SMALL, Padding.Top.MEDIUM) }
@@ -68,24 +67,22 @@ class MetadataView(private var media: Media, private val mediaProvider: (Media) 
                 setFlexGrow(1.0, nameField, englishField, romajiField)
             }
             h3("Relations") { addClassNames(Padding.Horizontal.NONE, Padding.Vertical.SMALL) }
-            add(RelationsView({ media }) { updated -> media = mediaProvider(updated); media })
+            add(RelationsView(mediaState))
 
             h3("Descriptions") { addClassNames(Padding.Horizontal.NONE, Padding.Vertical.SMALL) }
-            add(SynopsisView({ media }) { updated -> media = mediaProvider(updated); media })
+            add(SynopsisView(mediaState))
 
             h3("Misc") { addClassNames(Padding.Horizontal.NONE, Padding.Vertical.SMALL) }
-            add(Other({ media }) { updated -> media = mediaProvider(updated); media })
+            add(Other(mediaState))
         }
     }
 }
 
-class RelationsView(private val currentMedia: () -> Media, private val mediaProvider: (Media) -> Media) : KComposite() {
-    private fun updateMedia(update: (Media) -> Media): Media {
-        return mediaProvider(update(currentMedia()))
-    }
+class RelationsView(private val mediaState: EditorState<Media>) : KComposite() {
+    private fun updateMedia(update: (Media) -> Media) = mediaState.update(update)
 
     val root = ui {
-        val media = currentMedia()
+        val media = mediaState.current()
         flexLayout {
             addClassNames(LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL, "flex-container")
             setWidthFull()
@@ -104,13 +101,11 @@ class RelationsView(private val currentMedia: () -> Media, private val mediaProv
     }
 }
 
-class SynopsisView(private val currentMedia: () -> Media, private val mediaProvider: (Media) -> Media) : KComposite() {
-    private fun updateMedia(update: (Media) -> Media): Media {
-        return mediaProvider(update(currentMedia()))
-    }
+class SynopsisView(private val mediaState: EditorState<Media>) : KComposite() {
+    private fun updateMedia(update: (Media) -> Media) = mediaState.update(update)
 
     val root = ui {
-        val media = currentMedia()
+        val media = mediaState.current()
         flexLayout {
             addClassNames(LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL, "flex-container")
             setWidthFull()
@@ -133,6 +128,7 @@ class SynopsisView(private val currentMedia: () -> Media, private val mediaProvi
                 target = synopsisDE
                 item("Fill from TMDB (Series)") {
                     onClick {
+                        val media = mediaState.current()
                         val id = media.getFirstIDFromMap(StackType.TMDB)
                         if (id == null)
                             Notification.show("No TMDB ID was found in the mapping.").also { return@onClick }
@@ -146,6 +142,7 @@ class SynopsisView(private val currentMedia: () -> Media, private val mediaProvi
                 }
                 item("Fill from TMDB (Season)") {
                     onClick {
+                        val media = mediaState.current()
                         val id = media.getFirstIDFromMap(StackType.TMDB)
                         if (id == null)
                             Notification.show("No TMDB ID was found in the mapping.").also { return@onClick }
@@ -161,6 +158,7 @@ class SynopsisView(private val currentMedia: () -> Media, private val mediaProvi
                 }
                 item("Fill from AniSearch") {
                     onClick {
+                        val media = mediaState.current()
                         val id = media.getFirstIDFromMap(StackType.ANILIST)
                         if (id == null)
                             Notification.show("No AniList ID was found in the mapping.").also { return@onClick }
@@ -179,13 +177,11 @@ class SynopsisView(private val currentMedia: () -> Media, private val mediaProvi
     }
 }
 
-class Other(private val currentMedia: () -> Media, private val mediaProvider: (Media) -> Media) : KComposite() {
-    private fun updateMedia(update: (Media) -> Media): Media {
-        return mediaProvider(update(currentMedia()))
-    }
+class Other(private val mediaState: EditorState<Media>) : KComposite() {
+    private fun updateMedia(update: (Media) -> Media) = mediaState.update(update)
 
     val root = ui {
-        val media = currentMedia()
+        val media = mediaState.current()
         val categories = dbClient.transaction { CategoryTable.query { selectAll().toList() } }
         var schedule = dbClient.transaction { MediaScheduleTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }.firstOrNull()
         val weekdays = ScheduleWeekday.entries.toTypedArray()

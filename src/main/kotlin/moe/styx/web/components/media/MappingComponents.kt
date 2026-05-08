@@ -17,15 +17,17 @@ import moe.styx.common.data.*
 import moe.styx.common.data.tmdb.StackType
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.json
+import moe.styx.web.components.EditorState
 import moe.styx.web.data.getMalIDForAnilistID
 import moe.styx.web.data.tmdb.tmdbFindGroups
 import org.vaadin.lineawesome.LineAwesomeIcon
 
-class MappingOverview(private var media: Media, mediaProvider: (Media) -> Media) : KComposite() {
+class MappingOverview(private val mediaState: EditorState<Media>) : KComposite() {
     val root = ui {
         verticalLayout {
             isPadding = false
             isSpacing = false
+            val media = mediaState.current()
             val mappingJson = media.metadataMap?.let {
                 if (it.isBlank())
                     return@let null
@@ -43,7 +45,7 @@ class MappingOverview(private var media: Media, mediaProvider: (Media) -> Media)
                         anilistStack.getMappings() as MutableList<BasicMapping>,
                         malStack.getMappings() as MutableList<BasicMapping>
                     )
-                    media = mediaProvider(media.copy(metadataMap = json.encodeToString(mappings)))
+                    mediaState.update { it.copy(metadataMap = json.encodeToString(mappings)) }
                 }
             }
         }

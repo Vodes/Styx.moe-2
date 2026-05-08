@@ -15,14 +15,14 @@ import moe.styx.common.data.Media
 import moe.styx.common.data.ProcessingOptions
 import moe.styx.common.data.SourceType
 import moe.styx.common.extension.capitalize
+import moe.styx.web.components.EditorState
 import moe.styx.web.components.addRSSTemplateMenu
 import moe.styx.web.components.addRegexTemplateMenu
 import moe.styx.web.createComponent
 
 class DLOptionComponent(
     private val media: Media,
-    private var option: DownloadableOption,
-    private val onUpdate: (DownloadableOption) -> DownloadableOption
+    private val optionState: EditorState<DownloadableOption>
 ) :
     KComposite() {
     private lateinit var matchingLayout: VerticalLayout
@@ -33,7 +33,12 @@ class DLOptionComponent(
     private lateinit var ignoreParentCheck: Checkbox
     private lateinit var processingButton: Button
 
+    private fun currentOption() = optionState.current()
+
+    private fun updateOption(update: (DownloadableOption) -> DownloadableOption) = optionState.update(update)
+
     val root = ui {
+        val option = currentOption()
         verticalLayout {
             setWidthFull()
             isPadding = false
@@ -44,9 +49,9 @@ class DLOptionComponent(
                 addClassNames("meme-checkbox")
                 value = option.useTokens
                 addValueChangeListener {
-                    option = onUpdate(option.copy(useTokens = it.value))
+                    updateOption { option -> option.copy(useTokens = it.value) }
                     renderMatchingFields()
-                    updateVisibility(option.source)
+                    updateVisibility(currentOption().source)
                 }
                 height = "35px"
             }
@@ -66,7 +71,7 @@ class DLOptionComponent(
                     isEmptySelectionAllowed = false
                     setTextRenderer { if (it.name.length > 4) it.name.capitalize() else it.name }
                     addValueChangeListener {
-                        option = onUpdate(option.copy(source = it.value))
+                        updateOption { option -> option.copy(source = it.value) }
                         updateVisibility(it.value)
                     }
                     flexGrow = 1.0
@@ -78,7 +83,7 @@ class DLOptionComponent(
                     value = option.rssRegex ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
                     addRegexTemplateMenu(media, true)
-                    addValueChangeListener { option = onUpdate(option.copy(rssRegex = it.value)) }
+                    addValueChangeListener { updateOption { option -> option.copy(rssRegex = it.value) } }
                     flexGrow = 1.0
                 }
                 pathField = textField(if (option.source in arrayOf(SourceType.TORRENT, SourceType.USENET)) "RSS Feed" else "FTP Path") {
@@ -86,21 +91,21 @@ class DLOptionComponent(
                     value = option.sourcePath ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
                     addRSSTemplateMenu()
-                    addValueChangeListener { option = onUpdate(option.copy(sourcePath = it.value)) }
+                    addValueChangeListener { updateOption { option -> option.copy(sourcePath = it.value) } }
                     flexGrow = 1.0
                 }
                 ftpConnField = textField("FTP ConnectionString") {
                     isVisible = option.source == SourceType.FTP
                     value = option.ftpConnectionString ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { option = onUpdate(option.copy(ftpConnectionString = it.value)) }
+                    addValueChangeListener { updateOption { option -> option.copy(ftpConnectionString = it.value) } }
                     flexGrow = 1.0
                 }
                 keepSeedingCheck = checkBox("Keep Seeding") {
                     addClassNames("meme-checkbox")
                     isVisible = option.source == SourceType.TORRENT
                     value = option.keepSeeding
-                    addValueChangeListener { option = onUpdate(option.copy(keepSeeding = it.value)) }
+                    addValueChangeListener { updateOption { option -> option.copy(keepSeeding = it.value) } }
                     height = "35px"
                 }
                 setAlignSelf(FlexComponent.Alignment.START, typeSelect)
@@ -116,7 +121,7 @@ class DLOptionComponent(
                     step = 1
                     width = "200px"
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { option = onUpdate(option.copy(episodeOffset = it.value)) }
+                    addValueChangeListener { updateOption { option -> option.copy(episodeOffset = it.value) } }
                 }
                 horizontalLayout(false) {
                     addClassNames(LumoUtility.Gap.MEDIUM, "checkbox-horilayout")
@@ -124,14 +129,14 @@ class DLOptionComponent(
                         addClassNames("meme-checkbox")
                         setTooltipText("Also Download stuff that's older than an hour.")
                         value = option.ignoreDelay
-                        addValueChangeListener { option = onUpdate(option.copy(ignoreDelay = it.value)) }
+                        addValueChangeListener { updateOption { option -> option.copy(ignoreDelay = it.value) } }
                         height = "35px"
                     }
                     checkBox("Wait for previous") {
                         addClassNames("meme-checkbox")
                         setTooltipText("Require previous option to exist before downloading")
                         value = option.waitForPrevious
-                        addValueChangeListener { option = onUpdate(option.copy(waitForPrevious = it.value)) }
+                        addValueChangeListener { updateOption { option -> option.copy(waitForPrevious = it.value) } }
                         height = "35px"
                     }
                     ignoreParentCheck = checkBox("Ignore Parent Folder") {
@@ -139,7 +144,7 @@ class DLOptionComponent(
                         setTooltipText("Ignore parent folder when checking for FTP matches.")
                         value = option.ignoreParentFolder
                         isVisible = option.source == SourceType.FTP
-                        addValueChangeListener { option = onUpdate(option.copy(ignoreParentFolder = it.value)) }
+                        addValueChangeListener { updateOption { option -> option.copy(ignoreParentFolder = it.value) } }
                         height = "35px"
                     }
                 }
@@ -152,19 +157,19 @@ class DLOptionComponent(
                 textField("Naming Template") {
                     value = option.overrideNamingTemplate ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { option = onUpdate(option.copy(overrideNamingTemplate = it.value)) }
+                    addValueChangeListener { updateOption { option -> option.copy(overrideNamingTemplate = it.value) } }
                     flexGrow = 1.0
                 }
                 textField("Title Template") {
                     value = option.overrideTitleTemplate ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { option = onUpdate(option.copy(overrideTitleTemplate = it.value)) }
+                    addValueChangeListener { updateOption { option -> option.copy(overrideTitleTemplate = it.value) } }
                     flexGrow = 1.0
                 }
                 textField("Command") {
                     value = option.commandAfter ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { option = onUpdate(option.copy(commandAfter = it.value)) }
+                    addValueChangeListener { updateOption { option -> option.copy(commandAfter = it.value) } }
                     flexGrow = 1.0
                 }
             }
@@ -173,17 +178,18 @@ class DLOptionComponent(
                 checkBox("Processing") {
                     value = option.processingOptions != null
                     addValueChangeListener {
-                        option = onUpdate(option.copy(processingOptions = if (!it.value) null else ProcessingOptions()))
+                        updateOption { option -> option.copy(processingOptions = if (!it.value) null else ProcessingOptions()) }
                         processingButton.isEnabled = it.value
                     }
                 }
                 processingButton = button("Choose processing") {
                     isEnabled = option.processingOptions != null
                     onClick {
+                        val option = currentOption()
                         if (option.processingOptions == null)
                             return@onClick
                         ProcessingDialog(option.processingOptions!!, option.priority) {
-                            option = onUpdate(option.copy(processingOptions = it))
+                            updateOption { option -> option.copy(processingOptions = it) }
                         }.open()
                     }
                 }
@@ -195,10 +201,11 @@ class DLOptionComponent(
 
     private fun renderMatchingFields() {
         matchingLayout.removeAll()
+        val option = currentOption()
         if (option.useTokens) {
             matchingLayout.add(createComponent {
                 tokenGroupsComponent(option.tokenGroups, {
-                    option = onUpdate(option.copy(tokenGroups = it))
+                    updateOption { option -> option.copy(tokenGroups = it) }
                 })
             })
             return
@@ -209,7 +216,7 @@ class DLOptionComponent(
                 value = option.fileRegex
                 valueChangeMode = ValueChangeMode.LAZY
                 addRegexTemplateMenu(media)
-                addValueChangeListener { option = onUpdate(option.copy(fileRegex = it.value)) }
+                addValueChangeListener { updateOption { option -> option.copy(fileRegex = it.value) } }
                 setWidthFull()
                 maxWidth = "600px"
             }
@@ -217,6 +224,7 @@ class DLOptionComponent(
     }
 
     private fun updateVisibility(source: SourceType) {
+        val option = currentOption()
         when (source) {
             SourceType.TORRENT, SourceType.USENET -> {
                 rssRegexField.isVisible = !option.useTokens
@@ -249,8 +257,8 @@ class DLOptionComponent(
 
 @VaadinDsl
 fun (@VaadinDsl HasComponents).dlOpComponent(
-    media: Media, option: DownloadableOption, onUpdate: (DownloadableOption) -> DownloadableOption,
+    media: Media, optionState: EditorState<DownloadableOption>,
     block: (@VaadinDsl DLOptionComponent).() -> Unit = {}
 ) = init(
-    DLOptionComponent(media, option, onUpdate), block
+    DLOptionComponent(media, optionState), block
 )

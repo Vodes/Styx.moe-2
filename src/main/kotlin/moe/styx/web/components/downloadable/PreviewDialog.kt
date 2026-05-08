@@ -21,6 +21,7 @@ import moe.styx.downloader.parsing.ParseDenyReason
 import moe.styx.downloader.parsing.ParseResult
 import moe.styx.downloader.rss.FeedItem
 import moe.styx.downloader.rss.RSSHandler
+import moe.styx.web.components.LocalEditorState
 import moe.styx.web.components.addRSSTemplateMenu
 import moe.styx.web.components.addRegexTemplateMenu
 import moe.styx.web.createComponent
@@ -31,9 +32,10 @@ import org.vaadin.lineawesome.LineAwesomeIcon
 class PreviewDialog(
     private val media: Media,
     private var target: DownloaderTarget,
-    private var option: DownloadableOption,
+    option: DownloadableOption,
     val onClose: (DownloadableOption) -> Unit
 ) : Dialog() {
+    private val optionState = LocalEditorState(option)
     private lateinit var layout: VerticalLayout
     private lateinit var matchingLayout: VerticalLayout
     private var ftpClient: FTPClient? = null
@@ -42,6 +44,22 @@ class PreviewDialog(
     private var rssResults: List<RSSResult> = emptyList()
     private var ftpResults: List<FTPResult> = emptyList()
 
+    private fun currentOption() = optionState.current()
+
+    private fun updateOption(
+        rerenderMatching: Boolean = false,
+        markPathChanged: Boolean = false,
+        update: (DownloadableOption) -> DownloadableOption
+    ) {
+        optionState.update(update)
+        if (markPathChanged)
+            pathChanged = true
+        updateTarget()
+        if (rerenderMatching)
+            renderMatchingFields()
+        updateResults()
+    }
+
     init {
         setWidthFull()
         maxWidth = "1200px"
@@ -49,6 +67,7 @@ class PreviewDialog(
         run { downloaderConfig }
 
         if (!isRSS) {
+            val option = currentOption()
             FTPHandler.initClient()
             ftpClient = if (!option.ftpConnectionString.isNullOrBlank())
                 FTPClient.fromConnectionString(option.ftpConnectionString!!).connect()
@@ -66,20 +85,17 @@ class PreviewDialog(
                 textField(if (isRSS) "RSS Feed" else "FTP Path") {
                     setWidthFull()
                     valueChangeMode = ValueChangeMode.LAZY
-                    value = option.sourcePath ?: ""
+                    value = currentOption().sourcePath ?: ""
                     if (isRSS)
                         addRSSTemplateMenu()
                     addValueChangeListener {
-                        option = option.copy(sourcePath = it.value)
-                        pathChanged = true
-                        updateTarget()
-                        updateResults()
+                        updateOption(markPathChanged = true) { option -> option.copy(sourcePath = it.value) }
                     }
                 }
                 if (isRSS)
                     iconButton(LineAwesomeIcon.EXTERNAL_LINK_SQUARE_ALT_SOLID.create()) {
                         onClick {
-                            UI.getCurrent().page.open(option.sourcePath ?: "")
+                            UI.getCurrent().page.open(currentOption().sourcePath ?: "")
                         }
                     }
             }
@@ -88,12 +104,9 @@ class PreviewDialog(
                 maxWidth = "1000px"
                 checkBox("Use token groups") {
                     addClassNames("left-aligned-checkbox")
-                    value = option.useTokens
+                    value = currentOption().useTokens
                     addValueChangeListener {
-                        option = option.copy(useTokens = it.value)
-                        updateTarget()
-                        renderMatchingFields()
-                        updateResults()
+                        updateOption(rerenderMatching = true) { option -> option.copy(useTokens = it.value) }
                     }
                 }
                 matchingLayout = verticalLayout {
@@ -113,12 +126,11 @@ class PreviewDialog(
 
     private fun renderMatchingFields() {
         matchingLayout.removeAll()
+        val option = currentOption()
         if (option.useTokens) {
             matchingLayout.add(createComponent {
                 tokenGroupsComponent(option.tokenGroups, {
-                    option = option.copy(tokenGroups = it)
-                    updateTarget()
-                    updateResults()
+                    updateOption { option -> option.copy(tokenGroups = it) }
                 })
             })
             return
@@ -134,9 +146,7 @@ class PreviewDialog(
                     value = option.fileRegex
                     addRegexTemplateMenu(media)
                     addValueChangeListener {
-                        option = option.copy(fileRegex = it.value)
-                        updateTarget()
-                        updateResults()
+                        updateOption { option -> option.copy(fileRegex = it.value) }
                     }
                 }
                 if (isRSS)
@@ -146,9 +156,7 @@ class PreviewDialog(
                         value = option.rssRegex ?: ""
                         addRegexTemplateMenu(media, true)
                         addValueChangeListener {
-                            option = option.copy(rssRegex = it.value)
-                            updateTarget()
-                            updateResults()
+                            updateOption { option -> option.copy(rssRegex = it.value) }
                         }
                     }
             }
@@ -161,6 +169,7 @@ class PreviewDialog(
             return
         }
 
+        val option = currentOption()
         val results = if (isRSS) {
             if (pathChanged || rssResults.isEmpty()) {
                 pathChanged = false
@@ -194,10 +203,11 @@ class PreviewDialog(
 
     override fun onDetach(detachEvent: DetachEvent?) {
         ftpClient?.disconnect()
-        onClose(option)
+        onClose(currentOption())
     }
 
     private fun updateTarget() {
+        val option = currentOption()
         // Ugly hack to remove references
         target = target.copy(options = target.options.toList().toMutableList())
         target.options.find { it.priority == option.priority }?.let {
@@ -260,6 +270,7 @@ class PreviewDialog(
     }
 
     private fun reevaluateRss(): List<RSSResult> {
+        val option = currentOption()
         val new = rssResults.map {
             var parseResult = it.second
             if (it.second !is ParseResult.DENIED || (it.second as ParseResult.DENIED).parseFailReason != ParseDenyReason.PostIsTooOld) {
@@ -271,6 +282,7 @@ class PreviewDialog(
     }
 
     private fun reevaluateFtp(): List<FTPResult> {
+        val option = currentOption()
         val new = ftpResults.map {
             var parseResult = it.second
             if (it.second !is ParseResult.DENIED || (it.second as ParseResult.DENIED).parseFailReason != ParseDenyReason.PostIsTooOld) {

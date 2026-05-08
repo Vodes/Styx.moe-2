@@ -7,6 +7,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Padding
 import moe.styx.common.data.Media
 import moe.styx.common.extension.toBoolean
 import moe.styx.db.tables.ImageTable
+import moe.styx.web.components.EditorState
 import moe.styx.web.dbClient
 import moe.styx.web.deleteIfExists
 import moe.styx.web.getURL
@@ -14,7 +15,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
 
-class ThumbnailComponent(var media: Media, val mediaProvider: (Media) -> Media) : KComposite() {
+class ThumbnailComponent(private val mediaState: EditorState<Media>) : KComposite() {
     private val thumbFallback = "https://vodes.pw/i/Alex/ZTKosJEnJMuRpnr.png"
     private val bannerFallback = "https://archive.is/vdFTk/103fb85fb390e1401bf27bee19b656fe4d8355c5.jpg"
     var currentThumbnail: moe.styx.common.data.Image? = null
@@ -24,6 +25,7 @@ class ThumbnailComponent(var media: Media, val mediaProvider: (Media) -> Media) 
     lateinit var thumbImg: Image
 
     val root = ui {
+        val media = mediaState.current()
         currentThumbnail = dbClient.transaction { ImageTable.query { selectAll().where { GUID eq (media.thumbID ?: "") }.toList() }.firstOrNull() }
         currentBanner = dbClient.transaction { ImageTable.query { selectAll().where { GUID eq (media.bannerID ?: "") }.toList() }.firstOrNull() }
         verticalLayout {
@@ -40,7 +42,7 @@ class ThumbnailComponent(var media: Media, val mediaProvider: (Media) -> Media) 
                 }
                 button(if (currentThumbnail != null) "Replace" else "Add") {
                     onClick {
-                        ImageDialog(media, true) { handleResult(it, true) }.open()
+                        ImageDialog(mediaState.current(), true) { handleResult(it, true) }.open()
                     }
                 }
             }
@@ -56,7 +58,7 @@ class ThumbnailComponent(var media: Media, val mediaProvider: (Media) -> Media) 
                 }
                 button(if (currentBanner != null) "Replace" else "Add") {
                     onClick {
-                        ImageDialog(media, false) { handleResult(it, false) }.open()
+                        ImageDialog(mediaState.current(), false) { handleResult(it, false) }.open()
                     }
                 }
             }
@@ -73,14 +75,14 @@ class ThumbnailComponent(var media: Media, val mediaProvider: (Media) -> Media) 
                 currentThumbnail?.let { dbClient.transaction { ImageTable.deleteWhere { GUID eq currentThumbnail!!.GUID }.toBoolean() } } ?: true
             if (saved && deleted) {
                 currentThumbnail?.deleteIfExists()
-                media = mediaProvider(media.copy(thumbID = img.GUID))
+                mediaState.update { it.copy(thumbID = img.GUID) }
                 currentThumbnail = img
             }
         } else {
             val deleted = currentBanner?.let { dbClient.transaction { ImageTable.deleteWhere { GUID eq currentBanner!!.GUID }.toBoolean() } } ?: true
             if (saved && deleted) {
                 currentBanner?.deleteIfExists()
-                media = mediaProvider(media.copy(bannerID = img.GUID))
+                mediaState.update { it.copy(bannerID = img.GUID) }
                 currentBanner = img
             }
         }
