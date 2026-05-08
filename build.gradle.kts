@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.jsoup)
 
     // Custom
+    implementation(libs.styx.common)
     implementation(libs.styx.db)
     implementation(libs.styx.downloader)
     implementation(libs.styx.mal)

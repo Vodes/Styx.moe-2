@@ -28,9 +28,9 @@ import moe.styx.web.data.getAnisearchIDForAnilistID
 import moe.styx.web.data.scrapeAnisearchDescription
 import moe.styx.web.data.tmdb.getTmdbMetadata
 import moe.styx.web.dbClient
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.time.Duration
 import java.time.LocalTime
 

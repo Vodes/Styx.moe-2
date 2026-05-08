@@ -11,7 +11,7 @@ import moe.styx.downloader.episodeWanted
 import moe.styx.downloader.parsing.parseMetadata
 import moe.styx.web.dbClient
 import moe.styx.web.toReadableString
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 class ParsingDialog(toParse: String, val rss: Boolean, openedForLocal: Boolean = false, val target: DownloaderTarget? = null) : Dialog() {
 

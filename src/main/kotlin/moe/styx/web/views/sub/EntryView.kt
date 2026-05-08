@@ -14,7 +14,8 @@ import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.entry.entryOverview
 import moe.styx.web.dbClient
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 @Route("/entry")
 class EntryView : KComposite(), HasDynamicTitle, HasUrlParameter<String> {

@@ -9,7 +9,8 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Gap
 import moe.styx.db.tables.MediaTable
 import moe.styx.web.components.media.MediaChooseDialog
 import moe.styx.web.dbClient
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class MediaSelectionField(title: String, private var selected: String, onSelect: (String) -> Unit, exclude: String? = null) : KComposite() {

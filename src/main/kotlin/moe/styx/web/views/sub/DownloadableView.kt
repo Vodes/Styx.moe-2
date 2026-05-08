@@ -19,7 +19,8 @@ import moe.styx.web.components.authProgress
 import moe.styx.web.components.downloadable.DownloadableOverview
 import moe.styx.web.dbClient
 import moe.styx.web.views.AdminView
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 @Route("download")
 @PageTitle("Styx - Downloader")

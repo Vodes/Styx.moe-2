@@ -11,7 +11,8 @@ import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.media.mediaOverview
 import moe.styx.web.dbClient
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 @Route("/media")
 class MediaView : KComposite(), HasDynamicTitle, HasUrlParameter<String> {

@@ -10,6 +10,7 @@ import moe.styx.common.data.MappingCollection
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
 import moe.styx.common.data.TMDBMapping
+import moe.styx.common.data.tmdb.StackType
 import moe.styx.common.data.tmdb.TmdbEpisode
 import moe.styx.common.data.tmdb.getMappingForEpisode
 import moe.styx.common.extension.padString
@@ -23,7 +24,8 @@ import moe.styx.web.createComponent
 import moe.styx.web.data.tmdb.parseDateUnix
 import moe.styx.web.dbClient
 import moe.styx.web.topNotification
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 class TMDBMetaDialog(val media: Media) : Dialog() {
 
@@ -44,7 +46,7 @@ class TMDBMetaDialog(val media: Media) : Dialog() {
             }
             val episodes =
                 dbClient.transaction { MediaEntryTable.query { selectAll().where { mediaID eq media.GUID }.toList() } }
-            val grouped = episodes.groupBy { collection.getMappingForEpisode(it.entryNumber) as TMDBMapping? }
+            val grouped = episodes.groupBy { collection.getMappingForEpisode<TMDBMapping>(it.entryNumber, StackType.TMDB) }
             horizontalLayout {
                 button("Import metadata") {
                     onClick {

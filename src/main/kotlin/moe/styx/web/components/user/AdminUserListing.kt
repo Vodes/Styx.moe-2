@@ -1,7 +1,6 @@
 package moe.styx.web.components.user
 
 import com.github.mvysny.karibudsl.v10.*
-import com.github.mvysny.kaributools.selectionMode
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog
 import com.vaadin.flow.component.grid.Grid
@@ -19,9 +18,9 @@ import moe.styx.db.tables.UserTable
 import moe.styx.web.createComponent
 import moe.styx.web.dbClient
 import moe.styx.web.topNotification
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.time.Instant
 import java.time.ZoneId
 

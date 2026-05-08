@@ -14,7 +14,7 @@ import moe.styx.db.tables.DeviceTable
 import moe.styx.db.tables.UnregisteredDeviceTable
 import moe.styx.web.dbClient
 import moe.styx.web.topNotification
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 class AddDeviceDialog(val user: User, doRefresh: () -> Unit = {}) : Dialog() {
 

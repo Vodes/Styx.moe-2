@@ -8,7 +8,6 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.theme.lumo.LumoUtility
-import kotlinx.serialization.encodeToString
 import moe.styx.common.data.Media
 import moe.styx.common.data.MediaEntry
 import moe.styx.common.extension.equalsAny
@@ -23,9 +22,9 @@ import moe.styx.web.data.sendDiscordHookEmbed
 import moe.styx.web.dbClient
 import moe.styx.web.getURL
 import moe.styx.web.topNotification
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 import java.io.File
 
@@ -44,7 +43,7 @@ fun entryListing(media: Media) = createComponent {
                     UI.getCurrent().navigate("/entry?media=${media.GUID}")
                 }
             }
-            if(!media.isSeries.toBoolean() && episodes.isNotEmpty()) {
+            if (!media.isSeries.toBoolean() && episodes.isNotEmpty()) {
                 button("Notify Discord") {
                     onClick {
                         val image = media.thumbID?.let {
@@ -52,7 +51,7 @@ fun entryListing(media: Media) = createComponent {
                                 ImageTable.query { selectAll().where { GUID eq it }.toList() }.firstOrNull()
                             }
                         }
-                        if(image == null) {
+                        if (image == null) {
                             topNotification("This media has no thumbnail!")
                             return@onClick
                         }

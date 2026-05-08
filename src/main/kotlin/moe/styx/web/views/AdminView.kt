@@ -16,7 +16,7 @@ import moe.styx.web.components.misc.generateUnwatched
 import moe.styx.web.components.noAccess
 import moe.styx.web.components.user.userListing
 import moe.styx.web.layout.MainLayout
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 @Route("admin", layout = MainLayout::class)
 @PageTitle("Styx - Admin")

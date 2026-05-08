@@ -16,7 +16,8 @@ import moe.styx.db.tables.MediaEntryTable
 import moe.styx.db.tables.MediaTable
 import moe.styx.db.tables.MediaWatchedTable
 import moe.styx.web.dbClient
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 fun generateUnwatched(ui: UI) {
     launchGlobal {

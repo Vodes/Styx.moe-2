@@ -34,10 +34,10 @@ import moe.styx.web.dbClient
 import moe.styx.web.toISODate
 import moe.styx.web.views.sub.DownloadableView
 import moe.styx.web.views.sub.MediaView
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import java.io.File
 
 class MediaGrid(exclude: String = "", initialSearch: String? = null, onClickItem: ((Media) -> Unit)? = null) : KComposite() {

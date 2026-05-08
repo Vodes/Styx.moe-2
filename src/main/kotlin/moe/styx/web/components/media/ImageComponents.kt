@@ -10,9 +10,9 @@ import moe.styx.db.tables.ImageTable
 import moe.styx.web.dbClient
 import moe.styx.web.deleteIfExists
 import moe.styx.web.getURL
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 class ThumbnailComponent(var media: Media, val mediaProvider: (Media) -> Media) : KComposite() {
     private val thumbFallback = "https://vodes.pw/i/Alex/ZTKosJEnJMuRpnr.png"

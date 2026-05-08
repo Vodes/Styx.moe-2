@@ -12,7 +12,8 @@ import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.common.extension.toBoolean
 import moe.styx.db.tables.DeviceTable
 import moe.styx.web.*
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class DeviceListView(private val user: User, private val readonly: Boolean = false) : KComposite() {

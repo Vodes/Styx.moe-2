@@ -1,7 +1,6 @@
 package moe.styx.web.components.misc
 
 import com.github.mvysny.karibudsl.v10.*
-import com.github.mvysny.kaributools.selectionMode
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.dialog.Dialog
@@ -20,10 +19,10 @@ import moe.styx.web.createComponent
 import moe.styx.web.dbClient
 import moe.styx.web.newGUID
 import moe.styx.web.topNotification
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 
 val Category.visibleString
     get() = if (isVisible.toBoolean()) "Yes" else "No"

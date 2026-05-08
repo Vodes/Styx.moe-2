@@ -19,7 +19,9 @@ import moe.styx.common.data.User
 import moe.styx.db.tables.UserTable
 import moe.styx.web.auth.DiscordAPI
 import moe.styx.web.views.HomeView
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greaterEq
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 fun createComponent(block: HasComponents.() -> Component): KComposite {
     class Comp : KComposite() {

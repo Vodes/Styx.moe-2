@@ -27,7 +27,8 @@ import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.dbClient
 import moe.styx.web.newGUID
 import moe.styx.web.replaceAll
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
 
 class MediaOverview(media: Media?) : KComposite() {
@@ -105,7 +106,8 @@ class MediaOverview(media: Media?) : KComposite() {
                     }
                 }
                 val entryCount = dbClient.transaction { MediaEntryTable.selectAll().where { MediaEntryTable.mediaID eq internalMedia.GUID }.count() }
-                val entryTab = Tab(Span("Entries").apply { addClassNames(Padding.Right.SMALL) },
+                val entryTab = Tab(
+                    Span("Entries").apply { addClassNames(Padding.Right.SMALL) },
                     Badge("$entryCount").apply { addClassNames(Padding.Horizontal.SMALL) })
                 entryLayout = VerticalLayout().apply {
                     setSizeFull()

@@ -26,7 +26,8 @@ import moe.styx.web.dbClient
 import moe.styx.web.getURL
 import moe.styx.web.newGUID
 import moe.styx.web.topNotification
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.vaadin.filesystemdataprovider.FileTypeResolver
 import org.vaadin.filesystemdataprovider.FilesystemData
 import org.vaadin.filesystemdataprovider.FilesystemDataProvider
