@@ -78,6 +78,14 @@ html {
   align-self: flex-end;
 }
 
+.left-aligned-checkbox {
+  align-self: flex-start;
+}
+
+.token-group-delete {
+  align-self: flex-end;
+}
+
 .checkbox-horilayout {
   min-height: 66px;
 }
@@ -88,6 +96,14 @@ html {
   }
 
   .meme-checkbox {
+    align-self: flex-start;
+  }
+
+  .token-group-row {
+    align-items: flex-start;
+  }
+
+  .token-group-delete {
     align-self: flex-start;
   }
 

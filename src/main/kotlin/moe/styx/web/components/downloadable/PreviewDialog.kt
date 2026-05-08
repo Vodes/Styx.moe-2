@@ -35,6 +35,7 @@ class PreviewDialog(
     val onClose: (DownloadableOption) -> Unit
 ) : Dialog() {
     private lateinit var layout: VerticalLayout
+    private lateinit var matchingLayout: VerticalLayout
     private var ftpClient: FTPClient? = null
     private val isRSS = option.source in arrayOf(SourceType.TORRENT, SourceType.USENET)
     private var pathChanged = true
@@ -85,6 +86,48 @@ class PreviewDialog(
             verticalLayout {
                 setWidthFull()
                 maxWidth = "1000px"
+                checkBox("Use token groups") {
+                    addClassNames("left-aligned-checkbox")
+                    value = option.useTokens
+                    addValueChangeListener {
+                        option = option.copy(useTokens = it.value)
+                        updateTarget()
+                        renderMatchingFields()
+                        updateResults()
+                    }
+                }
+                matchingLayout = verticalLayout {
+                    setWidthFull()
+                    isPadding = false
+                    isSpacing = false
+                }
+            }
+            layout = verticalLayout {
+                setSizeFull()
+            }
+        }.also {
+            renderMatchingFields()
+            updateResults()
+        }
+    }
+
+    private fun renderMatchingFields() {
+        matchingLayout.removeAll()
+        if (option.useTokens) {
+            matchingLayout.add(createComponent {
+                tokenGroupsComponent(option.tokenGroups, {
+                    option = option.copy(tokenGroups = it)
+                    updateTarget()
+                    updateResults()
+                })
+            })
+            return
+        }
+
+        matchingLayout.add(createComponent {
+            verticalLayout {
+                setWidthFull()
+                isPadding = false
                 textField("File Regex") {
                     setWidthFull()
                     valueChangeMode = ValueChangeMode.LAZY
@@ -109,12 +152,7 @@ class PreviewDialog(
                         }
                     }
             }
-            layout = verticalLayout {
-                setSizeFull()
-            }
-        }.also {
-            updateResults()
-        }
+        })
     }
 
     private fun updateResults() {
@@ -225,7 +263,7 @@ class PreviewDialog(
         val new = rssResults.map {
             var parseResult = it.second
             if (it.second !is ParseResult.DENIED || (it.second as ParseResult.DENIED).parseFailReason != ParseDenyReason.PostIsTooOld) {
-                parseResult = option.episodeWanted(it.first.title, null, target, true)
+                parseResult = option.episodeWanted(it.first.titleToCheck(), null, target, true)
             }
             return@map it.first to parseResult
         }
@@ -241,6 +279,13 @@ class PreviewDialog(
             return@map it.first to parseResult
         }
         return new
+    }
+
+    private fun FeedItem.titleToCheck(): String {
+        if (title.filter { it == '/' }.length < 3)
+            return title
+
+        return title.split("/").maxBy { it.length }
     }
 }
 

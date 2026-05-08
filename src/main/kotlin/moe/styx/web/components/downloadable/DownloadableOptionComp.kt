@@ -5,6 +5,7 @@ import com.vaadin.flow.component.HasComponents
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.orderedlayout.FlexComponent
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.value.ValueChangeMode
 import com.vaadin.flow.theme.lumo.LumoUtility
@@ -16,9 +17,15 @@ import moe.styx.common.data.SourceType
 import moe.styx.common.extension.capitalize
 import moe.styx.web.components.addRSSTemplateMenu
 import moe.styx.web.components.addRegexTemplateMenu
+import moe.styx.web.createComponent
 
-class DLOptionComponent(private val media: Media, private var option: DownloadableOption, onUpdate: (DownloadableOption) -> DownloadableOption) :
+class DLOptionComponent(
+    private val media: Media,
+    private var option: DownloadableOption,
+    private val onUpdate: (DownloadableOption) -> DownloadableOption
+) :
     KComposite() {
+    private lateinit var matchingLayout: VerticalLayout
     private lateinit var rssRegexField: TextField
     private lateinit var pathField: TextField
     private lateinit var ftpConnField: TextField
@@ -31,13 +38,22 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
             setWidthFull()
             isPadding = false
             isSpacing = false
-            textField("File Regex") {
-                value = option.fileRegex
-                valueChangeMode = ValueChangeMode.LAZY
-                addRegexTemplateMenu(media)
-                addValueChangeListener { option = onUpdate(option.copy(fileRegex = it.value)) }
+            h3("Matching") { addClassNames(Padding.Bottom.MEDIUM) }
+            checkBox("Use token groups") {
+                addClassNames("left-aligned-checkbox")
+                addClassNames("meme-checkbox")
+                value = option.useTokens
+                addValueChangeListener {
+                    option = onUpdate(option.copy(useTokens = it.value))
+                    renderMatchingFields()
+                    updateVisibility(option.source)
+                }
+                height = "35px"
+            }
+            matchingLayout = verticalLayout {
                 setWidthFull()
-                maxWidth = "600px"
+                isPadding = false
+                isSpacing = false
             }
             h3("Source") { addClassNames(Padding.Vertical.MEDIUM) }
             flexLayout {
@@ -58,7 +74,7 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
                 }
                 rssRegexField = textField("RSS Regex") {
                     setTooltipText("File Regex will be used if empty")
-                    isVisible = option.source in arrayOf(SourceType.TORRENT, SourceType.USENET)
+                    isVisible = !option.useTokens && option.source in arrayOf(SourceType.TORRENT, SourceType.USENET)
                     value = option.rssRegex ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
                     addRegexTemplateMenu(media, true)
@@ -172,13 +188,38 @@ class DLOptionComponent(private val media: Media, private var option: Downloadab
                     }
                 }
             }
+        }.also {
+            renderMatchingFields()
         }
+    }
+
+    private fun renderMatchingFields() {
+        matchingLayout.removeAll()
+        if (option.useTokens) {
+            matchingLayout.add(createComponent {
+                tokenGroupsComponent(option.tokenGroups, {
+                    option = onUpdate(option.copy(tokenGroups = it))
+                })
+            })
+            return
+        }
+
+        matchingLayout.add(createComponent {
+            textField("File Regex") {
+                value = option.fileRegex
+                valueChangeMode = ValueChangeMode.LAZY
+                addRegexTemplateMenu(media)
+                addValueChangeListener { option = onUpdate(option.copy(fileRegex = it.value)) }
+                setWidthFull()
+                maxWidth = "600px"
+            }
+        })
     }
 
     private fun updateVisibility(source: SourceType) {
         when (source) {
             SourceType.TORRENT, SourceType.USENET -> {
-                rssRegexField.isVisible = true
+                rssRegexField.isVisible = !option.useTokens
                 pathField.isVisible = true
                 keepSeedingCheck.isVisible = source == SourceType.TORRENT
                 ftpConnField.isVisible = false
