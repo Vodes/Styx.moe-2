@@ -12,3 +12,10 @@ frontend/generated
 /src/main/bundles
 /.kotlin/sessions
 /.kotlin/metadata
+/node_modules
+package.json
+package-lock.json
+vite.generated.ts
+vite.config.ts
+types.d.ts
+tsconfig.json

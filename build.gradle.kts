@@ -39,6 +39,7 @@ dependencies {
     }
     implementation(libs.vaadin.boot)
     implementation(libs.vaadin.filesystemdataprovider)
+    implementation(libs.vaadin.clipboard)
     implementation(libs.karibu.dsl)
     implementation(libs.lineawesome)
 

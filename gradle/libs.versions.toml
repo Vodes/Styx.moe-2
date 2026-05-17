@@ -21,6 +21,7 @@ jsoup = { module = "org.jsoup:jsoup", version = "1.22.2" }
 
 vaadin-core = { module = "com.vaadin:vaadin-core", version.ref = "vaadin" }
 vaadin-filesystemdataprovider = { module = "org.vaadin.filesystemdataprovider:filesystemdataprovider", version = "4.0.0" }
+vaadin-clipboard = { module = "org.vaadin.addons.stefan:clipboard", version = "1.0.4" }
 vaadin-boot = { module = "com.github.mvysny.vaadin-boot:vaadin-boot", version = "13.3" }
 karibu-dsl = { module = "com.github.mvysny.karibudsl:karibu-dsl-v23", version.ref = "karibu-dsl" }
 karibu-testing = { module = "com.github.mvysny.kaributesting:karibu-testing-v24", version = "2.1.5" }
