@@ -25,6 +25,7 @@ import moe.styx.common.json
 import moe.styx.common.util.Log
 import moe.styx.common.util.launchThreaded
 import moe.styx.db.tables.UserTable
+import moe.styx.web.auth.GenericTokenResponse
 import moe.styx.libs.mal.NoRefreshMALClient
 import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress

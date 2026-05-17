@@ -29,6 +29,7 @@ import moe.styx.common.util.Log
 import moe.styx.common.util.launchThreaded
 import moe.styx.db.tables.UserTable
 import moe.styx.downloader.utils.setGenericJsonBody
+import moe.styx.web.auth.GenericTokenResponse
 import moe.styx.web.checkAuth
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.linkButton
@@ -170,16 +171,4 @@ private data class GenericAuthBody(
     @SerialName("redirect_uri")
     val redirectURI: String,
     val code: String
-)
-
-@Serializable
-data class GenericTokenResponse(
-    @SerialName("access_token")
-    val accessToken: String,
-    @SerialName("token_type")
-    val tokenType: String,
-    @SerialName("expires_in")
-    val expiresIn: Int,
-    @SerialName("refresh_token")
-    val refreshToken: String
 )

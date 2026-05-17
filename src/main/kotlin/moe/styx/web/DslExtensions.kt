@@ -16,10 +16,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import moe.styx.common.data.User
+import moe.styx.common.extension.currentUnixSeconds
 import moe.styx.db.tables.UserTable
-import moe.styx.web.auth.DiscordAPI
+import moe.styx.db.tables.WebLoginTable
+import moe.styx.web.auth.AuthCookie
 import moe.styx.web.views.HomeView
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.greaterEq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 
@@ -53,10 +57,9 @@ inline fun checkAuth(
         CoroutineScope(Dispatchers.IO).launch {
             val user = dbClient.transaction {
                 UserTable.query {
-                    selectAll().where { permissions greaterEq (minPerms - 1) }.also { println(it.toString()) }.toList()
-                        .sortedByDescending { permissions }
+                    selectAll().where { permissions greaterEq (minPerms - 1) }.toList()
                 }
-            }.firstOrNull()
+            }.maxBy { it.permissions }
             if (user == null) {
                 if (notLoggedIn != null)
                     parent?.let { ui.access { it.replaceAll { init(notLoggedIn(it)) } } }
@@ -69,16 +72,18 @@ inline fun checkAuth(
         return
     }
     CoroutineScope(Dispatchers.IO).launch {
-        val discordUser = DiscordAPI.getUserFromToken(DiscordAPI.getCurrentToken(request) ?: "")
-        if (discordUser == null) {
-            if (notLoggedIn != null)
-                parent?.let { ui.access { it.replaceAll { init(notLoggedIn(it)) } } }
-            else
-                ui.access { navigateTo<HomeView>() }
-            return@launch
+        val authToken = AuthCookie.getCurrentToken(request)?.ifBlank { null }
+        val now = currentUnixSeconds()
+        val user = authToken?.let { token ->
+            dbClient.transaction {
+                UserTable.query {
+                    (UserTable innerJoin WebLoginTable)
+                        .selectAll()
+                        .where { WebLoginTable.token eq token and (WebLoginTable.expiresAt greater now) }
+                        .toList()
+                }.find { it.permissions >= minPerms }
+            }
         }
-        val user = dbClient.transaction { UserTable.query { selectAll().where { discordID eq discordUser.id }.toList() } }
-            .find { it.permissions >= minPerms }
         if (user == null) {
             if (notLoggedIn != null)
                 parent?.let { ui.access { it.replaceAll { init(notLoggedIn(it)) } } }

@@ -71,7 +71,7 @@ class UserView : KComposite() {
                     }
             }
             linkButton(
-                "${config.base.apiBaseURL()}/discord/logout",
+                "${config.base.siteBaseURL()}/discord/logout",
                 "Logout",
                 LineAwesomeIcon.USER_ALT_SLASH_SOLID.create(),
                 target = AnchorTarget.DEFAULT

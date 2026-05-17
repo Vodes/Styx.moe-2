@@ -1,10 +1,9 @@
 package moe.styx.web.auth
 
-import com.vaadin.flow.server.VaadinRequest
 import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import jakarta.servlet.http.Cookie
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -28,15 +27,36 @@ object DiscordAPI {
         return@runBlocking json.decodeFromString(response.bodyAsText())
     }
 
-    fun getCurrentToken(request: VaadinRequest?): String? {
-        if (request == null)
-            return null
-        val cookies = request.cookies
-        val tokenCookie = cookies.find { (it as Cookie).name == "access_token" }
-        if (tokenCookie != null)
-            return tokenCookie.value
+    fun exchangeCode(code: String): GenericTokenResponse? = runBlocking {
+        if (code.isBlank())
+            return@runBlocking null
 
-        return UnifiedConfig.current.webConfig.debugAuthToken
+        val response = httpClient.submitForm("https://discord.com/api/oauth2/token", formParameters = parameters {
+            append("grant_type", "authorization_code")
+            append("client_id", UnifiedConfig.current.discord.discordClientID())
+            append("client_secret", UnifiedConfig.current.discord.discordClientSecret())
+            append("redirect_uri", "${UnifiedConfig.current.base.siteBaseURL()}/discord/auth")
+            append("code", code)
+        }) {
+            method = HttpMethod.Post
+            contentType(ContentType.Application.FormUrlEncoded)
+            accept(ContentType.Application.Json)
+        }
+
+        if (response.status != HttpStatusCode.OK)
+            return@runBlocking null
+        return@runBlocking json.decodeFromString(response.bodyAsText())
+    }
+
+    fun buildAuthURL(state: String? = null): String {
+        val builder = URLBuilder("https://discord.com/api/oauth2/authorize")
+        builder.parameters.append("client_id", UnifiedConfig.current.discord.discordClientID())
+        builder.parameters.append("redirect_uri", "${UnifiedConfig.current.base.siteBaseURL()}/discord/auth")
+        builder.parameters.append("response_type", "code")
+        builder.parameters.append("scope", "identify guilds")
+        if (!state.isNullOrBlank())
+            builder.parameters.append("state", state)
+        return builder.buildString()
     }
 }
 

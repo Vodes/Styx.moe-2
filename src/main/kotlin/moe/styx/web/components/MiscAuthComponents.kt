@@ -28,7 +28,7 @@ class NoAccessComp : KComposite() {
         verticalLayout(false) {
             h3("You are not logged in or don't have sufficient permissions.")
             linkButton(
-                "${UnifiedConfig.current.base.apiBaseURL()}/discord/auth",
+                "${UnifiedConfig.current.base.siteBaseURL()}/discord/auth",
                 "Login",
                 LineAwesomeIcon.USER_LOCK_SOLID.create(),
                 target = AnchorTarget.DEFAULT
