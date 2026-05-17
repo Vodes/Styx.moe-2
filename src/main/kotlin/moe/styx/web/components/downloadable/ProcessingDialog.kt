@@ -66,6 +66,11 @@ class ProcessingDialog(options: ProcessingOptions, private val priority: Int, va
                 isEnabled = priority > 0
                 addValueChangeListener { updateOptions { options -> options.copy(keepSubsOfPrevious = it.value) } }
             }
+            checkBox("Keep missing-language subs") {
+                value = options.keepSubsMissingLanguages
+                isEnabled = priority > 0
+                addValueChangeListener { updateOptions { options -> options.copy(keepSubsMissingLanguages = it.value) } }
+            }
             checkBox("Keep non-english subs") {
                 value = options.keepNonEnglish
                 isEnabled = priority > 0
