@@ -1,9 +1,6 @@
 package moe.styx.web.components.media
 
 import com.github.mvysny.karibudsl.v10.*
-import com.sksamuel.scrimage.ImmutableImage
-import com.sksamuel.scrimage.ScaleMethod
-import com.sksamuel.scrimage.webp.WebpWriter
 import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.Key
 import com.vaadin.flow.component.UI
@@ -14,27 +11,18 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer
 import com.vaadin.flow.theme.lumo.LumoUtility.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.utils.io.jvm.javaio.*
-import kotlinx.coroutines.runBlocking
-import moe.styx.common.config.UnifiedConfig
 import moe.styx.common.data.Image
 import moe.styx.common.data.Media
 import moe.styx.common.data.tmdb.StackType
 import moe.styx.common.data.tmdb.TmdbImage
 import moe.styx.common.data.tmdb.getFirstIDFromMap
 import moe.styx.common.extension.toBoolean
-import moe.styx.common.http.httpClient
-import moe.styx.common.isWindows
 import moe.styx.web.createComponent
 import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.data.tmdb.tmdbImageQuery
 import moe.styx.web.topNotification
+import moe.styx.web.util.downloadImageForStyx
 import org.vaadin.lineawesome.LineAwesomeIcon
-import java.io.File
-import java.util.*
 
 class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?) -> Unit) : Dialog() {
     private var current: Image? = null
@@ -69,7 +57,7 @@ class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?
                             if (urlField.value.isNullOrBlank())
                                 return@addClickListener
 
-                            val image = downloadImage(urlField.value, thumbnail)
+                            val image = downloadImageForStyx(urlField.value, thumbnail)
                             if (image == null) {
                                 topNotification("Could not download image for this ID!")
                                 return@addClickListener
@@ -144,7 +132,7 @@ class TMDBImageDialog(val id: Int, val tv: Boolean, val thumbnail: Boolean, val 
             if (result != null) {
                 (if (thumbnail) result.posters else result.backdrops).sortedByDescending { it.voteCount }.forEach {
                     add(imagePreview(it) {
-                        selected = downloadImage(it.getURL(), thumbnail)
+                        selected = downloadImageForStyx(it.getURL(), thumbnail)
                         close()
                     })
                 }
@@ -155,37 +143,6 @@ class TMDBImageDialog(val id: Int, val tv: Boolean, val thumbnail: Boolean, val 
     }
 
     override fun onDetach(detachEvent: DetachEvent?) = onClose(selected)
-}
-
-private fun downloadImage(url: String, thumbnail: Boolean): Image? = runBlocking {
-    val response = httpClient.get(url)
-    if (response.status != HttpStatusCode.OK)
-        return@runBlocking null
-
-    val guid = UUID.randomUUID().toString().uppercase()
-
-    if (isWindows) {
-        return@runBlocking Image(guid, externalURL = url, type = if (thumbnail) 0 else 1)
-    }
-    val stream = response.bodyAsChannel().toInputStream()
-    var image = ImmutableImage.loader().fromStream(stream).also {
-        runCatching {
-            stream.close()
-        }.onFailure {
-            return@runBlocking null
-        }
-    }
-
-    // Make thumbnails smaller
-    if (image.ratio() < 1 && image.height > 700)
-        image = image.scaleToHeight(700, ScaleMethod.Bicubic)
-    // Make banners smaller and since they're in landscape, go by width
-    else if (image.ratio() > 1 && image.width > 1600)
-        image = image.scaleToWidth(1600, ScaleMethod.Bicubic)
-
-    val output = File(UnifiedConfig.current.base.imageDir(), "$guid.webp")
-    image.output(WebpWriter.DEFAULT.withQ(100).withM(6), output)
-    return@runBlocking Image(guid, hasWEBP = 1, type = if (thumbnail) 0 else 1)
 }
 
 fun imagePreview(img: TmdbImage, onSelect: () -> Unit) = createComponent {
