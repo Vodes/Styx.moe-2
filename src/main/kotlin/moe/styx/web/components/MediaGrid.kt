@@ -30,6 +30,7 @@ import moe.styx.db.tables.ImageTable
 import moe.styx.db.tables.MediaEntryTable
 import moe.styx.db.tables.MediaTable
 import moe.styx.web.components.media.ImportDialog
+import moe.styx.web.components.media.MergeDialog
 import moe.styx.web.dbClient
 import moe.styx.web.toISODate
 import moe.styx.web.views.sub.DownloadableView
@@ -192,6 +193,13 @@ class MediaGrid(exclude: String = "", initialSearch: String? = null, onClickItem
                     onClick {
                         close()
                         ImportDialog(media).open()
+                    }
+                }
+                button("Merge Media") {
+                    addClassNames(Padding.Vertical.MEDIUM)
+                    onClick {
+                        close()
+                        MergeDialog(media).open()
                     }
                 }
                 button("Configure Downloader") {
