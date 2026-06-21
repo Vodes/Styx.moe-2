@@ -21,14 +21,15 @@ fun newGUID() = UUID.randomUUID().toString().uppercase()
 
 fun Image.getURL(): String {
     val config = UnifiedConfig.current.base
+    val baseURL = config.imageBaseURL().ifBlank { "${config.apiBaseURL()}/i" }
     return if (hasWEBP?.toBoolean() == true) {
-        "${config.imageBaseURL()}/$GUID.webp"
+        "$baseURL/$GUID.webp"
     } else if (hasJPG?.toBoolean() == true) {
-        "${config.imageBaseURL()}/$GUID.jpg"
+        "$baseURL/$GUID.jpg"
     } else if (hasPNG?.toBoolean() == true) {
-        "${config.imageBaseURL()}/$GUID.png"
+        "$baseURL/$GUID.png"
     } else {
-        return externalURL as String
+        externalURL as String
     }
 }
 
