@@ -6,6 +6,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.IntegerField
 import com.vaadin.flow.data.value.ValueChangeMode
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import moe.styx.common.data.BasicMapping
 import moe.styx.common.data.MappingCollection
@@ -14,10 +15,15 @@ import moe.styx.common.data.TMDBMapping
 import moe.styx.common.extension.toBoolean
 import moe.styx.common.json
 import moe.styx.common.util.isClose
-import moe.styx.web.data.getAniListDataForID
+import moe.styx.web.anilistClient
 import moe.styx.web.data.getMalIDForAnilistID
 import moe.styx.web.data.tmdb.tmdbFindMedia
 import moe.styx.web.topNotification
+import moe.styx.web.util.anyTitle
+import moe.styx.web.util.cleanedDescription
+import moe.styx.web.util.genresString
+import moe.styx.web.util.tagsString
+import pw.vodes.anilistkmp.ext.fetchMediaByID
 
 class QuickAddDialog(media: Media, val onChoose: (Media) -> Unit) : Dialog() {
 
@@ -40,7 +46,7 @@ class QuickAddDialog(media: Media, val onChoose: (Media) -> Unit) : Dialog() {
                             topNotification("No ID given.")
                             return@onClick
                         }
-                        val meta = getAniListDataForID(idField.value)
+                        val meta = runBlocking { anilistClient.fetchMediaByID(idField.value).data }
                         if (meta == null) {
                             topNotification("Could not get metadata for this ID.")
                             return@onClick
@@ -66,11 +72,11 @@ class QuickAddDialog(media: Media, val onChoose: (Media) -> Unit) : Dialog() {
                         onChoose(
                             media.copy(
                                 name = meta.anyTitle(),
-                                nameEN = meta.title.english ?: "",
-                                nameJP = meta.title.romaji ?: "",
-                                synopsisEN = meta.description ?: "",
-                                genres = meta.genres.joinToString(", "),
-                                tags = meta.tags.filter { it.rank > 60 && !it.isMediaSpoiler }.take(10).joinToString(", ") { it.name },
+                                nameEN = meta.title?.english ?: "",
+                                nameJP = meta.title?.romaji ?: "",
+                                synopsisEN = meta.cleanedDescription ?: "",
+                                genres = meta.genresString(),
+                                tags = meta.tagsString(),
                                 metadataMap = json.encodeToString(metadataMap)
                             )
                         )

@@ -11,18 +11,21 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer
 import com.vaadin.flow.theme.lumo.LumoUtility.*
+import kotlinx.coroutines.runBlocking
 import moe.styx.common.data.Image
 import moe.styx.common.data.Media
 import moe.styx.common.data.tmdb.StackType
 import moe.styx.common.data.tmdb.TmdbImage
 import moe.styx.common.data.tmdb.getFirstIDFromMap
 import moe.styx.common.extension.toBoolean
+import moe.styx.web.anilistClient
 import moe.styx.web.createComponent
-import moe.styx.web.data.getAniListDataForID
 import moe.styx.web.data.tmdb.tmdbImageQuery
 import moe.styx.web.topNotification
+import moe.styx.web.util.coverImageURL
 import moe.styx.web.util.downloadImageForStyx
 import org.vaadin.lineawesome.LineAwesomeIcon
+import pw.vodes.anilistkmp.ext.fetchMediaByID
 
 class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?) -> Unit) : Dialog() {
     private var current: Image? = null
@@ -78,14 +81,14 @@ class ImageDialog(val media: Media, val thumbnail: Boolean, val onClose: (Image?
                                 topNotification("No AniList ID found in mappings!")
                                 return@onClick
                             }
-                            val data = getAniListDataForID(id)
-                            if (data == null || (!thumbnail && data.bannerImage.isNullOrBlank()) || (thumbnail && data.coverImage.getURL()
-                                    .isNullOrBlank())
+                            val data = runBlocking { anilistClient.fetchMediaByID(id).data }
+                            val imageURL = if (thumbnail) data?.coverImageURL() else data?.bannerImage
+                            if (imageURL.isNullOrBlank()
                             ) {
                                 topNotification("Could not fetch images for this ID!")
                                 return@onClick
                             }
-                            urlField.value = if (thumbnail) data.coverImage.getURL() else data.bannerImage
+                            urlField.value = imageURL
                         }
                     }
                     button("Choose from TMDB") {

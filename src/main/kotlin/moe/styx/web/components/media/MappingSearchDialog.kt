@@ -7,16 +7,20 @@ import com.vaadin.flow.component.notification.Notification
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.value.ValueChangeMode
+import kotlinx.coroutines.runBlocking
 import moe.styx.common.data.BasicMapping
 import moe.styx.common.data.Media
 import moe.styx.common.data.TMDBMapping
 import moe.styx.common.data.tmdb.StackType
 import moe.styx.common.extension.toBoolean
-import moe.styx.web.data.AniListMediaResult
-import moe.styx.web.data.searchAniList
+import moe.styx.web.anilistClient
 import moe.styx.web.data.tmdb.getTmdbMetadata
 import moe.styx.web.data.tmdb.tmdbFindMedia
 import moe.styx.web.replaceAll
+import moe.styx.web.util.anyTitle
+import moe.styx.web.util.listingURL
+import pw.vodes.anilistkmp.ext.searchMedia
+import pw.vodes.anilistkmp.graphql.fragment.MediaBig
 
 class MappingSearchDialog(val parent: MappingStack, val media: Media) : Dialog() {
     private lateinit var resultLayout: VerticalLayout
@@ -81,8 +85,8 @@ class MappingSearchDialog(val parent: MappingStack, val media: Media) : Dialog()
     }
 }
 
-fun updateAnilistResults(search: String, layout: VerticalLayout, onClick: (AniListMediaResult) -> Unit) {
-    val results = searchAniList(search)
+fun updateAnilistResults(search: String, layout: VerticalLayout, onClick: (MediaBig) -> Unit) {
+    val results = runBlocking { anilistClient.searchMedia(search = search, perPage = 50).data }
     if (results.isEmpty())
         layout.replaceAll { h3("Could not find anything for this search.") }.also { return }
     results.forEach { meta ->
@@ -99,4 +103,3 @@ fun updateAnilistResults(search: String, layout: VerticalLayout, onClick: (AniLi
         )
     }
 }
-

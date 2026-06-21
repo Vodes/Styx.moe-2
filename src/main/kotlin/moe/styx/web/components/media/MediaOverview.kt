@@ -13,6 +13,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.tabs.Tab
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding
+import kotlinx.coroutines.runBlocking
 import moe.styx.common.data.Media
 import moe.styx.common.data.tmdb.StackType
 import moe.styx.common.data.tmdb.getFirstIDFromMap
@@ -24,13 +25,17 @@ import moe.styx.db.tables.MediaEntryTable
 import moe.styx.db.tables.MediaTable
 import moe.styx.web.components.LocalEditorState
 import moe.styx.web.components.entry.entryListing
-import moe.styx.web.data.getAniListDataForID
+import moe.styx.web.anilistClient
 import moe.styx.web.dbClient
 import moe.styx.web.newGUID
 import moe.styx.web.replaceAll
+import moe.styx.web.util.cleanedDescription
+import moe.styx.web.util.genresString
+import moe.styx.web.util.tagsString
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.vaadin.lineawesome.LineAwesomeIcon
+import pw.vodes.anilistkmp.ext.fetchMediaByID
 
 class MediaOverview(media: Media?) : KComposite() {
     private val mediaState = LocalEditorState(
@@ -55,18 +60,18 @@ class MediaOverview(media: Media?) : KComposite() {
                         if (id == null)
                             Notification.show("No AniList ID was found in the mapping.").also { return@onClick }
 
-                        val result = getAniListDataForID(id!!)
+                        val result = runBlocking { anilistClient.fetchMediaByID(id).data }
                         if (result == null)
                             Notification.show("Could not get data from AniList API.").also { return@onClick }
 
                         mediaState.update {
                             it.copy(
-                            nameJP = result!!.title.romaji,
-                            nameEN = result.title.english,
-                            synopsisEN = result.description,
-                            genres = result.genres.joinToString(", "),
-                            tags = result.tags.filter { it.rank > 60 && !it.isMediaSpoiler }.take(10).joinToString(", ") { it.name }
-                        )
+                                nameJP = result.title?.romaji,
+                                nameEN = result.title?.english,
+                                synopsisEN = result.cleanedDescription,
+                                genres = result.genresString(),
+                                tags = result.tagsString()
+                            )
                         }
                         updateTabs()
                     }
