@@ -9,6 +9,13 @@ fun MediaBig.anyTitle(): String {
     return title?.english ?: "N/A"
 }
 
+val seasonRegex = Regex("(?:Season|S) ?\\d+(?:.+Part \\d+)?")
+
+fun MediaBig.anyTitleNoSeason(): String {
+    val title = anyTitle()
+    return title.replace(seasonRegex, "")
+}
+
 fun MediaBig.listingURL() = "https://anilist.co/anime/$id"
 
 fun MediaBig.coverImageURL() = coverImage?.extraLarge ?: coverImage?.large

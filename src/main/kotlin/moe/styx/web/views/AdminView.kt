@@ -13,6 +13,7 @@ import moe.styx.web.components.MediaGrid
 import moe.styx.web.components.authProgress
 import moe.styx.web.components.misc.categoryListing
 import moe.styx.web.components.misc.generateUnwatched
+import moe.styx.web.components.misc.showVotingListing
 import moe.styx.web.components.noAccess
 import moe.styx.web.components.user.userListing
 import moe.styx.web.layout.MainLayout
@@ -83,6 +84,10 @@ class AdminView : KComposite(), HasUrlParameter<String> {
             panel("Category Management") {
                 init(categoryListing(perms < 99))
             }
+            if (perms > 50)
+                panel("Show Votings") {
+                    init(showVotingListing())
+                }
             panel("Misc Utils") {
                 button("Show unwatched shows") {
                     onClick {
