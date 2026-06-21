@@ -4,6 +4,7 @@ import com.github.mvysny.karibudsl.v10.*
 import com.github.mvysny.kaributools.setPrimary
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.Button
+import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.html.Anchor
 import com.vaadin.flow.component.html.AnchorTarget
@@ -19,14 +20,12 @@ import moe.styx.db.tables.CategoryTable
 import moe.styx.db.tables.ImageTable
 import moe.styx.db.tables.MediaTable
 import moe.styx.db.tables.ShowVotingTable
-import moe.styx.web.anilistClient
-import moe.styx.web.createComponent
+import moe.styx.web.*
 import moe.styx.web.data.getMalIDForAnilistID
 import moe.styx.web.data.tmdb.tmdbFindMedia
-import moe.styx.web.dbClient
-import moe.styx.web.newGUID
 import moe.styx.web.util.*
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import pw.vodes.anilistkmp.ext.fetchMediaByID
@@ -39,6 +38,7 @@ fun showVotingListing() = createComponent {
     lateinit var categorySelect: Select<Category>
     lateinit var showVotingGrid: Grid<ShowVoting>
     lateinit var addShowsButton: Button
+    lateinit var deleteSelectedButton: Button
 
     verticalLayout {
         val categories = dbClient.transaction { CategoryTable.query { selectAll().toList() }.sortedByDescending { it.sort } }
@@ -65,6 +65,21 @@ fun showVotingListing() = createComponent {
                         UI.getCurrent().page.reload()
                 }
             }
+            deleteSelectedButton = button("Delete selected") {
+                isEnabled = false
+                addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR)
+                onClick {
+                    if (showVotingGrid.selectedItems.isEmpty())
+                        return@onClick
+                    val result = dbClient.transaction {
+                        ShowVotingTable.deleteWhere { anilistID inList showVotingGrid.selectedItems.map { it.anilistID } }
+                    }
+                    if (result > 0)
+                        UI.getCurrent().page.reload()
+                    else
+                        topNotification("Failed to delete selected votings!")
+                }
+            }
         }
 
         val votingProvider = ListDataProvider(votings)
@@ -75,6 +90,7 @@ fun showVotingListing() = createComponent {
             selectionMode = Grid.SelectionMode.MULTI
             addSelectionListener {
                 addShowsButton.isEnabled = it.allSelectedItems.isNotEmpty() && categorySelect.value != null
+                deleteSelectedButton.isEnabled = it.allSelectedItems.isNotEmpty()
             }
             addColumn(ShowVoting::title).setHeader("Name").setFlexGrow(1).setSortable(true)
             addComponentColumn { voting ->
