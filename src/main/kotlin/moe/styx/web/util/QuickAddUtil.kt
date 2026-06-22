@@ -9,8 +9,6 @@ import moe.styx.web.data.getMalIDForAnilistID
 import moe.styx.web.data.tmdb.tmdbFindMedia
 import moe.styx.web.dbClient
 import moe.styx.web.newGUID
-import org.jetbrains.exposed.v1.core.Op
-import org.jetbrains.exposed.v1.core.QueryBuilder
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import pw.vodes.anilistkmp.graphql.fragment.MediaBig
 import pw.vodes.anilistkmp.graphql.type.MediaRelation
@@ -91,28 +89,4 @@ private fun findMediaByRemoteID(type: StackType, remoteID: Int): Media? =
                 .limit(2)
                 .toList()
         }.singleOrNull()
-    }
-
-private fun MediaTable.mappingRemoteIdExists(type: StackType, remoteID: Int): Op<Boolean> = object : Op<Boolean>() {
-    override fun toQueryBuilder(queryBuilder: QueryBuilder) {
-        val mappingKey = type.mappingCollectionKey()
-        queryBuilder {
-            append("jsonb_path_exists(")
-            append(MediaTable.metadataMap)
-            append("::jsonb, ")
-            append("'$.")
-            append(mappingKey)
-            append("[*] ? (@.remoteID == ")
-            append(remoteID.toString())
-            append(")'")
-            append(")")
-        }
-    }
-}
-
-private fun StackType.mappingCollectionKey(): String =
-    when (this) {
-        StackType.ANILIST -> "anilistMappings"
-        StackType.TMDB -> "tmdbMappings"
-        StackType.MAL -> "malMappings"
     }
