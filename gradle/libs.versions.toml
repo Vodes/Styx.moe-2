@@ -10,7 +10,7 @@ styx-common = { module = "moe.styx:styx-common", version = "0.6.5" }
 styx-db = { module = "moe.styx:styx-db", version = "0.6.2" }
 styx-downloader = { module = "moe.styx:styx-downloader", version = "0.6.1" }
 styx-mal = { module = "moe.styx:styx-lib-mal", version = "0.0.4" }
-anilistkmp = { module = "pw.vodes:anilist-kmp", version = "0.0.4" }
+anilistkmp = { module = "pw.vodes:anilist-kmp", version = "0.1.0" }
 anitomyj = { module = "com.github.Vodes:anitomyJ", version = "80f36aceb2" }
 scrimage-core = { module = "com.sksamuel.scrimage:scrimage-core", version.ref = "scrimage" }
 scrimage-webp = { module = "com.sksamuel.scrimage:scrimage-webp", version.ref = "scrimage" }

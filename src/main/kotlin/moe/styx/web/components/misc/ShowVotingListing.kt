@@ -12,18 +12,20 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.select.Select
 import com.vaadin.flow.data.provider.ListDataProvider
 import kotlinx.coroutines.runBlocking
-import moe.styx.common.data.*
-import moe.styx.common.extension.currentUnixSeconds
-import moe.styx.common.json
+import moe.styx.common.data.Category
+import moe.styx.common.data.ShowVoting
 import moe.styx.common.util.Log
 import moe.styx.db.tables.CategoryTable
 import moe.styx.db.tables.ImageTable
 import moe.styx.db.tables.MediaTable
 import moe.styx.db.tables.ShowVotingTable
-import moe.styx.web.*
-import moe.styx.web.data.getMalIDForAnilistID
-import moe.styx.web.data.tmdb.tmdbFindMedia
-import moe.styx.web.util.*
+import moe.styx.web.anilistClient
+import moe.styx.web.createComponent
+import moe.styx.web.dbClient
+import moe.styx.web.topNotification
+import moe.styx.web.util.coverImageURL
+import moe.styx.web.util.createMediaFromAnilist
+import moe.styx.web.util.downloadImageForStyx
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -112,37 +114,13 @@ private fun addShowFromVoting(showVoting: ShowVoting, category: Category): Boole
         return false
     }
     runCatching {
-        val malID = getMalIDForAnilistID(showVoting.anilistID)
-        val tmdbResult = tmdbFindMedia(anilistData.data!!.anyTitleNoSeason())
-        val mappings = MappingCollection(
-            anilistMappings = mutableListOf(BasicMapping(remoteID = anilistData.data!!.id)),
-            malMappings = mutableListOf<BasicMapping>().apply {
-                if (malID != null)
-                    add(BasicMapping(remoteID = malID))
-            }, tmdbMappings = mutableListOf<TMDBMapping>().apply {
-                if (tmdbResult.isNotEmpty())
-                    add(TMDBMapping(remoteID = tmdbResult.first().id))
-            }
-        )
         val image = anilistData.data!!.coverImageURL()?.let { downloadImageForStyx(it, true) }
-        val media = Media(
-            newGUID(),
-            name = anilistData.data!!.anyTitle(),
-            nameEN = anilistData.data!!.title?.english ?: "",
-            nameJP = anilistData.data!!.title?.romaji ?: "",
-            synopsisEN = anilistData.data!!.cleanedDescription ?: "",
-            synopsisDE = null,
-            thumbID = image?.GUID,
-            genres = anilistData.data!!.genresString(),
-            tags = anilistData.data!!.tagsString(),
-            metadataMap = json.encodeToString(mappings),
-            categoryID = category.GUID,
-            added = currentUnixSeconds()
-        )
+        val mediaToUpsert = createMediaFromAnilist(anilistData.data!!, image, category)
+
         if (image != null) {
             dbClient.transaction { ImageTable.upsertItem(image) }
         }
-        val mediaAdded = dbClient.transaction { MediaTable.upsertItem(media).insertedCount == 1 }
+        val mediaAdded = dbClient.transaction { mediaToUpsert.map(MediaTable::upsertItem).sumOf { it.insertedCount } } == mediaToUpsert.size
         if (mediaAdded) {
             dbClient.transaction {
                 ShowVotingTable.deleteWhere { anilistID eq anilistData.data!!.id }
@@ -150,7 +128,7 @@ private fun addShowFromVoting(showVoting: ShowVoting, category: Category): Boole
         }
         return mediaAdded
     }.onFailure {
-        Log.e(exception = it) { "Failed to add media for anilist ID: ${showVoting.anilistID}" }
+        Log.e(exception = it) { "Failed to add/update media for anilist ID: ${showVoting.anilistID}" }
     }
 
     return false

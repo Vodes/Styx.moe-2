@@ -7,18 +7,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.IntegerField
 import com.vaadin.flow.data.value.ValueChangeMode
 import kotlinx.coroutines.runBlocking
-import moe.styx.common.data.BasicMapping
-import moe.styx.common.data.MappingCollection
 import moe.styx.common.data.Media
-import moe.styx.common.data.TMDBMapping
-import moe.styx.common.extension.toBoolean
-import moe.styx.common.json
-import moe.styx.common.util.isClose
 import moe.styx.web.anilistClient
-import moe.styx.web.data.getMalIDForAnilistID
-import moe.styx.web.data.tmdb.tmdbFindMedia
 import moe.styx.web.topNotification
-import moe.styx.web.util.*
+import moe.styx.web.util.createMediaFromAnilist
 import pw.vodes.anilistkmp.ext.fetchMediaByID
 
 class QuickAddDialog(media: Media, val onChoose: (Media) -> Unit) : Dialog() {
@@ -47,36 +39,8 @@ class QuickAddDialog(media: Media, val onChoose: (Media) -> Unit) : Dialog() {
                             topNotification("Could not get metadata for this ID.")
                             return@onClick
                         }
-                        val malID = getMalIDForAnilistID(meta.id)
-                        val tmdbResult =
-                            tmdbFindMedia(meta.anyTitleNoSeason(), media.isSeries.toBoolean()).filter { it.name.isClose(meta.anyTitle()) }
-                        val metadataMap = runCatching { json.decodeFromString<MappingCollection>(media.metadataMap!!) }.getOrNull()?.apply {
-                            this.anilistMappings.add(BasicMapping(remoteID = meta.id))
-                            if (malID != null)
-                                this.malMappings.add(BasicMapping(remoteID = malID))
-                            if (tmdbResult.isNotEmpty())
-                                this.tmdbMappings.add(TMDBMapping(remoteID = tmdbResult.first().id))
-                        } ?: MappingCollection(
-                            anilistMappings = mutableListOf(BasicMapping(remoteID = meta.id)),
-                            malMappings = mutableListOf<BasicMapping>().apply {
-                                if (malID != null)
-                                    add(BasicMapping(remoteID = malID))
-                            }, tmdbMappings = mutableListOf<TMDBMapping>().apply {
-                                if (tmdbResult.isNotEmpty())
-                                    add(TMDBMapping(remoteID = tmdbResult.first().id))
-                            }
-                        )
-                        onChoose(
-                            media.copy(
-                                name = meta.anyTitle(),
-                                nameEN = meta.title?.english ?: "",
-                                nameJP = meta.title?.romaji ?: "",
-                                synopsisEN = meta.cleanedDescription ?: "",
-                                genres = meta.genresString(),
-                                tags = meta.tagsString(),
-                                metadataMap = json.encodeToString(metadataMap)
-                            )
-                        )
+                        val newMedia = createMediaFromAnilist(meta, existingMedia = media)
+                        onChoose(newMedia.first())
                         close()
                     }
                 }
