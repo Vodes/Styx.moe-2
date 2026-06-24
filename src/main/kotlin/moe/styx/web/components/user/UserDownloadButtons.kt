@@ -98,10 +98,45 @@ class UserAndroidDownloadButtons : KComposite() {
                         }
                     }
                 }
-                htmlSpan("If you don't know what to pick here or don't care about filesize just go with <b>Universal</b>.")
-                htmlSpan("Chances are that if you have a modern device <b>ARM-64</b> will be what you want.")
-                htmlSpan("ARMv7 and X86 Builds are not available anymore because the demand for that is quite low and <b>Universal</b> will still work.")
-                htmlSpan("<b>TV-Boxes will need the universal ones!</b>")
+                verticalLayout(padding = false, spacing = false) {
+                    htmlSpan("If you don't know what to pick here or don't care about filesize just go with <b>Universal</b>.")
+                    htmlSpan("Chances are that if you have a modern device <b>ARM-64</b> will be what you want.")
+                    htmlSpan("ARMv7 and X86 Builds are not available anymore because the demand for that is quite low and <b>Universal</b> will still work.")
+                    htmlSpan("<b>TV-Boxes will need the universal ones!</b>")
+                }
+            }
+        }
+    }
+}
+
+class UserIosDownloadButtons : KComposite() {
+    val root = ui {
+        horizontalLayout {
+            setClassNames2(Padding.Horizontal.SMALL)
+            val androidBuildDir = UnifiedConfig.current.base.androidBuildDir()
+            if (!File(androidBuildDir).exists() || File(androidBuildDir).listFiles().isNullOrEmpty()) {
+                h3("Could not find builds on the server.")
+                return@horizontalLayout
+            }
+            val latest = File(androidBuildDir).listFiles()!!.filter { it.isDirectory }.maxBy { it.name }
+            val ipaFile = latest.walkTopDown().find { it.name.endsWith(".ipa") }
+            verticalLayout {
+                h3("iOS")
+                unorderedList {
+                    addClassNames(Display.FLEX, Gap.SMALL, ListStyleType.NONE, Margin.NONE, Padding.NONE)
+                    if (ipaFile != null) {
+                        linkButton("", "IPA (for sideloading)", LineAwesomeIcon.APPLE.create()) {
+                            element.setAttribute("download", true)
+                            setHref(ipaFile.streamResource())
+                        }
+                    }
+                }
+                verticalLayout(padding = false, spacing = false) {
+                    htmlSpan("This is an unsigned ipa file for self-signing and sideloading purposes.")
+                    htmlSpan("There are many ways to do so, notably <a href='https://altstore.io'>Altstore</a>, <a href='https://sideloadly.io'>Sideloadly</a> or <a href='https://sidestore.io'>Sidestore</a>.")
+                    htmlSpan("I myself tested it out with <b>Sidestore</b> and would also probably recommend that as it only requires a PC at initial setup.")
+                    htmlSpan("If you want this to be easier, you can sponsor me the 100€ yearly Apple App Dev license.")
+                }
             }
         }
     }
@@ -123,4 +158,11 @@ fun (@VaadinDsl HasComponents).userAndroidDownloadButtons(
     block: (@VaadinDsl UserAndroidDownloadButtons).() -> Unit = {}
 ) = init(
     UserAndroidDownloadButtons(), block
+)
+
+@VaadinDsl
+fun (@VaadinDsl HasComponents).userIOSDownloadButtons(
+    block: (@VaadinDsl UserIosDownloadButtons).() -> Unit = {}
+) = init(
+    UserIosDownloadButtons(), block
 )

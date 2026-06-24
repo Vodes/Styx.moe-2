@@ -13,6 +13,7 @@ import moe.styx.common.util.launchThreaded
 import moe.styx.db.tables.WebTempLinkTable
 import moe.styx.web.components.user.userAndroidDownloadButtons
 import moe.styx.web.components.user.userDesktopDownloadButtons
+import moe.styx.web.components.user.userIOSDownloadButtons
 import moe.styx.web.dbClient
 import moe.styx.web.layout.MainLayout
 import moe.styx.web.replaceAll
@@ -53,6 +54,7 @@ class HomeView : KComposite(), HasUrlParameter<String> {
                         nativeLabel("This is a temporary download link. It will disable itself after this attempt.")
                         userDesktopDownloadButtons()
                         userAndroidDownloadButtons()
+                        userIOSDownloadButtons()
                     }
                 }
             }

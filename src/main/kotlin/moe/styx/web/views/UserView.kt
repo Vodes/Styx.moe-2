@@ -62,6 +62,7 @@ class UserView : KComposite() {
                     content {
                         userDesktopDownloadButtons()
                         userAndroidDownloadButtons()
+                        userIOSDownloadButtons()
                         div {
                             setClassNames2(Padding.SMALL)
                             verticalLayout {
