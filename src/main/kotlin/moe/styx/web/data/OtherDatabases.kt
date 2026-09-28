@@ -5,6 +5,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import moe.styx.common.http.httpClient
 import moe.styx.common.json
@@ -17,14 +18,14 @@ fun getMalIDForAnilistID(id: Int): Int? {
     val curTime = Clock.System.now().epochSeconds
     if ((curTime - 129600) > lastUpdated || currentDataset.isEmpty())
         updateDataset().also { lastUpdated = curTime }
-    return currentDataset.find { it.anilistID == id }?.malID
+    return currentDataset.findMalID(id)
 }
 
 fun getAnisearchIDForAnilistID(id: Int): Int? {
     val curTime = Clock.System.now().epochSeconds
     if ((curTime - 129600) > lastUpdated || currentDataset.isEmpty())
         updateDataset().also { lastUpdated = curTime }
-    return currentDataset.find { it.anilistID == id }?.anisearchID
+    return currentDataset.findAnisearchID(id)
 }
 
 fun scrapeAnisearchDescription(id: Int): String? = runBlocking {
@@ -46,26 +47,25 @@ fun scrapeAnisearchDescription(id: Int): String? = runBlocking {
 }
 
 @Serializable
-private data class Data(val sources: List<String>, val title: String)
+internal data class MultiIDStorage(
+    @SerialName("anilist_id") val anilistID: Int? = null,
+    @SerialName("mal_id") val malID: Int? = null,
+    @SerialName("anisearch_id") val anisearchID: Int? = null
+)
 
-@Serializable
-private data class Database(val data: List<Data>)
+internal fun parseAnimeMappings(source: String): List<MultiIDStorage> =
+    json.decodeFromString<List<MultiIDStorage>>(source).filter { it.anilistID != null }
 
-data class MultiIDStorage(val title: String, val anilistID: Int, val malID: Int, val anisearchID: Int?)
+internal fun List<MultiIDStorage>.findMalID(id: Int): Int? =
+    firstOrNull { it.anilistID == id && it.malID != null }?.malID
+
+internal fun List<MultiIDStorage>.findAnisearchID(id: Int): Int? =
+    firstOrNull { it.anilistID == id && it.anisearchID != null }?.anisearchID
 
 private fun updateDataset() = runBlocking {
     val response =
-        httpClient.get("https://github.com/manami-project/anime-offline-database/releases/download/latest/anime-offline-database-minified.json")
+        httpClient.get("https://raw.githubusercontent.com/Fribb/anime-lists/master/anime-list-mini.json")
     if (response.status != HttpStatusCode.OK)
         return@runBlocking
-    val parsedDB = json.decodeFromString<Database>(response.bodyAsText())
-    val numRegex = "\\D+".toRegex()
-    currentDataset = parsedDB.data.map { data ->
-        val anilistID = data.sources.find { it.contains("anilist.co") }?.replace(numRegex, "")?.toIntOrNull()
-        val malID = data.sources.find { it.contains("myanimelist") }?.replace(numRegex, "")?.toIntOrNull()
-        val anisearchID = data.sources.find { it.contains("anisearch.com") }?.replace(numRegex, "")?.toIntOrNull()
-        if (anilistID == null || malID == null)
-            return@map null
-        return@map MultiIDStorage(data.title, anilistID, malID, anisearchID)
-    }.filterNotNull()
+    currentDataset = parseAnimeMappings(response.bodyAsText())
 }
