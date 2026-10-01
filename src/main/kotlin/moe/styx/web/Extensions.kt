@@ -1,6 +1,5 @@
 package moe.styx.web
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import moe.styx.common.config.UnifiedConfig
@@ -10,6 +9,7 @@ import moe.styx.common.extension.toBoolean
 import moe.styx.downloader.parsing.ParseResult
 import java.io.File
 import java.util.*
+import kotlin.time.Instant
 
 fun Long.toISODate(): String {
     val instant = Instant.fromEpochSeconds(this)
@@ -38,7 +38,6 @@ fun ParseResult.toReadableString(): String {
         is ParseResult.OK -> "Would download"
         is ParseResult.DENIED -> "Denied: ${parseFailReason.name}"
         is ParseResult.FAILED -> "Failed: ${parseFailReason.name}"
-        else -> "Failed to parse!"
     }
 }
 

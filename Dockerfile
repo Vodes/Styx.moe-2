@@ -1,4 +1,4 @@
-FROM vodes/styx-baseimage:latest
+FROM vodes/styx-baseimage:v2
 
 COPY ./app.jar .
 
