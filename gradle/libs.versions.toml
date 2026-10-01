@@ -8,10 +8,10 @@ karibu-dsl = "2.3.2"
 [libraries]
 styx-common = { module = "moe.styx:styx-common", version = "0.6.6" }
 styx-db = { module = "moe.styx:styx-db", version = "0.6.3" }
-styx-downloader = { module = "moe.styx:styx-downloader", version = "0.6.3" }
+styx-downloader = { module = "moe.styx:styx-downloader", version = "0.6.4" }
 styx-mal = { module = "moe.styx:styx-lib-mal", version = "0.0.4" }
 anilistkmp = { module = "pw.vodes:anilist-kmp", version = "0.1.0" }
-anitomy = { module = "pw.vodes:anitomy-kmp-jvm", version = "2.0.0-alpha1" }
+anitomy = { module = "pw.vodes:anitomy-kmp-jvm", version = "2.0.0-alpha3" }
 scrimage-core = { module = "com.sksamuel.scrimage:scrimage-core", version.ref = "scrimage" }
 scrimage-webp = { module = "com.sksamuel.scrimage:scrimage-webp", version.ref = "scrimage" }
 scrimage-extra = { module = "com.sksamuel.scrimage:scrimage-formats-extra", version.ref = "scrimage" }
