@@ -39,6 +39,7 @@ class DownloadableOverview(var target: DownloaderTarget, val media: Media) : KCo
                 setWidthFull()
                 maxWidth = "1550px"
                 textField("Naming Template") {
+                    setTooltipText("Mix Styx %...% tokens with muxtools tokens such as \$show$, \$ep$, and \$res$. \$crc32$ is unsupported.")
                     value = target.namingTemplate
                     valueChangeMode = ValueChangeMode.LAZY
                     addValueChangeListener { updateTargetRef { target = target.copy(namingTemplate = value) } }

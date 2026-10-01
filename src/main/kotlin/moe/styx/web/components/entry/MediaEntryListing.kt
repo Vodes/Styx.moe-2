@@ -13,10 +13,10 @@ import moe.styx.common.data.MediaEntry
 import moe.styx.common.extension.equalsAny
 import moe.styx.common.extension.readableSize
 import moe.styx.common.extension.toBoolean
-import moe.styx.common.prettyPrintJson
 import moe.styx.db.tables.ImageTable
 import moe.styx.db.tables.MediaEntryTable
-import moe.styx.downloader.utils.getMediaInfo
+import moe.styx.downloader.utils.inspectMedia
+import moe.styx.downloader.utils.Log
 import moe.styx.web.createComponent
 import moe.styx.web.data.sendDiscordHookEmbed
 import moe.styx.web.dbClient
@@ -127,21 +127,27 @@ fun entryDeleteDialog(mediaEntry: MediaEntry) {
 
 fun entryMediaInfoDialog(mediaEntry: MediaEntry) {
     val entryFile = File(mediaEntry.filePath)
-    val mediainfo = if (entryFile.exists()) entryFile.getMediaInfo() else null
+    val inspection = if (entryFile.isFile) runCatching { entryFile.inspectMedia() }.onFailure {
+        Log.w("File inspection: ${entryFile.name}") { it.message ?: "Could not inspect file" }
+    } else null
     Dialog().apply {
         setSizeFull()
         maxWidth = "800px"
         maxHeight = "600px"
         verticalLayout {
             setSizeFull()
-            if (!entryFile.exists() || mediainfo == null) {
+            if (inspection == null) {
                 h3("Could not find file.")
                 return@verticalLayout
             }
-            textArea("MediaInfo") {
+            if (inspection.isFailure) {
+                h3("Could not inspect file.")
+                return@verticalLayout
+            }
+            textArea("File contents") {
                 setSizeFull()
                 isReadOnly = true
-                value = prettyPrintJson.encodeToString(mediainfo)
+                value = inspection.getOrThrow()
             }
         }
     }.open()

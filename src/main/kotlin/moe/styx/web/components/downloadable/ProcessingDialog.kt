@@ -3,15 +3,18 @@ package moe.styx.web.components.downloadable
 import com.github.mvysny.karibudsl.v10.*
 import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.dialog.Dialog
-import com.vaadin.flow.component.textfield.TextField
+import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.data.value.ValueChangeMode
 import moe.styx.common.data.ProcessingOptions
 import moe.styx.web.components.LocalEditorState
 
-class ProcessingDialog(options: ProcessingOptions, private val priority: Int, val onClose: (ProcessingOptions) -> Unit) : Dialog() {
-    private val optionsState = LocalEditorState(options)
+class ProcessingDialog(options: ProcessingOptions, val onClose: (ProcessingOptions) -> Unit) : Dialog() {
+    private val optionsState = LocalEditorState(if (options.keepAudioOfPrevious) options.copy(fillAudioOfPrevious = false) else options)
 
-    lateinit var tppstylesField: TextField
+    private var reportedOptions = false
+
+    private lateinit var keepAudioField: Checkbox
+    private lateinit var fillAudioField: Checkbox
 
     private fun currentOptions() = optionsState.current()
 
@@ -21,23 +24,36 @@ class ProcessingDialog(options: ProcessingOptions, private val priority: Int, va
         val options = currentOptions()
         isModal = true
         isDraggable = true
+        addOpenedChangeListener {
+            if (it.isOpened) reportedOptions = false else reportOptions()
+        }
         verticalLayout {
             h2("Processing Options")
+            span("Without a previous file, donor operations are skipped and new subtitles are retained.")
             checkBox("Keep Video") {
                 value = options.keepVideoOfPrevious
-                isEnabled = priority > 0
                 setTooltipText("Keep video of previous option")
                 addValueChangeListener { updateOptions { options -> options.copy(keepVideoOfPrevious = it.value) } }
             }
-            checkBox("Keep Audio") {
+            keepAudioField = checkBox("Keep all previous audio") {
                 value = options.keepAudioOfPrevious
-                isEnabled = priority > 0
-                setTooltipText("Keep audio of previous option")
-                addValueChangeListener { updateOptions { options -> options.copy(keepAudioOfPrevious = it.value) } }
+                setTooltipText("Append every audio track from the previous file")
+                addValueChangeListener {
+                    updateOptions { options -> options.copy(keepAudioOfPrevious = it.value, fillAudioOfPrevious = if (it.value) false else options.fillAudioOfPrevious) }
+                    if (it.value) fillAudioField.value = false
+                }
+            }
+            fillAudioField = checkBox("Fill missing audio languages") {
+                value = options.fillAudioOfPrevious && !options.keepAudioOfPrevious
+                setTooltipText("Add missing donor audio languages and their matching signs/forced subtitles")
+                addValueChangeListener {
+                    updateOptions { options -> options.copy(fillAudioOfPrevious = it.value, keepAudioOfPrevious = if (it.value) false else options.keepAudioOfPrevious) }
+                    if (it.value) keepAudioField.value = false
+                }
             }
             checkBox("Choose better Audio") {
                 value = options.keepBetterAudio
-                setTooltipText("Determine better audio and automatically choose that")
+                setTooltipText("Keep one Japanese audio candidate from the selected tracks")
                 addValueChangeListener { updateOptions { options -> options.copy(keepBetterAudio = it.value) } }
             }
             integerField("Audio Sync (ms)") {
@@ -45,46 +61,38 @@ class ProcessingDialog(options: ProcessingOptions, private val priority: Int, va
                 isStepButtonsVisible = true
                 step = 50
                 valueChangeMode = ValueChangeMode.LAZY
-                setTooltipText("Delay to apply to audio that will be muxed in")
-                addValueChangeListener { updateOptions { options -> options.copy(manualAudioSync = it.value.toLong()) } }
+                setTooltipText("Delay applied only to donor audio")
+                addValueChangeListener { updateOptions { options -> options.copy(manualAudioSync = (it.value ?: 0).toLong()) } }
             }
             integerField("Sub Sync (ms)") {
                 value = options.manualSubSync.toInt()
                 isStepButtonsVisible = true
                 step = 50
                 valueChangeMode = ValueChangeMode.LAZY
-                setTooltipText("Delay to apply to subs that will be muxed in")
-                addValueChangeListener { updateOptions { options -> options.copy(manualSubSync = it.value.toLong()) } }
+                setTooltipText("Delay applied only to donor subtitles")
+                addValueChangeListener { updateOptions { options -> options.copy(manualSubSync = (it.value ?: 0).toLong()) } }
             }
             checkBox("Discard new subs") {
                 value = options.removeNewSubs
-                isEnabled = priority > 0
                 addValueChangeListener { updateOptions { options -> options.copy(removeNewSubs = it.value) } }
             }
             checkBox("Keep all previous subs") {
                 value = options.keepSubsOfPrevious
-                isEnabled = priority > 0
                 addValueChangeListener { updateOptions { options -> options.copy(keepSubsOfPrevious = it.value) } }
             }
             checkBox("Keep missing-language subs") {
                 value = options.keepSubsMissingLanguages
-                isEnabled = priority > 0
                 addValueChangeListener { updateOptions { options -> options.copy(keepSubsMissingLanguages = it.value) } }
             }
             checkBox("Keep non-english subs") {
                 value = options.keepNonEnglish
-                isEnabled = priority > 0
                 addValueChangeListener { updateOptions { options -> options.copy(keepNonEnglish = it.value) } }
-            }
-            checkBox("Sync subs via sushi") {
-                value = options.sushiSubs
-                addValueChangeListener { updateOptions { options -> options.copy(sushiSubs = it.value) } }
             }
             checkBox("Restyle subs") {
                 value = options.restyleSubs
                 addValueChangeListener { updateOptions { options -> options.copy(restyleSubs = it.value) } }
             }
-            checkBox("Remove unnnecessary subs/audio") {
+            checkBox("Remove unnecessary subs/audio") {
                 value = options.removeUnnecessary
                 addValueChangeListener { updateOptions { options -> options.copy(removeUnnecessary = it.value) } }
             }
@@ -92,23 +100,25 @@ class ProcessingDialog(options: ProcessingOptions, private val priority: Int, va
                 value = options.fixTagging
                 addValueChangeListener { updateOptions { options -> options.copy(fixTagging = it.value) } }
             }
+            checkBox("Normalize track names") {
+                value = options.normalizeTrackNames
+                addValueChangeListener { updateOptions { options -> options.copy(normalizeTrackNames = it.value) } }
+            }
             details("Other settings") {
                 checkBox("Apply TPP to subs") {
                     value = options.tppSubs
-                    addValueChangeListener {
-                        updateOptions { options -> options.copy(tppSubs = it.value) }
-                        tppstylesField.isEnabled = it.value
-                    }
+                    setTooltipText("Currently has no effect: TPP is not implemented in muxtools-styx.")
+                    addValueChangeListener { updateOptions { options -> options.copy(tppSubs = it.value) } }
                 }
-                tppstylesField = textField("TPP Styles") {
-                    setTooltipText("Styles to apply the tpp to")
-                    isEnabled = options.tppSubs
-                    value = options.tppStyles
+                span("TPP currently has no effect.")
+                textField("Restyle languages") {
+                    value = options.restyleLanguages
+                    setTooltipText("Comma-separated languages whose ASS subtitles will be restyled")
                     valueChangeMode = ValueChangeMode.LAZY
-                    addValueChangeListener { updateOptions { options -> options.copy(tppStyles = it.value) } }
+                    addValueChangeListener { updateOptions { options -> options.copy(restyleLanguages = it.value) } }
                 }
                 textField("Sub languages") {
-                    setTooltipText("Subtitles that will be processed and/or kept if removal is enabled.")
+                    setTooltipText("Subtitle languages retained when removal is enabled.")
                     value = options.subLanguages
                     valueChangeMode = ValueChangeMode.LAZY
                     addValueChangeListener { updateOptions { options -> options.copy(subLanguages = it.value) } }
@@ -123,7 +133,14 @@ class ProcessingDialog(options: ProcessingOptions, private val priority: Int, va
         }
     }
 
+    private fun reportOptions() {
+        if (!reportedOptions) {
+            reportedOptions = true
+            onClose(currentOptions())
+        }
+    }
+
     override fun onDetach(detachEvent: DetachEvent?) {
-        onClose(currentOptions())
+        reportOptions()
     }
 }

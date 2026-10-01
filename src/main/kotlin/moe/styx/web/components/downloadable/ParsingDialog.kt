@@ -56,7 +56,7 @@ class ParsingDialog(toParse: String, val rss: Boolean, openedForLocal: Boolean =
 
     private fun updateResults(input: String) {
         val parsedMeta = parseMetadata(input)
-        val meta = parsedMeta.map { MappedParsing(it.category.name.replace("kElement", ""), it.value) }
+        val meta = parsedMeta.map { MappedParsing(it.kind.name, it.value) }
 
         val targets = target?.let { listOf(target) } ?: dbClient.transaction { DownloaderTargetsTable.query { selectAll().toList() } }
         val resultString = targets.episodeWanted(input, null, rss).toReadableString()

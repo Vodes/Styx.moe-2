@@ -155,6 +155,7 @@ class DLOptionComponent(
                 setWidthFull()
                 maxWidth = "1550px"
                 textField("Naming Template") {
+                    setTooltipText("Mix Styx %...% tokens with muxtools tokens such as \$show$, \$ep$, and \$res$. \$crc32$ is unsupported.")
                     value = option.overrideNamingTemplate ?: ""
                     valueChangeMode = ValueChangeMode.LAZY
                     addValueChangeListener { updateOption { option -> option.copy(overrideNamingTemplate = it.value) } }
@@ -188,7 +189,7 @@ class DLOptionComponent(
                         val option = currentOption()
                         if (option.processingOptions == null)
                             return@onClick
-                        ProcessingDialog(option.processingOptions!!, option.priority) {
+                        ProcessingDialog(option.processingOptions!!) {
                             updateOption { option -> option.copy(processingOptions = it) }
                         }.open()
                     }

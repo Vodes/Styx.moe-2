@@ -11,7 +11,7 @@ styx-db = { module = "moe.styx:styx-db", version = "0.6.3" }
 styx-downloader = { module = "moe.styx:styx-downloader", version = "0.6.1" }
 styx-mal = { module = "moe.styx:styx-lib-mal", version = "0.0.4" }
 anilistkmp = { module = "pw.vodes:anilist-kmp", version = "0.1.0" }
-anitomyj = { module = "com.github.Vodes:anitomyJ", version = "80f36aceb2" }
+anitomy = { module = "pw.vodes:anitomy-kmp-jvm", version = "2.0.0-alpha1" }
 scrimage-core = { module = "com.sksamuel.scrimage:scrimage-core", version.ref = "scrimage" }
 scrimage-webp = { module = "com.sksamuel.scrimage:scrimage-webp", version.ref = "scrimage" }
 scrimage-extra = { module = "com.sksamuel.scrimage:scrimage-formats-extra", version.ref = "scrimage" }

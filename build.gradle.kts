@@ -54,7 +54,7 @@ dependencies {
     implementation(libs.styx.downloader)
     implementation(libs.styx.mal)
     implementation(libs.anilistkmp)
-    implementation(libs.anitomyj)
+    implementation(libs.anitomy)
 
     // Image Processing
     implementation(libs.scrimage.core)
